@@ -48,7 +48,14 @@ export default function CreateEventPage() {
   const onSubmit = async (data: EventFormData) => {
     setIsSubmitting(true);
     try {
-      const response = await axios.post(`${API_URL}/events`, data);
+      // Convert local datetime to proper ISO string
+      const payload = {
+        ...data,
+        dateStart: new Date(data.dateStart).toISOString(),
+        dateEnd: new Date(data.dateEnd).toISOString(),
+      };
+
+      const response = await axios.post(`${API_URL}/events`, payload);
       toast.success("Event created successfully!");
       router.push(`/events/${response.data.event._id}`);
     } catch (error: any) {
