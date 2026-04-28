@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -30,6 +30,7 @@ export default function EventDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<
     "overview" | "entry-points" | "holder-types" | "categories"
   >("overview");
@@ -44,7 +45,18 @@ export default function EventDetailsPage() {
       const response = await axios.get(`${API_URL}/events/${eventId}`);
       return response.data;
     },
+    staleTime: 0, // Always consider data stale
+    refetchOnMount: true, // Refetch when page loads
+    refetchOnWindowFocus: true, // Refetch when tab focuses
   });
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      refetch();
+    };
+    window.addEventListener("popstate", handleRouteChange);
+    return () => window.removeEventListener("popstate", handleRouteChange);
+  }, [refetch]);
 
   const handleStatusChange = async (action: "activate" | "deactivate") => {
     try {
@@ -217,20 +229,33 @@ export default function EventDetailsPage() {
 
             <Card>
               <CardHeader>
-                <h2 className="font-semibold">Venue</h2>
+                <h2 className="font-semibold">Venue(s)</h2>
               </CardHeader>
               <CardBody className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">Name</p>
-                  <p className="text-gray-900 flex items-center">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    {event?.venue?.name}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Address</p>
-                  <p className="text-gray-900">{event?.venue?.address}</p>
-                </div>
+                {Array.isArray(event?.venue) && event.venue.length > 0 ? (
+                  event.venue.map((v: any, i: number) => (
+                    <div key={i} className="border rounded-lg p-3">
+                      <div className="flex items-center">
+                        <MapPin className="w-4 h-4 mr-2 text-orange-500" />
+                        <span className="font-medium">
+                          {v.name || `Venue ${i + 1}`}
+                        </span>
+                        {i === 0 && (
+                          <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                            Primary
+                          </span>
+                        )}
+                      </div>
+                      {v.address && (
+                        <p className="text-sm text-gray-500 mt-1 ml-6">
+                          {v.address}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No venue information</p>
+                )}
               </CardBody>
             </Card>
           </div>

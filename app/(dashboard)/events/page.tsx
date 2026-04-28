@@ -150,7 +150,9 @@ export default function EventsPage() {
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <MapPin className="w-4 h-4 mr-2" />
-                    {event.venue.name}
+                    {Array.isArray(event.venue)
+                      ? event.venue[0]?.name
+                      : event.venue?.name || "No venue"}
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <Users className="w-4 h-4 mr-2" />

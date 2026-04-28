@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Calendar, MapPin, DollarSign, ArrowLeft } from "lucide-react";
+import { Calendar, MapPin, DollarSign, ArrowLeft, Plus, X } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -21,11 +21,7 @@ const eventSchema = z.object({
   description: z.string().optional(),
   dateStart: z.string().min(1, "Start date is required"),
   dateEnd: z.string().min(1, "End date is required"),
-  venue: z.object({
-    name: z.string().min(1, "Venue name is required"),
-    address: z.string().min(1, "Address is required"),
-  }),
-  donorThreshold: z.number().min(0).default(0).optional(), // Add optional()
+  donorThreshold: z.number().min(0).default(0).optional(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -33,6 +29,12 @@ type EventFormData = z.infer<typeof eventSchema>;
 export default function CreateEventPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [venues, setVenues] = useState([{ name: "", address: "" }]);
+
+  const addVenue = () => setVenues([...venues, { name: "", address: "" }]);
+  const removeVenue = (index: number) => {
+    if (venues.length > 1) setVenues(venues.filter((_, i) => i !== index));
+  };
 
   const {
     register,
@@ -40,21 +42,18 @@ export default function CreateEventPage() {
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
-    defaultValues: {
-      donorThreshold: 50000,
-    },
+    defaultValues: { donorThreshold: 50000 },
   });
 
   const onSubmit = async (data: EventFormData) => {
     setIsSubmitting(true);
     try {
-      // Convert local datetime to proper ISO string
       const payload = {
         ...data,
+        venue: venues.map((v) => ({ name: v.name, address: v.address })),
         dateStart: new Date(data.dateStart).toISOString(),
         dateEnd: new Date(data.dateEnd).toISOString(),
       };
-
       const response = await axios.post(`${API_URL}/events`, payload);
       toast.success("Event created successfully!");
       router.push(`/events/${response.data.event._id}`);
@@ -67,7 +66,6 @@ export default function CreateEventPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-center space-x-4">
         <Link href="/events" className="text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-6 h-6" />
@@ -103,7 +101,6 @@ export default function CreateEventPage() {
                 }}
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Description
@@ -111,11 +108,10 @@ export default function CreateEventPage() {
               <textarea
                 {...register("description")}
                 rows={3}
-                placeholder="Brief description of the event..."
+                placeholder="Brief description..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="Start Date & Time"
@@ -135,37 +131,74 @@ export default function CreateEventPage() {
           </CardBody>
         </Card>
 
-        {/* Venue Information */}
+        {/* Venue Information - MULTI VENUE */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold">
-              <MapPin className="w-5 h-5 inline mr-2" />
-              Venue Details
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">
+                <MapPin className="w-5 h-5 inline mr-2" />
+                Venue Details
+              </h2>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addVenue}
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Venue
+              </Button>
+            </div>
           </CardHeader>
           <CardBody className="space-y-4">
-            <Input
-              label="Venue Name"
-              {...register("venue.name")}
-              error={errors.venue?.name?.message}
-              placeholder="e.g., ISKCON Temple Main Hall"
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Address
-              </label>
-              <textarea
-                {...register("venue.address")}
-                rows={2}
-                placeholder="Street, City, State, PIN"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-              {errors.venue?.address && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.venue.address.message}
+            {venues.map((venue, index) => (
+              <div key={index} className="border rounded-lg p-4 relative">
+                {venues.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeVenue(index)}
+                    className="absolute top-2 right-2 text-red-500 hover:bg-red-50 p-1 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <p className="text-sm font-medium text-gray-500 mb-3">
+                  Venue #{index + 1}
                 </p>
-              )}
-            </div>
+                <div className="space-y-3">
+                  <Input
+                    label="Venue Name"
+                    value={venue.name}
+                    onChange={(e) => {
+                      const updated = [...venues];
+                      updated[index].name = e.target.value;
+                      setVenues(updated);
+                    }}
+                    placeholder={
+                      index === 0
+                        ? "e.g., Main Temple Hall"
+                        : `e.g., Community Hall`
+                    }
+                    required={index === 0}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Address
+                    </label>
+                    <textarea
+                      value={venue.address}
+                      onChange={(e) => {
+                        const updated = [...venues];
+                        updated[index].address = e.target.value;
+                        setVenues(updated);
+                      }}
+                      rows={2}
+                      placeholder="Street, City, State, PIN"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </CardBody>
         </Card>
 
@@ -192,7 +225,6 @@ export default function CreateEventPage() {
           </CardBody>
         </Card>
 
-        {/* Actions */}
         <div className="flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
