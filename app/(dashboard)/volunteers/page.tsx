@@ -24,6 +24,7 @@ export default function VolunteersPage() {
     password: "",
     assignedEvents: [] as string[],
     assignedEntryPoints: [] as string[],
+    assignedVenues: [] as number[],
   });
 
   // Fetch volunteers
@@ -41,7 +42,7 @@ export default function VolunteersPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events?status=active`);
+      const response = await axios.get(`${API_URL}/events`);
       return response.data.events;
     },
   });
@@ -114,6 +115,7 @@ export default function VolunteersPage() {
       password: "",
       assignedEvents: [],
       assignedEntryPoints: [],
+      assignedVenues: [],
     });
   };
 
@@ -127,6 +129,7 @@ export default function VolunteersPage() {
       assignedEvents: volunteer.assignedEvents?.map((e: any) => e._id) || [],
       assignedEntryPoints:
         volunteer.assignedEntryPoints?.map((e: any) => e._id) || [],
+      assignedVenues: volunteer.assignedVenues || [],
     });
     setShowModal(true);
   };
@@ -157,6 +160,32 @@ export default function VolunteersPage() {
         : [...prev.assignedEvents, eventId],
     }));
   };
+
+  const toggleVenue = (venueKey: string) => {
+    setFormData((prev) => {
+      const current = prev.assignedVenues || [];
+      const key = parseInt(venueKey);
+      return {
+        ...prev,
+        assignedVenues: current.includes(key)
+          ? current.filter((v) => v !== key)
+          : [...current, key],
+      };
+    });
+  };
+
+  // Get venues for selected events
+  const selectedEventsVenues =
+    events
+      ?.filter((e: any) => formData.assignedEvents.includes(e._id))
+      ?.flatMap((e: any) =>
+        (Array.isArray(e.venue) ? e.venue : []).map((v: any, i: number) => ({
+          ...v,
+          eventName: e.name,
+          eventCode: e.eventCode,
+          venueIndex: i,
+        })),
+      ) || [];
 
   const toggleEntryPoint = (epId: string) => {
     setFormData((prev) => ({
@@ -221,6 +250,10 @@ export default function VolunteersPage() {
                   Assigned Stations
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Venues
+                </th>
+
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Events
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -254,6 +287,23 @@ export default function VolunteersPage() {
                           {ep.stationLabel || ep.name}
                         </span>
                       ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {volunteer.assignedVenues?.map((vIndex: number) => {
+                        const eventVenue = selectedEventsVenues?.find(
+                          (v: any) => v.venueIndex === vIndex,
+                        );
+                        return eventVenue ? (
+                          <span
+                            key={vIndex}
+                            className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"
+                          >
+                            {eventVenue.eventCode}: {eventVenue.name}
+                          </span>
+                        ) : null;
+                      })}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -411,6 +461,46 @@ export default function VolunteersPage() {
               ))}
             </div>
           </div>
+          {/* Assign Venues */}
+          {selectedEventsVenues.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assign Venues
+              </label>
+              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                {selectedEventsVenues.map((venue: any) => {
+                  const venueKey = venue.venueIndex.toString();
+                  return (
+                    <label
+                      key={`${venue.eventCode}-${venueKey}`}
+                      className={`flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                        (formData.assignedVenues || []).includes(
+                          venue.venueIndex,
+                        )
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(formData.assignedVenues || []).includes(
+                          venue.venueIndex,
+                        )}
+                        onChange={() => toggleVenue(venueKey)}
+                        className="rounded border-gray-300 text-orange-600 mr-2"
+                      />
+                      <span className="text-sm">
+                        {venue.name || `Venue ${venue.venueIndex + 1}`}
+                        <span className="text-xs text-gray-500 block">
+                          {venue.eventCode} - {venue.address || ""}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </form>
       </Modal>
     </div>

@@ -13,8 +13,7 @@ import {
   Users,
   QrCode,
   Edit,
-  Play,
-  Pause,
+  Trash2,
   DoorOpen,
   Tags,
   UserPlus,
@@ -45,26 +44,30 @@ export default function EventDetailsPage() {
       const response = await axios.get(`${API_URL}/events/${eventId}`);
       return response.data;
     },
-    staleTime: 0, // Always consider data stale
-    refetchOnMount: true, // Refetch when page loads
-    refetchOnWindowFocus: true, // Refetch when tab focuses
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
-    const handleRouteChange = () => {
-      refetch();
-    };
-    window.addEventListener("popstate", handleRouteChange);
-    return () => window.removeEventListener("popstate", handleRouteChange);
-  }, [refetch]);
+    queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    refetch();
+  }, [eventId]);
 
-  const handleStatusChange = async (action: "activate" | "deactivate") => {
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this event? This cannot be undone.",
+      )
+    )
+      return;
     try {
-      await axios.post(`${API_URL}/events/${eventId}/${action}`);
-      toast.success(`Event ${action}d successfully`);
-      refetch();
+      await axios.delete(`${API_URL}/events/${eventId}`);
+      toast.success("Event deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      router.push("/events");
     } catch (error) {
-      toast.error(`Failed to ${action} event`);
+      toast.error("Failed to delete event");
     }
   };
 
@@ -91,13 +94,14 @@ export default function EventDetailsPage() {
               <h1 className="text-2xl font-bold text-gray-900">
                 {event?.name}
               </h1>
+              {/* Status badge */}
               <span
                 className={`px-2 py-1 text-xs rounded-full ${
                   event?.status === "active"
                     ? "bg-green-100 text-green-700"
-                    : event?.status === "draft"
-                      ? "bg-gray-100 text-gray-700"
-                      : "bg-blue-100 text-blue-700"
+                    : event?.status === "upcoming"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-700"
                 }`}
               >
                 {event?.status}
@@ -107,26 +111,22 @@ export default function EventDetailsPage() {
           </div>
         </div>
 
+        {/* Edit & Delete Buttons */}
         <div className="flex items-center space-x-3">
-          {event?.status === "draft" && (
-            <Button onClick={() => handleStatusChange("activate")}>
-              <Play className="w-4 h-4 mr-2" />
-              Activate Event
+          <Link href={`/events/${eventId}/edit`}>
+            <Button variant="outline">
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
             </Button>
-          )}
-          {event?.status === "active" && (
-            <Button
-              variant="outline"
-              onClick={() => handleStatusChange("deactivate")}
-            >
-              <Pause className="w-4 h-4 mr-2" />
-              End Event
-            </Button>
-          )}
+          </Link>
+          <Button variant="outline" onClick={handleDelete}>
+            <Trash2 className="w-4 h-4 mr-2 text-red-600" />
+            <span className="text-red-600">Delete</span>
+          </Button>
         </div>
       </div>
 
-      {/* Tabs - Order: Overview → Entry Points → Holder Types → Categories */}
+      {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto">
           <button

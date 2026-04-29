@@ -37,38 +37,51 @@ export default function EditEventPage() {
   });
 
   useEffect(() => {
-    if (eventData) {
-      setFormData({
-        name: eventData.name || "",
-        eventCode: eventData.eventCode || "",
-        description: eventData.description || "",
-        dateStart: eventData.dateStart
-          ? new Date(eventData.dateStart).toISOString().slice(0, 16)
-          : "",
-        dateEnd: eventData.dateEnd
-          ? new Date(eventData.dateEnd).toISOString().slice(0, 16)
-          : "",
-        donorThreshold: eventData.donorThreshold || 0,
-      });
+  if (eventData) {
+    setFormData({
+      name: eventData.name || "",
+      eventCode: eventData.eventCode || "",
+      description: eventData.description || "",
+      // Convert UTC to local time for datetime-local input
+      dateStart: eventData.dateStart
+        ? new Date(eventData.dateStart).toLocaleString("sv-SE", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).replace(" ", "T")
+        : "",
+      dateEnd: eventData.dateEnd
+        ? new Date(eventData.dateEnd).toLocaleString("sv-SE", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).replace(" ", "T")
+        : "",
+      donorThreshold: eventData.donorThreshold || 0,
+    });
 
-      // Handle venue array
-      if (Array.isArray(eventData.venue) && eventData.venue.length > 0) {
-        setVenues(
-          eventData.venue.map((v: any) => ({
-            name: v.name || "",
-            address: v.address || "",
-          })),
-        );
-      } else if (eventData.venue?.name) {
-        setVenues([
-          {
-            name: eventData.venue.name || "",
-            address: eventData.venue.address || "",
-          },
-        ]);
-      }
+    // Handle venue array
+    if (Array.isArray(eventData.venue) && eventData.venue.length > 0) {
+      setVenues(
+        eventData.venue.map((v: any) => ({
+          name: v.name || "",
+          address: v.address || "",
+        })),
+      );
+    } else if (eventData.venue?.name) {
+      setVenues([
+        {
+          name: eventData.venue.name || "",
+          address: eventData.venue.address || "",
+        },
+      ]);
     }
-  }, [eventData]);
+  }
+}, [eventData]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {

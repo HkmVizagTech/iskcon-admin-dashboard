@@ -99,13 +99,6 @@ export default function DashboardPage() {
           color="purple"
           loading={statsLoading}
         />
-        <StatCard
-          title="Scan Rate"
-          value={`${stats?.scanRate || 0}%`}
-          icon={<TrendingUp className="w-6 h-6" />}
-          color="orange"
-          loading={statsLoading}
-        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -264,6 +257,53 @@ export default function DashboardPage() {
           icon={<Calendar className="w-6 h-6" />}
         />
       </div>
+      {/* Holder Type Breakdown */}
+      {stats?.holderTypeStats && stats.holderTypeStats.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Holder Types
+          </h3>
+          <div className="space-y-3">
+            {stats.holderTypeStats.map((ht: any) => (
+              <div key={ht._id} className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700 capitalize">
+                  {ht._id || "Unknown"}
+                </span>
+                <span className="text-sm font-bold text-gray-900">
+                  {ht.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Scans Per Entry Point */}
+      {stats?.scansByEP && stats.scansByEP.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Scans by Entry Point
+          </h3>
+          <div className="space-y-3">
+            {stats.scansByEP.map((ep: any) => (
+              <div key={ep._id}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="font-medium text-gray-700">{ep.name}</span>
+                  <span className="text-gray-600">{ep.count} scans</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-orange-500 h-2 rounded-full"
+                    style={{
+                      width: `${Math.min((ep.count / (stats.scansByEP[0]?.count || 1)) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

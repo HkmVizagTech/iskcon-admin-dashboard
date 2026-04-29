@@ -13,6 +13,7 @@ import {
   Edit,
   Trash2,
   QrCode,
+  UserPlus,
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -20,7 +21,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
-import Link from "next/link"; // Add this import
+import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -44,8 +45,8 @@ export default function EntryPointsPage() {
     stationLabel: "",
     type: "custom",
     location: "",
-    maxCapacity: "",
     multiEntryAllowed: false,
+    allowGroupCount: false,
     linkedEpId: "",
   });
 
@@ -128,8 +129,8 @@ export default function EntryPointsPage() {
       stationLabel: "",
       type: "custom",
       location: "",
-      maxCapacity: "",
       multiEntryAllowed: false,
+      allowGroupCount: false,
       linkedEpId: "",
     });
   };
@@ -141,19 +142,15 @@ export default function EntryPointsPage() {
       stationLabel: ep.stationLabel,
       type: ep.type,
       location: ep.location || "",
-      maxCapacity: ep.maxCapacity?.toString() || "",
-      multiEntryAllowed: ep.multiEntryAllowed,
+      multiEntryAllowed: ep.multiEntryAllowed || false,
+      allowGroupCount: ep.allowGroupCount || false,
       linkedEpId: ep.linkedEpId || "",
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
-      ...formData,
-      maxCapacity: formData.maxCapacity ? parseInt(formData.maxCapacity) : null,
-    };
-
+    const data = { ...formData };
     if (editingEntryPoint) {
       updateMutation.mutate({ id: editingEntryPoint._id, data });
     } else {
@@ -200,7 +197,6 @@ export default function EntryPointsPage() {
             </p>
           </div>
         </div>
-
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-5 h-5 mr-2" />
           Add Entry Point
@@ -221,11 +217,7 @@ export default function EntryPointsPage() {
                   </div>
                 </div>
                 <span
-                  className={`px-2 py-1 text-xs rounded-full ${
-                    ep.isActive
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
+                  className={`px-2 py-1 text-xs rounded-full ${ep.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}
                 >
                   {ep.isActive ? "Active" : "Inactive"}
                 </span>
@@ -234,12 +226,6 @@ export default function EntryPointsPage() {
               <div className="space-y-2 text-sm">
                 {ep.location && (
                   <p className="text-gray-600">📍 {ep.location}</p>
-                )}
-                {ep.maxCapacity && (
-                  <p className="text-gray-600 flex items-center">
-                    <Users className="w-4 h-4 mr-2" />
-                    {ep.currentCount} / {ep.maxCapacity}
-                  </p>
                 )}
                 {ep.linkedEpId && (
                   <p className="text-orange-600 flex items-center">
@@ -253,6 +239,12 @@ export default function EntryPointsPage() {
                 )}
                 {ep.multiEntryAllowed && (
                   <p className="text-blue-600">✓ Multiple entries allowed</p>
+                )}
+                {ep.allowGroupCount && (
+                  <p className="text-green-600 flex items-center">
+                    <UserPlus className="w-4 h-4 mr-1" />✓ Family/Group count
+                    enabled
+                  </p>
                 )}
               </div>
             </div>
@@ -303,7 +295,6 @@ export default function EntryPointsPage() {
             placeholder="e.g., Main Gate Entry"
             required
           />
-
           <Input
             label="Station Label"
             value={formData.stationLabel}
@@ -313,7 +304,6 @@ export default function EntryPointsPage() {
             placeholder="e.g., Gate #1 - North Entrance"
             required
           />
-
           <Input
             label="Location (Optional)"
             value={formData.location}
@@ -323,16 +313,7 @@ export default function EntryPointsPage() {
             placeholder="e.g., Near Reception"
           />
 
-          <Input
-            label="Max Capacity (Optional)"
-            type="number"
-            value={formData.maxCapacity}
-            onChange={(e) =>
-              setFormData({ ...formData, maxCapacity: e.target.value })
-            }
-            placeholder="Leave empty for unlimited"
-          />
-
+          {/* Multi Entry Toggle */}
           <div>
             <label className="flex items-center">
               <input
@@ -348,6 +329,28 @@ export default function EntryPointsPage() {
               />
               <span className="ml-2 text-sm">Allow multiple entries</span>
             </label>
+          </div>
+
+          {/* Family/Group Count Toggle - NEW */}
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.allowGroupCount}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    allowGroupCount: e.target.checked,
+                  })
+                }
+                className="rounded border-gray-300 text-orange-600"
+              />
+              <span className="ml-2 text-sm">Allow Family/Group Count</span>
+            </label>
+            <p className="text-xs text-gray-400 mt-1 ml-6">
+              When enabled, volunteer can enter number of people for this entry
+              point
+            </p>
           </div>
 
           <Select

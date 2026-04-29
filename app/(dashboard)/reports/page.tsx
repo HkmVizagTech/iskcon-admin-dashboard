@@ -4,7 +4,16 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { format } from "date-fns";
-import { Download, TrendingUp, Users, QrCode, ScanLine } from "lucide-react";
+import {
+  Download,
+  TrendingUp,
+  Users,
+  QrCode,
+  ScanLine,
+  CheckCircle,
+  Circle,
+  Filter,
+} from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import StatCard from "@/components/ui/StatCard";
@@ -14,6 +23,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function ReportsPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
+  const [activeTab, setActiveTab] = useState<"overview" | "holders">(
+    "overview",
+  );
+  const [holderTypeFilter, setHolderTypeFilter] = useState("");
+  const [venueFilter, setVenueFilter] = useState("");
+  const [preacherFilter, setPreacherFilter] = useState("");
+  const [entryPointFilter, setEntryPointFilter] = useState("");
 
   const { data: events } = useQuery({
     queryKey: ["events-all"],
@@ -23,6 +39,23 @@ export default function ReportsPage() {
     },
   });
 
+  // Get selected event data
+  const selectedEventData = events?.find((e: any) => e._id === selectedEvent);
+  const eventVenues = Array.isArray(selectedEventData?.venue)
+    ? selectedEventData.venue
+    : [];
+  // Fetch entry points for filter
+  const { data: entryPoints } = useQuery({
+    queryKey: ["entry-points", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      const response = await axios.get(
+        `${API_URL}/events/${selectedEvent}/entry-points`,
+      );
+      return response.data;
+    },
+    enabled: !!selectedEvent,
+  });
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ["event-summary", selectedEvent],
     queryFn: async () => {
@@ -47,16 +80,28 @@ export default function ReportsPage() {
     enabled: !!selectedEvent,
   });
 
-  const { data: capacity } = useQuery({
-    queryKey: ["capacity", selectedEvent],
+  // Holder detail report
+  const { data: holdersReport, isLoading: holdersLoading } = useQuery({
+    queryKey: [
+      "holders-report",
+      selectedEvent,
+      holderTypeFilter,
+      venueFilter,
+      preacherFilter,
+      entryPointFilter,
+    ],
     queryFn: async () => {
       if (!selectedEvent) return null;
+      const params = new URLSearchParams();
+      if (holderTypeFilter) params.append("holderType", holderTypeFilter);
+      if (venueFilter) params.append("venue", venueFilter);
+      if (preacherFilter) params.append("preacher", preacherFilter);
       const response = await axios.get(
-        `${API_URL}/reports/events/${selectedEvent}/capacity`,
+        `${API_URL}/reports/events/${selectedEvent}/holders-detail?${params}`,
       );
-      return response.data;
+      return response.data.report;
     },
-    enabled: !!selectedEvent,
+    enabled: !!selectedEvent && activeTab === "holders",
   });
 
   const handleExport = async () => {
@@ -67,9 +112,7 @@ export default function ReportsPage() {
     try {
       const response = await axios.get(
         `${API_URL}/reports/export/${selectedEvent}`,
-        {
-          responseType: "blob",
-        },
+        { responseType: "blob" },
       );
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
@@ -94,7 +137,6 @@ export default function ReportsPage() {
           </h1>
           <p className="text-gray-600 mt-1">View insights and export data</p>
         </div>
-
         <Button onClick={handleExport} disabled={!selectedEvent}>
           <Download className="w-5 h-5 mr-2" />
           Export Report
@@ -106,7 +148,13 @@ export default function ReportsPage() {
         <CardBody>
           <select
             value={selectedEvent}
-            onChange={(e) => setSelectedEvent(e.target.value)}
+            onChange={(e) => {
+              setSelectedEvent(e.target.value);
+              setHolderTypeFilter("");
+              setVenueFilter("");
+              setPreacherFilter("");
+              setEntryPointFilter("");
+            }}
             className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           >
             <option value="">Select an event...</option>
@@ -119,109 +167,261 @@ export default function ReportsPage() {
         </CardBody>
       </Card>
 
-      {selectedEvent && summary && (
+      {selectedEvent && (
         <>
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              title="Total Passes Issued"
-              value={summary.totalIssued || 0}
-              icon={<QrCode className="w-6 h-6" />}
-              color="blue"
-              loading={summaryLoading}
-            />
-            <StatCard
-              title="Total Scans"
-              value={summary.totalScanned || 0}
-              icon={<ScanLine className="w-6 h-6" />}
-              color="green"
-              loading={summaryLoading}
-            />
-            <StatCard
-              title="Scan Rate"
-              value={`${summary.totalIssued ? ((summary.totalScanned / summary.totalIssued) * 100).toFixed(1) : 0}%`}
-              icon={<TrendingUp className="w-6 h-6" />}
-              color="orange"
-              loading={summaryLoading}
-            />
-            <StatCard
-              title="No-Shows"
-              value={noShows?.count || 0}
-              icon={<Users className="w-6 h-6" />}
-              color="purple"
-              loading={summaryLoading}
-            />
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-6">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`py-3 px-1 border-b-2 font-medium text-sm ${activeTab === "overview" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("holders")}
+                className={`py-3 px-1 border-b-2 font-medium text-sm ${activeTab === "holders" ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}
+              >
+                Holder Details
+              </button>
+            </nav>
           </div>
 
-          {/* Capacity Report */}
-          {capacity && capacity.length > 0 && (
-            <Card>
-              <CardHeader>
-                <h2 className="font-semibold">Entry Point Capacity</h2>
-              </CardHeader>
-              <CardBody>
-                <div className="space-y-4">
-                  {capacity.map((ep: any) => (
-                    <div key={ep.name}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium">{ep.name}</span>
-                        <span className="text-gray-600">
-                          {ep.currentCount} / {ep.maxCapacity || "∞"}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-orange-500 to-red-600 h-2 rounded-full"
-                          style={{ width: `${ep.percentage}%` }}
-                        />
-                      </div>
+          {/* Overview Tab */}
+          {activeTab === "overview" && summary && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                  title="Total Passes Issued"
+                  value={summary.totalIssued || 0}
+                  icon={<QrCode className="w-6 h-6" />}
+                  color="blue"
+                  loading={summaryLoading}
+                />
+                <StatCard
+                  title="Total Scans"
+                  value={summary.totalScanned || 0}
+                  icon={<ScanLine className="w-6 h-6" />}
+                  color="green"
+                  loading={summaryLoading}
+                />
+                <StatCard
+                  title="Scan Rate"
+                  value={`${summary.totalIssued ? ((summary.totalScanned / summary.totalIssued) * 100).toFixed(1) : 0}%`}
+                  icon={<TrendingUp className="w-6 h-6" />}
+                  color="orange"
+                  loading={summaryLoading}
+                />
+                <StatCard
+                  title="No-Shows"
+                  value={noShows?.count || 0}
+                  icon={<Users className="w-6 h-6" />}
+                  color="purple"
+                  loading={summaryLoading}
+                />
+              </div>
+
+              {noShows && noShows.noShows?.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <h2 className="font-semibold">
+                      No-Shows ({noShows.count})
+                    </h2>
+                  </CardHeader>
+                  <CardBody padding={false}>
+                    <div className="max-h-96 overflow-y-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                              Name
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                              Phone
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                              QR ID
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {noShows.noShows.slice(0, 10).map((pass: any) => (
+                            <tr key={pass._id}>
+                              <td className="px-6 py-3 text-sm">
+                                {pass.holderId?.name}
+                              </td>
+                              <td className="px-6 py-3 text-sm">
+                                {pass.holderId?.phone}
+                              </td>
+                              <td className="px-6 py-3 text-sm font-mono">
+                                {pass.qrId}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
-                </div>
-              </CardBody>
-            </Card>
+                  </CardBody>
+                </Card>
+              )}
+            </>
           )}
 
-          {/* No-Shows List */}
-          {noShows && noShows.noShows?.length > 0 && (
-            <Card>
-              <CardHeader>
-                <h2 className="font-semibold">No-Shows ({noShows.count})</h2>
-              </CardHeader>
-              <CardBody padding={false}>
-                <div className="max-h-96 overflow-y-auto">
+          {/* Holder Details Tab */}
+          {activeTab === "holders" && (
+            <Card padding={false}>
+              {/* Filters */}
+              <div className="p-4 bg-gray-50 border-b border-gray-200 flex flex-wrap gap-4">
+                <Filter className="w-5 h-5 text-gray-400 mt-2" />
+                <select
+                  value={holderTypeFilter}
+                  onChange={(e) => setHolderTypeFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="">All Holder Types</option>
+                  <option value="SP">Sponsor</option>
+                  <option value="DN">Donor</option>
+                  <option value="VL">Volunteer</option>
+                  <option value="GN">General Public</option>
+                  <option value="VP">VIP Guest</option>
+                </select>
+                <select
+                  value={venueFilter}
+                  onChange={(e) => setVenueFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="">All Venues</option>
+                  {eventVenues.map((v: any, i: number) => (
+                    <option key={i} value={v.name}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={preacherFilter}
+                  onChange={(e) => setPreacherFilter(e.target.value)}
+                  placeholder="Filter by preacher..."
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <select
+                  value={entryPointFilter}
+                  onChange={(e) => setEntryPointFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="">All Entry Points</option>
+                  {entryPoints?.map((ep: any) => (
+                    <option key={ep._id} value={ep._id}>
+                      {ep.name} ({ep.stationLabel})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Table */}
+              {holdersLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 sticky top-0">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                           Name
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                           Phone
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">
-                          QR ID
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Type
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Venue
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Preacher
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Entry Points (Scanned/Total)
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {noShows.noShows.slice(0, 10).map((pass: any) => (
-                        <tr key={pass._id}>
-                          <td className="px-6 py-3 text-sm">
-                            {pass.holderId?.name}
-                          </td>
-                          <td className="px-6 py-3 text-sm">
-                            {pass.holderId?.phone}
-                          </td>
-                          <td className="px-6 py-3 text-sm font-mono">
-                            {pass.qrId}
+                      {holdersReport?.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={6}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            No holders found
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        holdersReport?.map((item: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              {item.holder?.name || "N/A"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {item.holder?.phone || "N/A"}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded-full">
+                                {item.holderType || "N/A"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {item.holder?.venue || "N/A"}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">
+                              {item.holder?.preacher || "-"}
+                            </td>
+                            <td className="px-4 py-3">
+                              {/* Stepper: scanned vs total entry points */}
+                              <div className="flex flex-wrap gap-1">
+                                {item.entryPoints?.map((ep: any, i: number) => {
+                                  const isScanned = item.scans?.some(
+                                    (s: any) =>
+                                      s.epId?.toString() ===
+                                        ep._id?.toString() || s.epId === ep._id,
+                                  );
+                                  return (
+                                    <span
+                                      key={i}
+                                      className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full ${
+                                        isScanned
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-gray-100 text-gray-500"
+                                      }`}
+                                    >
+                                      {isScanned ? (
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                      ) : (
+                                        <Circle className="w-3 h-3 mr-1" />
+                                      )}
+                                      {ep.name ||
+                                        ep.stationLabel ||
+                                        `EP ${i + 1}`}
+                                    </span>
+                                  );
+                                })}
+                                {(!item.entryPoints ||
+                                  item.entryPoints.length === 0) && (
+                                  <span className="text-xs text-gray-400">
+                                    No entry points
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
-              </CardBody>
+              )}
             </Card>
           )}
         </>

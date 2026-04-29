@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { ArrowLeft, User, Phone, Mail, QrCode } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, QrCode, MapPin } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -19,6 +19,8 @@ export default function CreateHolderPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedVenue, setSelectedVenue] = useState("");
+  const [preacher, setPreacher] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -35,10 +37,16 @@ export default function CreateHolderPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events?status=active`);
+      const response = await axios.get(`${API_URL}/events`);
       return response.data.events;
     },
   });
+
+  // Get selected event's venues
+  const selectedEventData = events?.find((e: any) => e._id === selectedEvent);
+  const eventVenues = Array.isArray(selectedEventData?.venue)
+    ? selectedEventData.venue
+    : [];
 
   // Fetch holder types from API
   const { data: holderTypes } = useQuery({
@@ -90,6 +98,8 @@ export default function CreateHolderPage() {
               ?.code?.toLowerCase() || "custom",
           lifetimeDonation: parseInt(formData.lifetimeDonation) || 0,
           deliveryMethod,
+          preacher: preacher,
+          venueName: selectedVenue || selectedEventData?.venue?.[0]?.name || "",
         },
       );
       return response.data;
@@ -152,6 +162,7 @@ export default function CreateHolderPage() {
                   setSelectedEvent(e.target.value);
                   setSelectedHolderTypeId("");
                   setSelectedCategory("");
+                  setSelectedVenue("");
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 required
@@ -166,6 +177,32 @@ export default function CreateHolderPage() {
             </CardBody>
           </Card>
 
+          {/* Step 1.5: Select Venue (if multiple) */}
+          {selectedEvent && eventVenues.length > 1 && (
+            <Card>
+              <CardHeader>
+                <h2 className="font-semibold">
+                  <MapPin className="w-4 h-4 inline mr-1" /> Select Venue
+                </h2>
+              </CardHeader>
+              <CardBody>
+                <select
+                  value={selectedVenue}
+                  onChange={(e) => setSelectedVenue(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Select venue...</option>
+                  {eventVenues.map((v: any, i: number) => (
+                    <option key={i} value={v.name}>
+                      {v.name || `Venue ${i + 1}`}{" "}
+                      {v.address ? `- ${v.address}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </CardBody>
+            </Card>
+          )}
+
           {selectedEvent && (
             <>
               {/* Step 2: Select Holder Type */}
@@ -176,7 +213,7 @@ export default function CreateHolderPage() {
                 <CardBody>
                   {!holderTypes || holderTypes.length === 0 ? (
                     <p className="text-sm text-gray-500">
-                      No holder types found. Create them in the event settings.
+                      No holder types found.
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -186,7 +223,7 @@ export default function CreateHolderPage() {
                           type="button"
                           onClick={() => {
                             setSelectedHolderTypeId(ht._id);
-                            setSelectedCategory(""); // Reset category when holder type changes
+                            setSelectedCategory("");
                           }}
                           className={`p-4 rounded-lg border-2 transition-all ${
                             selectedHolderTypeId === ht._id
@@ -229,26 +266,13 @@ export default function CreateHolderPage() {
                       required
                     >
                       <option value="">Choose a category...</option>
-                      {filteredCategories?.map((cat: any) => {
-                        const ht = holderTypes?.find(
-                          (h: any) =>
-                            h._id ===
-                            (cat.holderTypeId?._id || cat.holderTypeId),
-                        );
-                        return (
-                          <option key={cat._id} value={cat._id}>
-                            {cat.icon || "🏷️"} {cat.name} ({cat.catCode}) —{" "}
-                            {cat.entryPoints?.length || 0} access points
-                          </option>
-                        );
-                      })}
+                      {filteredCategories?.map((cat: any) => (
+                        <option key={cat._id} value={cat._id}>
+                          {cat.icon || "🏷️"} {cat.name} ({cat.catCode}) —{" "}
+                          {cat.entryPoints?.length || 0} access points
+                        </option>
+                      ))}
                     </select>
-                    {filteredCategories?.length === 0 && (
-                      <p className="text-sm text-amber-600 mt-2">
-                        No categories found for this holder type. Create them in
-                        the event Categories tab.
-                      </p>
-                    )}
                   </CardBody>
                 </Card>
               )}
@@ -290,6 +314,14 @@ export default function CreateHolderPage() {
                         }
                         placeholder="rajesh@email.com"
                         icon={<Mail className="w-4 h-4" />}
+                      />
+                      {/* Preacher Field */}
+                      <Input
+                        label="Preacher (Optional)"
+                        value={preacher}
+                        onChange={(e) => setPreacher(e.target.value)}
+                        placeholder="Who referred this devotee?"
+                        icon={<User className="w-4 h-4" />}
                       />
                       {selectedHolderType?.code === "DN" && (
                         <Input
@@ -390,6 +422,8 @@ export default function CreateHolderPage() {
             setSelectedEvent("");
             setSelectedHolderTypeId("");
             setSelectedCategory("");
+            setSelectedVenue("");
+            setPreacher("");
             setFormData({
               name: "",
               phone: "",

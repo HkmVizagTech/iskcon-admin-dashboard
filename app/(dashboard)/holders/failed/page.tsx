@@ -30,7 +30,7 @@ export default function FailedImportsPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events?status=active`);
+      const response = await axios.get(`${API_URL}/events`);
       return response.data.events;
     },
   });

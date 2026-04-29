@@ -184,43 +184,6 @@ export default function EventsPage() {
                   >
                     View Details →
                   </Link>
-
-                  <div className="flex items-center space-x-2">
-                    {event.status === "draft" && (
-                      <button
-                        onClick={() =>
-                          handleStatusChange(event._id, "activate")
-                        }
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                        title="Activate"
-                      >
-                        <Play className="w-4 h-4" />
-                      </button>
-                    )}
-                    {event.status === "active" && (
-                      <button
-                        onClick={() =>
-                          handleStatusChange(event._id, "deactivate")
-                        }
-                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg"
-                        title="Deactivate"
-                      >
-                        <Pause className="w-4 h-4" />
-                      </button>
-                    )}
-                    <Link
-                      href={`/events/${event._id}/edit`}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(event._id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
               </div>
             </Card>

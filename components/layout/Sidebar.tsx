@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  ScanLine,
 } from "lucide-react";
 
 const menuItems = [
@@ -24,6 +25,7 @@ const menuItems = [
   { name: "Bulk Import", href: "/holders/import", icon: Upload },
   { name: "Failed Imports", href: "/holders/failed", icon: AlertTriangle }, // ← NEW
   { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Live Scan", href: "/scanfeed", icon: ScanLine },
   { name: "Volunteers", href: "/volunteers", icon: Users },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
