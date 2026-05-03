@@ -48,12 +48,16 @@ export default function CreateEventPage() {
   const onSubmit = async (data: EventFormData) => {
     setIsSubmitting(true);
     try {
+      // ✅ Preserve the local time as-is with timezone offset
       const payload = {
         ...data,
         venue: venues.map((v) => ({ name: v.name, address: v.address })),
-        dateStart: new Date(data.dateStart).toISOString(),
-        dateEnd: new Date(data.dateEnd).toISOString(),
+        // Send date with timezone information
+        dateStart: data.dateStart, // Send as "2026-05-02T09:00" (without Z)
+        dateEnd: data.dateEnd,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // "Asia/Kolkata"
       };
+
       const response = await axios.post(`${API_URL}/events`, payload);
       toast.success("Event created successfully!");
       router.push(`/events/${response.data.event._id}`);

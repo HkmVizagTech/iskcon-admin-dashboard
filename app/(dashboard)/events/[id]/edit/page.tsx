@@ -36,60 +36,60 @@ export default function EditEventPage() {
     },
   });
 
-  useEffect(() => {
-  if (eventData) {
-    setFormData({
-      name: eventData.name || "",
-      eventCode: eventData.eventCode || "",
-      description: eventData.description || "",
-      // Convert UTC to local time for datetime-local input
-      dateStart: eventData.dateStart
-        ? new Date(eventData.dateStart).toLocaleString("sv-SE", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          }).replace(" ", "T")
-        : "",
-      dateEnd: eventData.dateEnd
-        ? new Date(eventData.dateEnd).toLocaleString("sv-SE", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-          }).replace(" ", "T")
-        : "",
-      donorThreshold: eventData.donorThreshold || 0,
-    });
+ useEffect(() => {
+    if (eventData) {
+      const options = {
+        timeZone: 'Asia/Kolkata' as const,
+        year: 'numeric' as const,
+        month: '2-digit' as const,
+        day: '2-digit' as const,
+        hour: '2-digit' as const,
+        minute: '2-digit' as const,
+        hour12: false as const
+      };
 
-    // Handle venue array
-    if (Array.isArray(eventData.venue) && eventData.venue.length > 0) {
-      setVenues(
-        eventData.venue.map((v: any) => ({
-          name: v.name || "",
-          address: v.address || "",
-        })),
-      );
-    } else if (eventData.venue?.name) {
-      setVenues([
-        {
-          name: eventData.venue.name || "",
-          address: eventData.venue.address || "",
-        },
-      ]);
+      setFormData({
+        name: eventData.name || "",
+        eventCode: eventData.eventCode || "",
+        description: eventData.description || "",
+        dateStart: eventData.dateStart
+          ? new Date(eventData.dateStart).toLocaleString("sv-SE", options)
+              .replace(' ', 'T')
+          : "",
+        dateEnd: eventData.dateEnd
+          ? new Date(eventData.dateEnd).toLocaleString("sv-SE", options)
+              .replace(' ', 'T')
+          : "",
+        donorThreshold: eventData.donorThreshold || 0,
+      });
+
+      // Handle venue array
+      if (Array.isArray(eventData.venue) && eventData.venue.length > 0) {
+        setVenues(
+          eventData.venue.map((v: any) => ({
+            name: v.name || "",
+            address: v.address || "",
+          })),
+        );
+      } else if (eventData.venue?.name) {
+        setVenues([
+          {
+            name: eventData.venue.name || "",
+            address: eventData.venue.address || "",
+          },
+        ]);
+      }
     }
-  }
-}, [eventData]);
+  }, [eventData]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
       const payload = {
         ...formData,
         venue: venues.map((v) => ({ name: v.name, address: v.address })),
-        dateStart: new Date(formData.dateStart).toISOString(),
-        dateEnd: new Date(formData.dateEnd).toISOString(),
+        dateStart: formData.dateStart, // Send without converting
+        dateEnd: formData.dateEnd,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
       const response = await axios.patch(
         `${API_URL}/events/${eventId}`,
