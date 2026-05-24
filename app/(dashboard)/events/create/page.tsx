@@ -51,10 +51,11 @@ export default function CreateEventPage() {
       const payload = {
         ...data,
         venue: venues.map((v) => ({ name: v.name, address: v.address })),
-        // Send date with timezone information
-        dateStart: data.dateStart, // Send as "2026-05-02T09:00" (without Z)
-        dateEnd: data.dateEnd,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // "Asia/Kolkata"
+        // FIX: append IST offset so server stores the exact time user intended.
+        // datetime-local gives "YYYY-MM-DDTHH:mm" with no timezone — sending
+        // that bare string to a UTC server shifts the date by +5:30 on every save.
+        dateStart: data.dateStart ? `${data.dateStart}:00+05:30` : data.dateStart,
+        dateEnd: data.dateEnd ? `${data.dateEnd}:00+05:30` : data.dateEnd,
       };
 
       const response = await api.post(`/events`, payload);

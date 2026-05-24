@@ -3,13 +3,51 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api"; // FIX: use authenticated instance — bare axios had no token
+import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { ArrowLeft, MapPin, Plus, X } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
+
+// ─── Timezone helpers ────────────────────────────────────────────────────────
+// The datetime-local input has no timezone concept — its value is always a
+// "local" string like "2025-01-16T00:00".  If we send that string as-is, the
+// server (running UTC on Cloud Run) parses it as UTC and stores a date that is
+// +5:30 ahead of what the user intended, causing drift on every save.
+//
+// Fix:
+//   READ  — convert UTC ISO from DB → IST "YYYY-MM-DDTHH:mm" for the input
+//   WRITE — append "+05:30" before sending so the server sees a full ISO string
+
+const IST_OFFSET = "+05:30";
+
+/** Convert a UTC ISO string from the DB into a datetime-local value in IST */
+function utcToISTLocal(utcIso: string): string {
+  if (!utcIso) return "";
+  const d = new Date(utcIso);
+  // toLocaleString with sv-SE gives "YYYY-MM-DD HH:mm" — swap space for T
+  return d
+    .toLocaleString("sv-SE", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+    .replace(" ", "T");
+}
+
+/** Convert the datetime-local string back to a full ISO string with IST offset */
+function istLocalToISO(localStr: string): string {
+  if (!localStr) return "";
+  // localStr is "YYYY-MM-DDTHH:mm" — just append the IST offset
+  return `${localStr}:00${IST_OFFSET}`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function EditEventPage() {
   const params = useParams();
@@ -26,14 +64,11 @@ export default function EditEventPage() {
     donorThreshold: 0,
   });
   const [venues, setVenues] = useState([{ name: "", address: "" }]);
-  // FIX: track whether the form has been populated from server data
   const [populated, setPopulated] = useState(false);
 
   const { data: eventData, isLoading } = useQuery({
     queryKey: ["event", eventId],
     queryFn: async () => {
-      // FIX: was using bare axios — no auth token attached, silent 401 returned
-      // null data and the form never populated
       const response = await api.get(`/events/${eventId}`);
       return response.data.event;
     },
@@ -41,30 +76,13 @@ export default function EditEventPage() {
 
   useEffect(() => {
     if (eventData && !populated) {
-      const options = {
-        timeZone: "Asia/Kolkata" as const,
-        year: "numeric" as const,
-        month: "2-digit" as const,
-        day: "2-digit" as const,
-        hour: "2-digit" as const,
-        minute: "2-digit" as const,
-        hour12: false as const,
-      };
-
       setFormData({
         name: eventData.name || "",
         eventCode: eventData.eventCode || "",
         description: eventData.description || "",
-        dateStart: eventData.dateStart
-          ? new Date(eventData.dateStart)
-              .toLocaleString("sv-SE", options)
-              .replace(" ", "T")
-          : "",
-        dateEnd: eventData.dateEnd
-          ? new Date(eventData.dateEnd)
-              .toLocaleString("sv-SE", options)
-              .replace(" ", "T")
-          : "",
+        // FIX: convert UTC→IST for the datetime-local input
+        dateStart: utcToISTLocal(eventData.dateStart),
+        dateEnd: utcToISTLocal(eventData.dateEnd),
         donorThreshold: eventData.donorThreshold || 0,
       });
 
@@ -85,19 +103,21 @@ export default function EditEventPage() {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      // FIX: send only the fields being edited as a $set-friendly payload.
-      // The backend now uses $set so unmentioned fields are untouched.
       const payload: Record<string, any> = {};
 
       if (formData.name) payload.name = formData.name;
       if (formData.eventCode) payload.eventCode = formData.eventCode;
-      // description can be empty string — include if user has touched the field
       payload.description = formData.description;
-      if (formData.dateStart) payload.dateStart = formData.dateStart;
-      if (formData.dateEnd) payload.dateEnd = formData.dateEnd;
+
+      // FIX: append IST offset so the server stores the exact time the user intended
+      // Previously: sent "2025-01-16T00:00" → server (UTC) stored as 2025-01-16T00:00Z
+      //             which displays as 2025-01-16T05:30 IST — +5:30 drift every save
+      // Now:        sends "2025-01-16T00:00:00+05:30" → server stores 2025-01-15T18:30Z
+      //             which displays back as 2025-01-16T00:00 IST — correct, no drift
+      if (formData.dateStart) payload.dateStart = istLocalToISO(formData.dateStart);
+      if (formData.dateEnd) payload.dateEnd = istLocalToISO(formData.dateEnd);
       if (formData.donorThreshold !== undefined) payload.donorThreshold = formData.donorThreshold;
 
-      // Only include venues if at least one has a name
       const cleanVenues = venues.filter((v) => v.name.trim());
       if (cleanVenues.length > 0) payload.venue = cleanVenues;
 
@@ -169,13 +189,13 @@ export default function EditEventPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Start Date & Time"
+              label="Start Date & Time (IST)"
               type="datetime-local"
               value={formData.dateStart}
               onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
             />
             <Input
-              label="End Date & Time"
+              label="End Date & Time (IST)"
               type="datetime-local"
               value={formData.dateEnd}
               onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
