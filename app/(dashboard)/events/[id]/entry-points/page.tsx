@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import {
   ArrowLeft,
   Plus,
@@ -23,7 +23,6 @@ import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 const entryPointTypes = [
   { value: "venue_entry", label: "🚪 Venue Entry" },
@@ -53,7 +52,7 @@ export default function EntryPointsPage() {
   const { data: eventData } = useQuery({
     queryKey: ["event", eventId],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events/${eventId}`);
+      const response = await api.get(`/events/${eventId}`);
       return response.data;
     },
   });
@@ -61,8 +60,8 @@ export default function EntryPointsPage() {
   const { data: entryPoints, refetch } = useQuery({
     queryKey: ["entry-points", eventId],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_URL}/events/${eventId}/entry-points`,
+      const response = await api.get(
+        `/events/${eventId}/entry-points`,
       );
       return response.data;
     },
@@ -70,8 +69,8 @@ export default function EntryPointsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await axios.post(
-        `${API_URL}/events/${eventId}/entry-points`,
+      const response = await api.post(
+        `/events/${eventId}/entry-points`,
         data,
       );
       return response.data;
@@ -89,8 +88,8 @@ export default function EntryPointsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await axios.patch(
-        `${API_URL}/events/${eventId}/entry-points/${id}`,
+      const response = await api.patch(
+        `/events/${eventId}/entry-points/${id}`,
         data,
       );
       return response.data;
@@ -110,7 +109,7 @@ export default function EntryPointsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`${API_URL}/events/${eventId}/entry-points/${id}`);
+      await api.delete(`/events/${eventId}/entry-points/${id}`);
     },
     onSuccess: () => {
       toast.success("Entry point deleted successfully");
@@ -166,8 +165,8 @@ export default function EntryPointsPage() {
 
   const generateStationQR = async (entryPointId: string) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/entry-points/${entryPointId}/generate-station-qr`,
+      const response = await api.post(
+        `/entry-points/${entryPointId}/generate-station-qr`,
       );
       const link = document.createElement("a");
       link.href = response.data.qrImage;

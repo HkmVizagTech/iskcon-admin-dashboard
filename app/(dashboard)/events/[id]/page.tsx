@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -23,7 +23,6 @@ import Button from "@/components/ui/Button";
 import StatCard from "@/components/ui/StatCard";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function EventDetailsPage() {
   const params = useParams();
@@ -41,7 +40,7 @@ export default function EventDetailsPage() {
   } = useQuery({
     queryKey: ["event", eventId],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events/${eventId}`);
+      const response = await api.get(`/events/${eventId}`);
       return response.data;
     },
     staleTime: 0,
@@ -62,7 +61,7 @@ export default function EventDetailsPage() {
     )
       return;
     try {
-      await axios.delete(`${API_URL}/events/${eventId}`);
+      await api.delete(`/events/${eventId}`);
       toast.success("Event deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["events"] });
       router.push("/events");

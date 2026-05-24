@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import toast from "react-hot-toast";
 import { Plus, Search, Edit, Trash2, Key, Shield } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
@@ -10,7 +10,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function VolunteersPage() {
   const queryClient = useQueryClient();
@@ -33,7 +32,7 @@ export default function VolunteersPage() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append("search", search);
-      const response = await axios.get(`${API_URL}/volunteers?${params}`);
+      const response = await api.get(`/volunteers?${params}`);
       return response.data.volunteers;
     },
   });
@@ -42,7 +41,7 @@ export default function VolunteersPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events`);
+      const response = await api.get(`/events`);
       return response.data.events;
     },
   });
@@ -51,8 +50,8 @@ export default function VolunteersPage() {
   const { data: availableEntryPoints } = useQuery({
     queryKey: ["available-entry-points"],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_URL}/volunteers/available-entry-points`,
+      const response = await api.get(
+        `/volunteers/available-entry-points`,
       );
       return response.data.entryPoints;
     },
@@ -61,7 +60,7 @@ export default function VolunteersPage() {
   // Create volunteer mutation
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await axios.post(`${API_URL}/volunteers`, data);
+      const response = await api.post(`/volunteers`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -78,7 +77,7 @@ export default function VolunteersPage() {
   // Update volunteer mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await axios.put(`${API_URL}/volunteers/${id}`, data);
+      const response = await api.put(`/volunteers/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -96,7 +95,7 @@ export default function VolunteersPage() {
   // Delete volunteer mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`${API_URL}/volunteers/${id}`);
+      await api.delete(`/volunteers/${id}`);
     },
     onSuccess: () => {
       toast.success("Volunteer deleted");

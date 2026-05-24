@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -25,7 +25,6 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function HolderDetailsPage() {
   const params = useParams();
@@ -35,15 +34,15 @@ export default function HolderDetailsPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["holder", holderId],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/holders/${holderId}`);
+      const response = await api.get(`/holders/${holderId}`);
       return response.data;
     },
   });
 
   const resendMutation = useMutation({
     mutationFn: async () => {
-      const response = await axios.post(
-        `${API_URL}/qr/${data?.qrPass?.qrId}/resend`,
+      const response = await api.post(
+        `/qr/${data?.qrPass?.qrId}/resend`,
         {
           deliveryMethod: data?.qrPass?.deliveryMethod || "whatsapp",
         },
@@ -57,8 +56,8 @@ export default function HolderDetailsPage() {
 
   const revokeMutation = useMutation({
     mutationFn: async () => {
-      const response = await axios.patch(
-        `${API_URL}/qr/${data?.qrPass?.qrId}/revoke`,
+      const response = await api.patch(
+        `/qr/${data?.qrPass?.qrId}/revoke`,
       );
       return response.data;
     },

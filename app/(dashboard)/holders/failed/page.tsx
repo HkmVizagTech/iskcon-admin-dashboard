@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -21,7 +21,6 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function FailedImportsPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
@@ -30,7 +29,7 @@ export default function FailedImportsPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events`);
+      const response = await api.get(`/events`);
       return response.data.events;
     },
   });
@@ -39,8 +38,8 @@ export default function FailedImportsPage() {
     queryKey: ["failed-imports", selectedEvent],
     queryFn: async () => {
       if (!selectedEvent) return null;
-      const response = await axios.get(
-        `${API_URL}/holders/failed-imports/${selectedEvent}`,
+      const response = await api.get(
+        `/holders/failed-imports/${selectedEvent}`,
       );
       return response.data.imports;
     },

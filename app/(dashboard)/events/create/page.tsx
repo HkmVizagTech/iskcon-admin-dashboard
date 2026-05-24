@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import toast from "react-hot-toast";
 import { Calendar, MapPin, DollarSign, ArrowLeft, Plus, X } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
@@ -13,7 +13,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 const eventSchema = z.object({
   name: z.string().min(3, "Event name is required"),
@@ -58,7 +57,7 @@ export default function CreateEventPage() {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // "Asia/Kolkata"
       };
 
-      const response = await axios.post(`${API_URL}/events`, payload);
+      const response = await api.post(`/events`, payload);
       toast.success("Event created successfully!");
       router.push(`/events/${response.data.event._id}`);
     } catch (error: any) {

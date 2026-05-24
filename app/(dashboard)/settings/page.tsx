@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import toast from "react-hot-toast";
 import { User, Lock, Bell, Shield } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -26,7 +25,7 @@ export default function SettingsPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
-      const response = await axios.put(`${API_URL}/auth/profile`, profileData);
+      const response = await api.put(`/auth/profile`, profileData);
       return response.data;
     },
     onSuccess: () => {
@@ -42,7 +41,7 @@ export default function SettingsPage() {
       if (passwordData.newPassword !== passwordData.confirmPassword) {
         throw new Error("Passwords do not match");
       }
-      const response = await axios.post(`${API_URL}/auth/change-password`, {
+      const response = await api.post(`/auth/change-password`, {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword,
       });

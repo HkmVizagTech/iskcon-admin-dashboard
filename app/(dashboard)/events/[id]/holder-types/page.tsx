@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import { ArrowLeft, Plus, Edit, Trash2 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -12,7 +12,6 @@ import Input from "@/components/ui/Input";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Quick icon selection
 const ICON_OPTIONS = [
@@ -56,7 +55,7 @@ export default function HolderTypesPage() {
   const { data: eventData } = useQuery({
     queryKey: ["event", eventId],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events/${eventId}`);
+      const response = await api.get(`/events/${eventId}`);
       return response.data;
     },
   });
@@ -64,8 +63,8 @@ export default function HolderTypesPage() {
   const { data: holderTypes, refetch } = useQuery({
     queryKey: ["holder-types", eventId],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_URL}/events/${eventId}/holder-types`,
+      const response = await api.get(
+        `/events/${eventId}/holder-types`,
       );
       return response.data;
     },
@@ -73,8 +72,8 @@ export default function HolderTypesPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await axios.post(
-        `${API_URL}/events/${eventId}/holder-types`,
+      const response = await api.post(
+        `/events/${eventId}/holder-types`,
         data,
       );
       return response.data;
@@ -91,8 +90,8 @@ export default function HolderTypesPage() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await axios.patch(
-        `${API_URL}/events/${eventId}/holder-types/${id}`,
+      const response = await api.patch(
+        `/events/${eventId}/holder-types/${id}`,
         data,
       );
       return response.data;
@@ -109,7 +108,7 @@ export default function HolderTypesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`${API_URL}/events/${eventId}/holder-types/${id}`);
+      await api.delete(`/events/${eventId}/holder-types/${id}`);
     },
     onSuccess: () => {
       toast.success("Holder type deleted");

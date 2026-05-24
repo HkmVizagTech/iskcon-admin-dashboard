@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance
 import { ArrowLeft, Plus, Tags, Edit, Trash2, Check, X } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -12,7 +12,6 @@ import Input from "@/components/ui/Input";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function CategoriesPage() {
   const params = useParams();
@@ -34,7 +33,7 @@ export default function CategoriesPage() {
   const { data: eventData } = useQuery({
     queryKey: ["event", eventId],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events/${eventId}`);
+      const response = await api.get(`/events/${eventId}`);
       return response.data;
     },
   });
@@ -43,8 +42,8 @@ export default function CategoriesPage() {
   const { data: holderTypes } = useQuery({
     queryKey: ["holder-types", eventId],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_URL}/events/${eventId}/holder-types`,
+      const response = await api.get(
+        `/events/${eventId}/holder-types`,
       );
       return response.data;
     },
@@ -54,8 +53,8 @@ export default function CategoriesPage() {
   const { data: entryPoints } = useQuery({
     queryKey: ["entry-points", eventId],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_URL}/events/${eventId}/entry-points`,
+      const response = await api.get(
+        `/events/${eventId}/entry-points`,
       );
       return response.data;
     },
@@ -65,8 +64,8 @@ export default function CategoriesPage() {
   const { data: categories, refetch } = useQuery({
     queryKey: ["categories", eventId],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_URL}/events/${eventId}/categories`,
+      const response = await api.get(
+        `/events/${eventId}/categories`,
       );
       return response.data;
     },
@@ -75,8 +74,8 @@ export default function CategoriesPage() {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await axios.post(
-        `${API_URL}/events/${eventId}/categories`,
+      const response = await api.post(
+        `/events/${eventId}/categories`,
         data,
       );
       return response.data;
@@ -94,8 +93,8 @@ export default function CategoriesPage() {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await axios.patch(
-        `${API_URL}/events/${eventId}/categories/${id}`,
+      const response = await api.patch(
+        `/events/${eventId}/categories/${id}`,
         data,
       );
       return response.data;
@@ -113,7 +112,7 @@ export default function CategoriesPage() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axios.delete(`${API_URL}/events/${eventId}/categories/${id}`);
+      await api.delete(`/events/${eventId}/categories/${id}`);
     },
     onSuccess: () => {
       toast.success("Category deleted");
