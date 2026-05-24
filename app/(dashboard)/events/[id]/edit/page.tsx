@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { utcToISTLocal, istLocalToISO } from "@/lib/dateUtils";
 import toast from "react-hot-toast";
 import { ArrowLeft, MapPin, Plus, X } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
@@ -11,7 +12,26 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
 
-import { utcToISTLocal, istLocalToISO } from "@/lib/dateUtils";
+function buildFormData(eventData: any) {
+  return {
+    name: eventData?.name || "",
+    eventCode: eventData?.eventCode || "",
+    description: eventData?.description || "",
+    dateStart: eventData?.dateStart ? utcToISTLocal(eventData.dateStart) : "",
+    dateEnd: eventData?.dateEnd ? utcToISTLocal(eventData.dateEnd) : "",
+    donorThreshold: eventData?.donorThreshold || 0,
+  };
+}
+
+function buildVenues(eventData: any) {
+  if (Array.isArray(eventData?.venue) && eventData.venue.length > 0) {
+    return eventData.venue.map((v: any) => ({ name: v.name || "", address: v.address || "" }));
+  }
+  if (eventData?.venue?.name) {
+    return [{ name: eventData.venue.name || "", address: eventData.venue.address || "" }];
+  }
+  return [{ name: "", address: "" }];
+}
 
 export default function EditEventPage() {
   const params = useParams();
@@ -19,72 +39,42 @@ export default function EditEventPage() {
   const eventId = params.id as string;
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    eventCode: "",
-    description: "",
-    dateStart: "",
-    dateEnd: "",
-    donorThreshold: 0,
-  });
-  const [venues, setVenues] = useState([{ name: "", address: "" }]);
-  const [populated, setPopulated] = useState(false);
-
   const { data: eventData, isLoading } = useQuery({
     queryKey: ["event", eventId],
     queryFn: async () => {
       const response = await api.get(`/events/${eventId}`);
       return response.data.event;
     },
+    staleTime: 0, // always fetch fresh on mount
   });
 
+  // FIX: Initialise directly from cache if available so fields are never blank.
+  // Previously used useEffect + populated guard which caused a blank-then-filled flash
+  // because React renders the empty initial state before the effect runs.
+  const [formData, setFormData] = useState(() => buildFormData(eventData));
+  const [venues, setVenues] = useState<{ name: string; address: string }[]>(
+    () => buildVenues(eventData),
+  );
+
+  // Sync when server data arrives (handles the async fetch case)
   useEffect(() => {
-    if (eventData && !populated) {
-      setFormData({
-        name: eventData.name || "",
-        eventCode: eventData.eventCode || "",
-        description: eventData.description || "",
-        // FIX: convert UTC→IST for the datetime-local input
-        dateStart: utcToISTLocal(eventData.dateStart),
-        dateEnd: utcToISTLocal(eventData.dateEnd),
-        donorThreshold: eventData.donorThreshold || 0,
-      });
-
-      if (Array.isArray(eventData.venue) && eventData.venue.length > 0) {
-        setVenues(
-          eventData.venue.map((v: any) => ({
-            name: v.name || "",
-            address: v.address || "",
-          })),
-        );
-      } else if (eventData.venue?.name) {
-        setVenues([{ name: eventData.venue.name || "", address: eventData.venue.address || "" }]);
-      }
-
-      setPopulated(true);
+    if (eventData) {
+      setFormData(buildFormData(eventData));
+      setVenues(buildVenues(eventData));
     }
-  }, [eventData, populated]);
+  }, [eventData]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
       const payload: Record<string, any> = {};
-
       if (formData.name) payload.name = formData.name;
       if (formData.eventCode) payload.eventCode = formData.eventCode;
       payload.description = formData.description;
-
-      // FIX: append IST offset so the server stores the exact time the user intended
-      // Previously: sent "2025-01-16T00:00" → server (UTC) stored as 2025-01-16T00:00Z
-      //             which displays as 2025-01-16T05:30 IST — +5:30 drift every save
-      // Now:        sends "2025-01-16T00:00:00+05:30" → server stores 2025-01-15T18:30Z
-      //             which displays back as 2025-01-16T00:00 IST — correct, no drift
       if (formData.dateStart) payload.dateStart = istLocalToISO(formData.dateStart);
       if (formData.dateEnd) payload.dateEnd = istLocalToISO(formData.dateEnd);
       if (formData.donorThreshold !== undefined) payload.donorThreshold = formData.donorThreshold;
-
       const cleanVenues = venues.filter((v) => v.name.trim());
       if (cleanVenues.length > 0) payload.venue = cleanVenues;
-
       const response = await api.patch(`/events/${eventId}`, payload);
       return response.data;
     },
@@ -105,7 +95,7 @@ export default function EditEventPage() {
     if (venues.length > 1) setVenues(venues.filter((_, i) => i !== index));
   };
 
-  if (isLoading) {
+  if (isLoading && !eventData) {
     return (
       <div className="flex justify-center py-12">
         <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
@@ -126,9 +116,7 @@ export default function EditEventPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold">Basic Information</h2>
-        </CardHeader>
+        <CardHeader><h2 className="text-lg font-semibold">Basic Information</h2></CardHeader>
         <CardBody className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
@@ -172,8 +160,7 @@ export default function EditEventPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
-              <MapPin className="w-5 h-5 inline mr-2" />
-              Venue(s)
+              <MapPin className="w-5 h-5 inline mr-2" />Venue(s)
             </h2>
             <Button type="button" variant="outline" size="sm" onClick={addVenue}>
               <Plus className="w-4 h-4 mr-1" /> Add Venue
@@ -223,9 +210,7 @@ export default function EditEventPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold">Donor Threshold</h2>
-        </CardHeader>
+        <CardHeader><h2 className="text-lg font-semibold">Donor Threshold</h2></CardHeader>
         <CardBody>
           <Input
             label="Minimum Lifetime Donation (₹)"
@@ -239,9 +224,7 @@ export default function EditEventPage() {
       </Card>
 
       <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
-        </Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
         <Button onClick={() => updateMutation.mutate()} loading={updateMutation.isPending}>
           Save Changes
         </Button>

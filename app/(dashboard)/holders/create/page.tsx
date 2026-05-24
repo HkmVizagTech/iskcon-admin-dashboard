@@ -14,7 +14,6 @@ import Input from "@/components/ui/Input";
 import Link from "next/link";
 import QRPreview from "@/components/qr/QRPreview";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function CreateHolderPage() {
   const router = useRouter();
@@ -39,7 +38,7 @@ export default function CreateHolderPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await api.get(`${API_URL}/events`);
+      const response = await api.get(`/events`);
       return response.data.events;
     },
   });
@@ -56,7 +55,7 @@ export default function CreateHolderPage() {
     queryFn: async () => {
       if (!selectedEvent) return [];
       const response = await api.get(
-        `${API_URL}/events/${selectedEvent}/holder-types`,
+        `/events/${selectedEvent}/holder-types`,
       );
       return response.data;
     },
@@ -69,7 +68,7 @@ export default function CreateHolderPage() {
     queryFn: async () => {
       if (!selectedEvent) return [];
       const response = await api.get(
-        `${API_URL}/events/${selectedEvent}/categories`,
+        `/events/${selectedEvent}/categories`,
       );
       return response.data;
     },
@@ -88,7 +87,7 @@ export default function CreateHolderPage() {
   const createHolderMutation = useMutation({
     mutationFn: async () => {
       const response = await api.post(
-        `${API_URL}/events/${selectedEvent}/holders`,
+        `/events/${selectedEvent}/holders`,
         {
           name: formData.name,
           phone: formData.phone,

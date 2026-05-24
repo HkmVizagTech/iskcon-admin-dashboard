@@ -23,7 +23,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function HoldersPage() {
   const [search, setSearch] = useState("");
@@ -33,7 +32,7 @@ export default function HoldersPage() {
   const { data: events } = useQuery({
     queryKey: ["events-list"],
     queryFn: async () => {
-      const response = await api.get(`${API_URL}/events`);
+      const response = await api.get(`/events`);
       return response.data.events;
     },
   });
@@ -47,7 +46,7 @@ export default function HoldersPage() {
       params.append("page", page.toString());
       params.append("limit", "20");
       const response = await api.get(
-        `${API_URL}/events/${selectedEvent}/holders?${params}`,
+        `/events/${selectedEvent}/holders?${params}`,
       );
       return response.data;
     },
@@ -61,7 +60,7 @@ export default function HoldersPage() {
     }
     try {
       const response = await api.get(
-        `${API_URL}/events/${selectedEvent}/holders/export`,
+        `/events/${selectedEvent}/holders/export`,
         {
           responseType: "blob",
         },
@@ -81,7 +80,7 @@ export default function HoldersPage() {
 
   const handleResendQR = async (qrId: string) => {
     try {
-      await api.post(`${API_URL}/qr/${qrId}/resend`, {
+      await api.post(`/qr/${qrId}/resend`, {
         deliveryMethod: "whatsapp",
       });
       toast.success("QR resent successfully");
@@ -93,7 +92,7 @@ export default function HoldersPage() {
   const handleRevokeQR = async (qrId: string) => {
     if (!confirm("Are you sure you want to revoke this QR pass?")) return;
     try {
-      await api.patch(`${API_URL}/qr/${qrId}/revoke`);
+      await api.patch(`/qr/${qrId}/revoke`);
       toast.success("QR revoked successfully");
     } catch (error) {
       toast.error("Failed to revoke QR");

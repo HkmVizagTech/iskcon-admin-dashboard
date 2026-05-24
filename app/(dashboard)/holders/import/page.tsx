@@ -24,7 +24,6 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function BulkImportPage() {
   const router = useRouter();
@@ -40,7 +39,7 @@ export default function BulkImportPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await api.get(`${API_URL}/events`);
+      const response = await api.get(`/events`);
       return response.data.events;
     },
   });
@@ -50,7 +49,7 @@ export default function BulkImportPage() {
     queryFn: async () => {
       if (!selectedEvent) return [];
       const response = await api.get(
-        `${API_URL}/events/${selectedEvent}/holder-types`,
+        `/events/${selectedEvent}/holder-types`,
       );
       return response.data;
     },
@@ -62,7 +61,7 @@ export default function BulkImportPage() {
     queryFn: async () => {
       if (!selectedEvent) return [];
       const response = await api.get(
-        `${API_URL}/events/${selectedEvent}/categories`,
+        `/events/${selectedEvent}/categories`,
       );
       return response.data;
     },
@@ -127,7 +126,7 @@ export default function BulkImportPage() {
       formData.append("deliveryMethod", "whatsapp");
 
       const response = await api.post(
-        `${API_URL}/events/${selectedEvent}/holders/bulk`,
+        `/events/${selectedEvent}/holders/bulk`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },

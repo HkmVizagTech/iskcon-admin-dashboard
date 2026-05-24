@@ -24,7 +24,6 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function ScanFeedPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
@@ -39,7 +38,7 @@ export default function ScanFeedPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await api.get(`${API_URL}/events`);
+      const response = await api.get(`/events`);
       return response.data.events;
     },
   });
@@ -54,7 +53,7 @@ export default function ScanFeedPage() {
       params.append("limit", "20");
       if (resultFilter) params.append("result", resultFilter);
       const response = await api.get(
-        `${API_URL}/reports/events/${selectedEvent}/scan-log?${params}`,
+        `/reports/events/${selectedEvent}/scan-log?${params}`,
       );
       return response.data;
     },
@@ -67,7 +66,7 @@ export default function ScanFeedPage() {
     queryFn: async () => {
       if (!selectedEvent) return null;
       const response = await api.get(
-        `${API_URL}/reports/events/${selectedEvent}/summary`,
+        `/reports/events/${selectedEvent}/summary`,
       );
       return response.data;
     },
@@ -82,7 +81,7 @@ export default function ScanFeedPage() {
     }
     try {
       const response = await api.get(
-        `${API_URL}/reports/export/${selectedEvent}`,
+        `/reports/export/${selectedEvent}`,
         {
           responseType: "blob",
         },
