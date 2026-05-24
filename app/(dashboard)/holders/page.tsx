@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import Link from "next/link";
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import {
   Plus,
   Search,
@@ -245,7 +246,7 @@ export default function HoldersPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {format(new Date(holder.issuedAt), "MMM d, yyyy")}
+                      {formatIST(holder.issuedAt, "MMM d, yyyy")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end space-x-2">

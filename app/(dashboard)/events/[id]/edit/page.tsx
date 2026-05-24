@@ -11,43 +11,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
 
-// ─── Timezone helpers ────────────────────────────────────────────────────────
-// The datetime-local input has no timezone concept — its value is always a
-// "local" string like "2025-01-16T00:00".  If we send that string as-is, the
-// server (running UTC on Cloud Run) parses it as UTC and stores a date that is
-// +5:30 ahead of what the user intended, causing drift on every save.
-//
-// Fix:
-//   READ  — convert UTC ISO from DB → IST "YYYY-MM-DDTHH:mm" for the input
-//   WRITE — append "+05:30" before sending so the server sees a full ISO string
-
-const IST_OFFSET = "+05:30";
-
-/** Convert a UTC ISO string from the DB into a datetime-local value in IST */
-function utcToISTLocal(utcIso: string): string {
-  if (!utcIso) return "";
-  const d = new Date(utcIso);
-  // toLocaleString with sv-SE gives "YYYY-MM-DD HH:mm" — swap space for T
-  return d
-    .toLocaleString("sv-SE", {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    })
-    .replace(" ", "T");
-}
-
-/** Convert the datetime-local string back to a full ISO string with IST offset */
-function istLocalToISO(localStr: string): string {
-  if (!localStr) return "";
-  // localStr is "YYYY-MM-DDTHH:mm" — just append the IST offset
-  return `${localStr}:00${IST_OFFSET}`;
-}
-// ─────────────────────────────────────────────────────────────────────────────
+import { utcToISTLocal, istLocalToISO } from "@/lib/dateUtils";
 
 export default function EditEventPage() {
   const params = useParams();

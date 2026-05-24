@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import {
   ArrowLeft,
   Calendar,
@@ -205,7 +206,7 @@ export default function EventDetailsPage() {
                     <p className="text-gray-900 flex items-center">
                       <Calendar className="w-4 h-4 mr-2" />
                       {event?.dateStart &&
-                        format(new Date(event.dateStart), "PPP p")}
+                        formatIST(event.dateStart, "PPP p")}
                     </p>
                   </div>
                   <div>
@@ -213,7 +214,7 @@ export default function EventDetailsPage() {
                     <p className="text-gray-900 flex items-center">
                       <Calendar className="w-4 h-4 mr-2" />
                       {event?.dateEnd &&
-                        format(new Date(event.dateEnd), "PPP p")}
+                        formatIST(event.dateEnd, "PPP p")}
                     </p>
                   </div>
                 </div>

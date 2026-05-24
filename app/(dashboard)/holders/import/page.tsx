@@ -278,7 +278,10 @@ export default function BulkImportPage() {
                   {events?.map((event: any) => (
                     <option key={event._id} value={event._id}>
                       {event.name} ({event.eventCode}) —{" "}
-                      {new Date(event.dateStart).toLocaleDateString()}
+                      {new Date(event.dateStart).toLocaleDateString("en-IN", {
+                        day: "numeric", month: "short", year: "numeric",
+                        timeZone: "Asia/Kolkata"
+                      })}
                     </option>
                   ))}
                 </select>

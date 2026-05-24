@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import {
   Download, TrendingUp, Users, QrCode, ScanLine,
   CheckCircle, Circle, Filter,

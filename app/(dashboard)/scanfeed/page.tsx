@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import {
   Search,
   Calendar,
@@ -293,7 +294,7 @@ export default function ScanFeedPage() {
                         {log.scannedBy?.name || "Unknown"}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {format(new Date(log.scannedAt), "MMM d, h:mm a")}
+                        {formatIST(log.scannedAt, "MMM d, h:mm a")}
                       </div>
                       <div>{getResultBadge(log.result)}</div>
                     </div>

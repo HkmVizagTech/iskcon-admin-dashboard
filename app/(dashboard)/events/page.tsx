@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import { Plus, Search, Calendar, MapPin, Users } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -109,7 +110,7 @@ export default function EventsPage() {
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center text-sm text-gray-600">
                     <Calendar className="w-4 h-4 mr-2" />
-                    {format(new Date(event.dateStart), "MMM d, yyyy")} - {format(new Date(event.dateEnd), "MMM d, yyyy")}
+                    {formatIST(event.dateStart, "MMM d, yyyy")} - {formatIST(event.dateEnd, "MMM d, yyyy")}
                   </div>
                   <div className="flex items-center text-sm text-gray-600">
                     <MapPin className="w-4 h-4 mr-2" />

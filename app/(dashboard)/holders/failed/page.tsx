@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -145,7 +146,7 @@ export default function FailedImportsPage() {
                         Batch: {batch.batchId}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {format(new Date(batch.createdAt), "PPP p")} •
+                        {formatIST(batch.createdAt, "PPP p")} •
                         {batch.failedCount}/{batch.totalCount} failed
                       </p>
                     </div>

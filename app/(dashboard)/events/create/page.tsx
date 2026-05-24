@@ -1,5 +1,7 @@
 "use client";
 
+import { istLocalToISO } from "@/lib/dateUtils";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -54,8 +56,8 @@ export default function CreateEventPage() {
         // FIX: append IST offset so server stores the exact time user intended.
         // datetime-local gives "YYYY-MM-DDTHH:mm" with no timezone — sending
         // that bare string to a UTC server shifts the date by +5:30 on every save.
-        dateStart: data.dateStart ? `${data.dateStart}:00+05:30` : data.dateStart,
-        dateEnd: data.dateEnd ? `${data.dateEnd}:00+05:30` : data.dateEnd,
+        dateStart: data.dateStart ? istLocalToISO(data.dateStart) : data.dateStart,
+        dateEnd: data.dateEnd ? istLocalToISO(data.dateEnd) : data.dateEnd,
       };
 
       const response = await api.post(`/events`, payload);

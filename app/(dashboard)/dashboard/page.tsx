@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import StatCard from "@/components/ui/StatCard";
 
 export default function DashboardPage() {
@@ -136,7 +137,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
-                        {event.eventCode} • {format(new Date(event.dateStart), "MMM d")} - {format(new Date(event.dateEnd), "MMM d")}
+                        {event.eventCode} • {formatIST(event.dateStart, "MMM d")} - {formatIST(event.dateEnd, "MMM d")}
                       </p>
                     </div>
                     <div className="text-right">
@@ -173,7 +174,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="font-medium text-gray-900">{scan.holderId?.name || "Unknown"}</p>
                         <p className="text-xs text-gray-500">
-                          {scan.stationLabel} • {format(new Date(scan.scannedAt), "h:mm a")}
+                          {scan.stationLabel} • {formatIST(scan.scannedAt, "h:mm a")}
                         </p>
                       </div>
                     </div>

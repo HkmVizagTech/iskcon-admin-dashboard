@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
+import { formatIST } from "@/lib/dateUtils";
 import {
   ArrowLeft,
   User,
@@ -166,7 +167,7 @@ export default function HolderDetailsPage() {
               <p className="text-sm text-gray-900 flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
                 {holder?.issuedAt
-                  ? format(new Date(holder.issuedAt), "PPP p")
+                  ? formatIST(holder.issuedAt, "PPP p")
                   : "N/A"}
               </p>
             </div>
@@ -209,7 +210,7 @@ export default function HolderDetailsPage() {
               <p className="text-sm text-gray-900 flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
                 {qrPass?.validFrom
-                  ? format(new Date(qrPass.validFrom), "PPP p")
+                  ? formatIST(qrPass.validFrom, "PPP p")
                   : "N/A"}
               </p>
             </div>
@@ -218,7 +219,7 @@ export default function HolderDetailsPage() {
               <p className="text-sm text-gray-900 flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
                 {qrPass?.validUntil
-                  ? format(new Date(qrPass.validUntil), "PPP p")
+                  ? formatIST(qrPass.validUntil, "PPP p")
                   : "N/A"}
               </p>
             </div>
@@ -301,7 +302,7 @@ export default function HolderDetailsPage() {
                       </p>
                       <p className="text-xs text-gray-500">
                         {scan.scannedAt
-                          ? format(new Date(scan.scannedAt), "PPP p")
+                          ? formatIST(scan.scannedAt, "PPP p")
                           : "N/A"}
                       </p>
                     </div>
