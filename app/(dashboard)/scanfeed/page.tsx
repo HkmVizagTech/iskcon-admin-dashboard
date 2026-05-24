@@ -1,8 +1,10 @@
 "use client";
 
+import api from "@/lib/api";
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+
 import { format } from "date-fns";
 import {
   Search,
@@ -36,7 +38,7 @@ export default function ScanFeedPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events`);
+      const response = await api.get(`${API_URL}/events`);
       return response.data.events;
     },
   });
@@ -50,7 +52,7 @@ export default function ScanFeedPage() {
       params.append("page", page.toString());
       params.append("limit", "20");
       if (resultFilter) params.append("result", resultFilter);
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/reports/events/${selectedEvent}/scan-log?${params}`,
       );
       return response.data;
@@ -63,7 +65,7 @@ export default function ScanFeedPage() {
     queryKey: ["event-summary", selectedEvent],
     queryFn: async () => {
       if (!selectedEvent) return null;
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/reports/events/${selectedEvent}/summary`,
       );
       return response.data;
@@ -78,7 +80,7 @@ export default function ScanFeedPage() {
       return;
     }
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/reports/export/${selectedEvent}`,
         {
           responseType: "blob",

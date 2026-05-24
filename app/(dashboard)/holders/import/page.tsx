@@ -1,9 +1,11 @@
 "use client";
 
+import api from "@/lib/api";
+
 import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 
@@ -38,7 +40,7 @@ export default function BulkImportPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events`);
+      const response = await api.get(`${API_URL}/events`);
       return response.data.events;
     },
   });
@@ -47,7 +49,7 @@ export default function BulkImportPage() {
     queryKey: ["holder-types", selectedEvent],
     queryFn: async () => {
       if (!selectedEvent) return [];
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/events/${selectedEvent}/holder-types`,
       );
       return response.data;
@@ -59,7 +61,7 @@ export default function BulkImportPage() {
     queryKey: ["categories", selectedEvent],
     queryFn: async () => {
       if (!selectedEvent) return [];
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/events/${selectedEvent}/categories`,
       );
       return response.data;
@@ -124,7 +126,7 @@ export default function BulkImportPage() {
       );
       formData.append("deliveryMethod", "whatsapp");
 
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/events/${selectedEvent}/holders/bulk`,
         formData,
         {

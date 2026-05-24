@@ -1,8 +1,10 @@
 "use client";
 
+import api from "@/lib/api";
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -30,7 +32,7 @@ export default function HoldersPage() {
   const { data: events } = useQuery({
     queryKey: ["events-list"],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events`);
+      const response = await api.get(`${API_URL}/events`);
       return response.data.events;
     },
   });
@@ -43,7 +45,7 @@ export default function HoldersPage() {
       if (search) params.append("search", search);
       params.append("page", page.toString());
       params.append("limit", "20");
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/events/${selectedEvent}/holders?${params}`,
       );
       return response.data;
@@ -57,7 +59,7 @@ export default function HoldersPage() {
       return;
     }
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/events/${selectedEvent}/holders/export`,
         {
           responseType: "blob",
@@ -78,7 +80,7 @@ export default function HoldersPage() {
 
   const handleResendQR = async (qrId: string) => {
     try {
-      await axios.post(`${API_URL}/qr/${qrId}/resend`, {
+      await api.post(`${API_URL}/qr/${qrId}/resend`, {
         deliveryMethod: "whatsapp",
       });
       toast.success("QR resent successfully");
@@ -90,7 +92,7 @@ export default function HoldersPage() {
   const handleRevokeQR = async (qrId: string) => {
     if (!confirm("Are you sure you want to revoke this QR pass?")) return;
     try {
-      await axios.patch(`${API_URL}/qr/${qrId}/revoke`);
+      await api.patch(`${API_URL}/qr/${qrId}/revoke`);
       toast.success("QR revoked successfully");
     } catch (error) {
       toast.error("Failed to revoke QR");
