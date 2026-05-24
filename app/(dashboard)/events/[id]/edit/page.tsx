@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import api from "@/lib/api"; // FIX: use authenticated instance — bare axios had no token
 import toast from "react-hot-toast";
 import { ArrowLeft, MapPin, Plus, X } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
@@ -11,12 +11,12 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-
 export default function EditEventPage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.id as string;
+  const queryClient = useQueryClient();
+
   const [formData, setFormData] = useState({
     name: "",
     eventCode: "",
@@ -26,26 +26,29 @@ export default function EditEventPage() {
     donorThreshold: 0,
   });
   const [venues, setVenues] = useState([{ name: "", address: "" }]);
-  const queryClient = useQueryClient();
+  // FIX: track whether the form has been populated from server data
+  const [populated, setPopulated] = useState(false);
 
   const { data: eventData, isLoading } = useQuery({
     queryKey: ["event", eventId],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/events/${eventId}`);
+      // FIX: was using bare axios — no auth token attached, silent 401 returned
+      // null data and the form never populated
+      const response = await api.get(`/events/${eventId}`);
       return response.data.event;
     },
   });
 
- useEffect(() => {
-    if (eventData) {
+  useEffect(() => {
+    if (eventData && !populated) {
       const options = {
-        timeZone: 'Asia/Kolkata' as const,
-        year: 'numeric' as const,
-        month: '2-digit' as const,
-        day: '2-digit' as const,
-        hour: '2-digit' as const,
-        minute: '2-digit' as const,
-        hour12: false as const
+        timeZone: "Asia/Kolkata" as const,
+        year: "numeric" as const,
+        month: "2-digit" as const,
+        day: "2-digit" as const,
+        hour: "2-digit" as const,
+        minute: "2-digit" as const,
+        hour12: false as const,
       };
 
       setFormData({
@@ -53,17 +56,18 @@ export default function EditEventPage() {
         eventCode: eventData.eventCode || "",
         description: eventData.description || "",
         dateStart: eventData.dateStart
-          ? new Date(eventData.dateStart).toLocaleString("sv-SE", options)
-              .replace(' ', 'T')
+          ? new Date(eventData.dateStart)
+              .toLocaleString("sv-SE", options)
+              .replace(" ", "T")
           : "",
         dateEnd: eventData.dateEnd
-          ? new Date(eventData.dateEnd).toLocaleString("sv-SE", options)
-              .replace(' ', 'T')
+          ? new Date(eventData.dateEnd)
+              .toLocaleString("sv-SE", options)
+              .replace(" ", "T")
           : "",
         donorThreshold: eventData.donorThreshold || 0,
       });
 
-      // Handle venue array
       if (Array.isArray(eventData.venue) && eventData.venue.length > 0) {
         setVenues(
           eventData.venue.map((v: any) => ({
@@ -72,38 +76,40 @@ export default function EditEventPage() {
           })),
         );
       } else if (eventData.venue?.name) {
-        setVenues([
-          {
-            name: eventData.venue.name || "",
-            address: eventData.venue.address || "",
-          },
-        ]);
+        setVenues([{ name: eventData.venue.name || "", address: eventData.venue.address || "" }]);
       }
+
+      setPopulated(true);
     }
-  }, [eventData]);
+  }, [eventData, populated]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      const payload = {
-        ...formData,
-        venue: venues.map((v) => ({ name: v.name, address: v.address })),
-        dateStart: formData.dateStart, // Send without converting
-        dateEnd: formData.dateEnd,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      };
-      const response = await axios.patch(
-        `${API_URL}/events/${eventId}`,
-        payload,
-      );
+      // FIX: send only the fields being edited as a $set-friendly payload.
+      // The backend now uses $set so unmentioned fields are untouched.
+      const payload: Record<string, any> = {};
+
+      if (formData.name) payload.name = formData.name;
+      if (formData.eventCode) payload.eventCode = formData.eventCode;
+      // description can be empty string — include if user has touched the field
+      payload.description = formData.description;
+      if (formData.dateStart) payload.dateStart = formData.dateStart;
+      if (formData.dateEnd) payload.dateEnd = formData.dateEnd;
+      if (formData.donorThreshold !== undefined) payload.donorThreshold = formData.donorThreshold;
+
+      // Only include venues if at least one has a name
+      const cleanVenues = venues.filter((v) => v.name.trim());
+      if (cleanVenues.length > 0) payload.venue = cleanVenues;
+
+      const response = await api.patch(`/events/${eventId}`, payload);
       return response.data;
     },
     onSuccess: () => {
-      // Invalidate both queries
       queryClient.invalidateQueries({ queryKey: ["event", eventId] });
       queryClient.invalidateQueries({ queryKey: ["events"] });
       toast.success("Event updated successfully!");
       router.push(`/events/${eventId}`);
-      router.refresh(); // Force Next.js refresh
+      router.refresh();
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.error || "Failed to update event");
@@ -126,10 +132,7 @@ export default function EditEventPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center space-x-4">
-        <Link
-          href={`/events/${eventId}`}
-          className="text-gray-600 hover:text-gray-900"
-        >
+        <Link href={`/events/${eventId}`} className="text-gray-600 hover:text-gray-900">
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <div>
@@ -147,30 +150,19 @@ export default function EditEventPage() {
             <Input
               label="Event Name"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
             <Input
               label="Event Code"
               value={formData.eventCode}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  eventCode: e.target.value.toUpperCase(),
-                })
-              }
+              onChange={(e) => setFormData({ ...formData, eventCode: e.target.value.toUpperCase() })}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
             <textarea
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             />
@@ -180,23 +172,18 @@ export default function EditEventPage() {
               label="Start Date & Time"
               type="datetime-local"
               value={formData.dateStart}
-              onChange={(e) =>
-                setFormData({ ...formData, dateStart: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, dateStart: e.target.value })}
             />
             <Input
               label="End Date & Time"
               type="datetime-local"
               value={formData.dateEnd}
-              onChange={(e) =>
-                setFormData({ ...formData, dateEnd: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
             />
           </div>
         </CardBody>
       </Card>
 
-      {/* Multi-Venue Edit */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -204,12 +191,7 @@ export default function EditEventPage() {
               <MapPin className="w-5 h-5 inline mr-2" />
               Venue(s)
             </h2>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addVenue}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={addVenue}>
               <Plus className="w-4 h-4 mr-1" /> Add Venue
             </Button>
           </div>
@@ -226,9 +208,7 @@ export default function EditEventPage() {
                   <X className="w-4 h-4" />
                 </button>
               )}
-              <p className="text-sm font-medium text-gray-500 mb-3">
-                Venue #{index + 1}
-              </p>
+              <p className="text-sm font-medium text-gray-500 mb-3">Venue #{index + 1}</p>
               <div className="space-y-3">
                 <Input
                   label="Venue Name"
@@ -240,9 +220,7 @@ export default function EditEventPage() {
                   }}
                 />
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                   <textarea
                     value={venue.address}
                     onChange={(e) => {
@@ -260,7 +238,6 @@ export default function EditEventPage() {
         </CardBody>
       </Card>
 
-      {/* Donor Settings */}
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold">Donor Threshold</h2>
@@ -271,10 +248,7 @@ export default function EditEventPage() {
             type="number"
             value={formData.donorThreshold}
             onChange={(e) =>
-              setFormData({
-                ...formData,
-                donorThreshold: parseInt(e.target.value) || 0,
-              })
+              setFormData({ ...formData, donorThreshold: parseInt(e.target.value) || 0 })
             }
           />
         </CardBody>
@@ -284,10 +258,7 @@ export default function EditEventPage() {
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancel
         </Button>
-        <Button
-          onClick={() => updateMutation.mutate()}
-          loading={updateMutation.isPending}
-        >
+        <Button onClick={() => updateMutation.mutate()} loading={updateMutation.isPending}>
           Save Changes
         </Button>
       </div>
