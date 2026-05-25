@@ -24,6 +24,7 @@ export default function CategoriesPage() {
     catCode: "",
     description: "",
     color: "#FF6B6B",
+    icon: "🏷️",  // FIX: was missing — icon input was bound to formData.color by mistake
     holderTypeId: "",
     entryPointIds: [] as string[],
     issuerRoleRequired: "event_admin",
@@ -135,6 +136,7 @@ export default function CategoriesPage() {
       catCode: "",
       description: "",
       color: "#FF6B6B",
+      icon: "🏷️",
       holderTypeId: "",
       entryPointIds: [],
       issuerRoleRequired: "event_admin",
@@ -149,6 +151,7 @@ export default function CategoriesPage() {
       catCode: cat.catCode || "",
       description: cat.description || "",
       color: cat.color || "#FF6B6B",
+      icon: cat.icon || "🏷️",
       holderTypeId: cat.holderTypeId?._id || cat.holderTypeId || "",
       entryPointIds: cat.entryPoints?.map((ep: any) => ep._id || ep) || [],
       issuerRoleRequired: cat.issuerRoleRequired || "event_admin",
@@ -411,7 +414,8 @@ export default function CategoriesPage() {
               </label>
               <input
                 type="text"
-                value={formData.color}
+                value={formData.icon || ""}
+                onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                 placeholder="🏷️"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               />

@@ -10,7 +10,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000,
+            // FIX: 60s staleTime was making scan feed / live stats up to 1 min stale.
+            // Real-time pages (scan feed, dashboard) override this with staleTime:0.
+            // Static pages (categories, holder types) keep 60s default.
+            staleTime: 30 * 1000,
             retry: 1,
           },
         },
