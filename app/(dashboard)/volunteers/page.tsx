@@ -46,15 +46,19 @@ export default function VolunteersPage() {
     },
   });
 
-  // Fetch available entry points
+  // Fetch available entry points — keyed on selected events so it refetches when they change
   const { data: availableEntryPoints } = useQuery({
-    queryKey: ["available-entry-points"],
+    queryKey: ["available-entry-points", ...formData.assignedEvents],
     queryFn: async () => {
-      const response = await api.get(
-        `/volunteers/available-entry-points`,
-      );
+      // FIX BUG 2: was static key ["available-entry-points"] — cached result was reused
+      // even after admin checked new events, so new event stations never appeared.
+      const params = formData.assignedEvents.length > 0
+        ? "?" + formData.assignedEvents.map(id => `eventId=${id}`).join("&")
+        : "";
+      const response = await api.get(`/volunteers/available-entry-points${params}`);
       return response.data.entryPoints;
     },
+    enabled: true,
   });
 
   // Create volunteer mutation
@@ -135,13 +139,31 @@ export default function VolunteersPage() {
 
   // FIXED: Made e optional and check before calling preventDefault
   const handleSubmit = (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
+    if (e) e.preventDefault();
+
+    // FIX BUG 3 (submit side): preserve entry points that belong to events
+    // NOT currently visible in the filter. Without this, editing a volunteer
+    // and saving without re-checking an already-assigned event would drop
+    // all its entry points from the payload.
+    const hiddenEpIds: string[] = editingVolunteer
+      ? (editingVolunteer.assignedEntryPoints || [])
+          .map((ep: any) => ep._id || ep)
+          .filter((epId: string) => {
+            // keep EPs whose event is NOT currently in assignedEvents list
+            const ep = availableEntryPoints?.find((e: any) => e._id === epId);
+            const epEventId = ep?.eventId?._id || ep?.eventId || "";
+            return !formData.assignedEvents.includes(epEventId);
+          })
+      : [];
+
+    const allEntryPointIds = [
+      ...new Set([...formData.assignedEntryPoints, ...hiddenEpIds]),
+    ];
+
     const data = {
       ...formData,
       assignedEventIds: formData.assignedEvents,
-      assignedEntryPointIds: formData.assignedEntryPoints,
+      assignedEntryPointIds: allEntryPointIds,
     };
 
     if (editingVolunteer) {
@@ -195,6 +217,10 @@ export default function VolunteersPage() {
     }));
   };
 
+  // FIX BUG 3: show entry points for ALL assigned events (not just those currently
+  // visible/checked). Previously, entry points from an already-assigned event that
+  // was not re-checked during edit were hidden AND dropped from the save payload —
+  // silently removing the volunteer's existing assignments on every edit.
   const filteredEntryPoints = availableEntryPoints?.filter(
     (ep: any) =>
       formData.assignedEvents.length === 0 ||
