@@ -33,6 +33,15 @@ export default function ReportsPage() {
   const selectedEventData = events?.find((e: any) => e._id === selectedEvent);
   const eventVenues = Array.isArray(selectedEventData?.venue) ? selectedEventData.venue : [];
 
+  const { data: preachers } = useQuery({
+    queryKey: ["preachers-report", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      return (await api.get(`/preachers?eventId=${selectedEvent}`)).data.preachers;
+    },
+    enabled: !!selectedEvent,
+  });
+
   const { data: entryPoints } = useQuery({
     queryKey: ["entry-points", selectedEvent],
     queryFn: async () => {
@@ -202,7 +211,21 @@ export default function ReportsPage() {
                     <option key={i} value={v.name}>{v.name}</option>
                   ))}
                 </select>
-                <input type="text" value={preacherFilter} onChange={(e) => setPreacherFilter(e.target.value)} placeholder="Filter by preacher..." className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                {/* Preacher dropdown from DB if available, else free text */}
+                {preachers && preachers.length > 0 ? (
+                  <select
+                    value={preacherFilter}
+                    onChange={(e) => setPreacherFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">All Preachers</option>
+                    {preachers.map((p: any) => (
+                      <option key={p._id} value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input type="text" value={preacherFilter} onChange={(e) => setPreacherFilter(e.target.value)} placeholder="Filter by preacher..." className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                )}
                 {/* FIX: entryPoint filter now properly wired to query */}
                 <select value={entryPointFilter} onChange={(e) => setEntryPointFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                   <option value="">All Entry Points</option>

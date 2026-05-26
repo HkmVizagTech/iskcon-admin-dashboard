@@ -9,7 +9,7 @@ import {
   Users,
   QrCode,
   Upload,
-  BarChart3,
+  BarChart3, BookOpen,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -27,6 +27,7 @@ const menuItems = [
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Live Scan", href: "/scanfeed", icon: ScanLine },
   { name: "Volunteers", href: "/volunteers", icon: Users },
+  { name: "Preachers", href: "/preachers", icon: BookOpen },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

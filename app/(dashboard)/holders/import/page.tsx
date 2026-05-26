@@ -30,6 +30,7 @@ export default function BulkImportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
+  const [selectedPreacherId, setSelectedPreacherId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<any>(null);
@@ -81,6 +82,16 @@ export default function BulkImportPage() {
     return categories.find((c: any) => c._id === selectedCategory);
   }, [selectedCategory, categories]);
 
+  // Fetch preachers for selected event
+  const { data: preachers } = useQuery({
+    queryKey: ["preachers-import", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      return (await api.get(`/preachers?eventId=${selectedEvent}`)).data.preachers;
+    },
+    enabled: !!selectedEvent,
+  });
+
   const selectedHolderType = holderTypes?.find(
     (ht: any) => ht._id === selectedHolderTypeId,
   );
@@ -119,6 +130,7 @@ export default function BulkImportPage() {
       formData.append("file", file);
       formData.append("eventId", selectedEvent);
       formData.append("categoryId", selectedCategory);
+      if (selectedPreacherId) formData.append("preacherId", selectedPreacherId);
       formData.append(
         "holderType",
         selectedHolderType?.code?.toLowerCase() || "custom",

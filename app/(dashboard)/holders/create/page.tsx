@@ -22,6 +22,7 @@ export default function CreateHolderPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedVenue, setSelectedVenue] = useState("");
   const [preacher, setPreacher] = useState("");
+  const [preacherId, setPreacherId] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -84,6 +85,17 @@ export default function CreateHolderPage() {
     });
   }, [categories, selectedHolderTypeId]);
 
+  // Fetch preachers for the selected event
+  const { data: preachers } = useQuery({
+    queryKey: ["preachers", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      const res = await api.get(`/preachers?eventId=${selectedEvent}`);
+      return res.data.preachers;
+    },
+    enabled: !!selectedEvent,
+  });
+
   const createHolderMutation = useMutation({
     mutationFn: async () => {
       const response = await api.post(
@@ -100,6 +112,7 @@ export default function CreateHolderPage() {
           lifetimeDonation: parseInt(formData.lifetimeDonation) || 0,
           deliveryMethod,
           preacher: preacher,
+          preacherId: preacherId || undefined,
           venueName: selectedVenue || selectedEventData?.venue?.[0]?.name || "",
         },
       );
@@ -316,14 +329,46 @@ export default function CreateHolderPage() {
                         placeholder="rajesh@email.com"
                         icon={<Mail className="w-4 h-4" />}
                       />
-                      {/* Preacher Field */}
-                      <Input
-                        label="Preacher (Optional)"
-                        value={preacher}
-                        onChange={(e) => setPreacher(e.target.value)}
-                        placeholder="Who referred this devotee?"
-                        icon={<User className="w-4 h-4" />}
-                      />
+                      {/* Preacher — dropdown if preachers exist, else free text */}
+                      {preachers && preachers.length > 0 ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Preacher (Optional)
+                          </label>
+                          <select
+                            value={preacherId}
+                            onChange={(e) => {
+                              setPreacherId(e.target.value);
+                              const p = preachers.find((p: any) => p._id === e.target.value);
+                              setPreacher(p?.name || "");
+                            }}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          >
+                            <option value="">Select preacher...</option>
+                            {preachers.map((p: any) => (
+                              <option key={p._id} value={p._id}>{p.name}</option>
+                            ))}
+                            <option value="__other">Other (type below)</option>
+                          </select>
+                          {preacherId === "__other" && (
+                            <input
+                              type="text"
+                              value={preacher}
+                              onChange={(e) => setPreacher(e.target.value)}
+                              placeholder="Enter preacher name"
+                              className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <Input
+                          label="Preacher (Optional)"
+                          value={preacher}
+                          onChange={(e) => setPreacher(e.target.value)}
+                          placeholder="Who referred this devotee?"
+                          icon={<User className="w-4 h-4" />}
+                        />
+                      )}
                       {selectedHolderType?.code === "DN" && (
                         <Input
                           label="Lifetime Donation (₹)"
@@ -425,6 +470,7 @@ export default function CreateHolderPage() {
             setSelectedCategory("");
             setSelectedVenue("");
             setPreacher("");
+            setPreacherId("");
             setFormData({
               name: "",
               phone: "",
