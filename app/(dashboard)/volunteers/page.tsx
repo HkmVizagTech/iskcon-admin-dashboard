@@ -156,9 +156,7 @@ export default function VolunteersPage() {
           })
       : [];
 
-    const allEntryPointIds = [
-      ...new Set([...formData.assignedEntryPoints, ...hiddenEpIds]),
-    ];
+    const allEntryPointIds = Array.from(new Set([...formData.assignedEntryPoints, ...hiddenEpIds]));
 
     const data = {
       ...formData,

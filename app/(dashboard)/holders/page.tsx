@@ -29,8 +29,6 @@ export default function HoldersPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [page, setPage] = useState(1);
 
-  const selectedEventData = events?.find((e: any) => e._id === selectedEvent);
-
   const { data: events } = useQuery({
     queryKey: ["events-list"],
     queryFn: async () => {
@@ -38,6 +36,8 @@ export default function HoldersPage() {
       return response.data.events;
     },
   });
+
+  const selectedEventData = events?.find((e: any) => e._id === selectedEvent);
 
   const { data: holdersData, isLoading } = useQuery({
     queryKey: ["holders", selectedEvent, search, page],

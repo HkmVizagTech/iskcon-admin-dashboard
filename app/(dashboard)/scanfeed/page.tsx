@@ -326,16 +326,25 @@ export default function ScanFeedPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={page === 1}
-                      onClick={() => setPage((p) => p - 1)}
+                      disabled={cursors.length === 0}
+                      onClick={() => {
+                        const prev = cursors.slice(0, -1);
+                        setCursors(prev);
+                        setCursor(prev.length > 0 ? prev[prev.length - 1] : null);
+                      }}
                     >
                       Previous
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={page === scanData.pagination.pages}
-                      onClick={() => setPage((p) => p + 1)}
+                      disabled={!scanData?.pagination?.hasMore}
+                      onClick={() => {
+                        if (scanData.pagination.nextCursor) {
+                          setCursors((prev: string[]) => [...prev, cursor || ""]);
+                          setCursor(scanData.pagination.nextCursor);
+                        }
+                      }}
                     >
                       Next
                     </Button>
