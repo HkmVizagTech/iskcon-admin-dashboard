@@ -39,8 +39,21 @@ export default function CreateHolderPage() {
   const { data: events } = useQuery({
     queryKey: ["events-active"],
     queryFn: async () => {
-      const response = await api.get(`/events`);
-      return response.data.events;
+      // FIX: only show present (active) and future (upcoming) events when issuing passes
+      // Past/completed events are excluded so admins don't accidentally issue to wrong event
+      const [active, upcoming] = await Promise.all([
+        api.get("/events?status=active"),
+        api.get("/events?status=upcoming"),
+      ]);
+      const all = [
+        ...(active.data.events || []),
+        ...(upcoming.data.events || []),
+      ];
+      // Deduplicate and sort by start date ascending (nearest first)
+      const seen = new Set();
+      return all
+        .filter((e: any) => { if (seen.has(e._id)) return false; seen.add(e._id); return true; })
+        .sort((a: any, b: any) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime());
     },
   });
 
