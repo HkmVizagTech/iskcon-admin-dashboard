@@ -341,15 +341,30 @@ export default function CreateHolderPage() {
                               setPreacherId(e.target.value);
                               const p = preachers.find((p: any) => p._id === e.target.value);
                               setPreacher(p?.name || "");
+                              // setPreacherId already set via e.target.value above
                             }}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                           >
                             <option value="">Select preacher...</option>
                             {preachers.map((p: any) => (
-                              <option key={p._id} value={p._id}>{p.name}</option>
+                              <option key={p._id} value={p._id}>
+                                {p.shortCode ? `[${p.shortCode}] ` : ""}{p.name}
+                              </option>
                             ))}
                             <option value="__other">Other (type below)</option>
                           </select>
+                          {/* Show shortCode badge for selected preacher */}
+                          {preacherId && preacherId !== "__other" && (() => {
+                            const p = preachers?.find((p: any) => p._id === preacherId);
+                            return p?.shortCode ? (
+                              <div className="mt-1 flex items-center gap-2">
+                                <span className="font-mono text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded font-bold border border-orange-200">
+                                  {p.shortCode}
+                                </span>
+                                <span className="text-xs text-gray-500">{p.name}</span>
+                              </div>
+                            ) : null;
+                          })()}
                           {preacherId === "__other" && (
                             <input
                               type="text"

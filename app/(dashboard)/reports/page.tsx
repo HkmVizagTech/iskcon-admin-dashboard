@@ -220,7 +220,9 @@ export default function ReportsPage() {
                   >
                     <option value="">All Preachers</option>
                     {preachers.map((p: any) => (
-                      <option key={p._id} value={p.name}>{p.name}</option>
+                      <option key={p._id} value={p.name}>
+                        {p.shortCode ? `[${p.shortCode}] ` : ""}{p.name}
+                      </option>
                     ))}
                   </select>
                 ) : (
