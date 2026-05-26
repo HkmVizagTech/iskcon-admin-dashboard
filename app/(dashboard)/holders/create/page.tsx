@@ -87,10 +87,10 @@ export default function CreateHolderPage() {
 
   // Fetch preachers for the selected event
   const { data: preachers } = useQuery({
-    queryKey: ["preachers", selectedEvent],
+    queryKey: ["preachers"],
     queryFn: async () => {
       if (!selectedEvent) return [];
-      const res = await api.get(`/preachers?eventId=${selectedEvent}`);
+      const res = await api.get("/preachers");
       return res.data.preachers;
     },
     enabled: !!selectedEvent,

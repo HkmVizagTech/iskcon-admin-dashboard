@@ -84,10 +84,10 @@ export default function BulkImportPage() {
 
   // Fetch preachers for selected event
   const { data: preachers } = useQuery({
-    queryKey: ["preachers-import", selectedEvent],
+    queryKey: ["preachers"],
     queryFn: async () => {
       if (!selectedEvent) return [];
-      return (await api.get(`/preachers?eventId=${selectedEvent}`)).data.preachers;
+      return (await api.get("/preachers")).data.preachers;
     },
     enabled: !!selectedEvent,
   });

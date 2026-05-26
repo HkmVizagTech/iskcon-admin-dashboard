@@ -34,10 +34,10 @@ export default function ReportsPage() {
   const eventVenues = Array.isArray(selectedEventData?.venue) ? selectedEventData.venue : [];
 
   const { data: preachers } = useQuery({
-    queryKey: ["preachers-report", selectedEvent],
+    queryKey: ["preachers"],
     queryFn: async () => {
       if (!selectedEvent) return [];
-      return (await api.get(`/preachers?eventId=${selectedEvent}`)).data.preachers;
+      return (await api.get("/preachers")).data.preachers;
     },
     enabled: !!selectedEvent,
   });
