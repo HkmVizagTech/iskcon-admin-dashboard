@@ -30,7 +30,20 @@ export default function ScanFeedPage() {
   const [activeTab, setActiveTab] = useState<"scans" | "summary" | "capacity">(
     "scans",
   );
-  const [page, setPage] = useState(1);
+
+  // Reset pagination when event or filter changes
+  const handleEventChange = (eventId: string) => {
+    setSelectedEvent(eventId);
+    setCursor(null);
+    setCursors([]);
+  };
+  const handleFilterChange = (filter: string) => {
+    setResultFilter(filter);
+    setCursor(null);
+    setCursors([]);
+  };
+  const [cursor, setCursor] = useState<string | null>(null);  // FIX: cursor pagination
+  const [cursors, setCursors] = useState<string[]>([]); // history for back navigation
   const [searchFilter, setSearchFilter] = useState("");
   const [resultFilter, setResultFilter] = useState("");
 
@@ -45,12 +58,13 @@ export default function ScanFeedPage() {
 
   // Fetch scan logs
   const { data: scanData, isLoading: scansLoading } = useQuery({
-    queryKey: ["scan-logs", selectedEvent, page, resultFilter],
+    queryKey: ["scan-logs", selectedEvent, cursor, resultFilter],
     queryFn: async () => {
       if (!selectedEvent) return null;
+      // FIX: use cursor-based pagination — old page param returned same first page every time
       const params = new URLSearchParams();
-      params.append("page", page.toString());
       params.append("limit", "20");
+      if (cursor) params.append("before", cursor);
       if (resultFilter) params.append("result", resultFilter);
       const response = await api.get(
         `/reports/events/${selectedEvent}/scan-log?${params}`,
@@ -180,7 +194,7 @@ export default function ScanFeedPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <select
               value={selectedEvent}
-              onChange={(e) => setSelectedEvent(e.target.value)}
+              onChange={(e) => handleEventChange(e.target.value)}
               className="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             >
               <option value="">Select an event...</option>
@@ -195,7 +209,7 @@ export default function ScanFeedPage() {
               <>
                 <select
                   value={resultFilter}
-                  onChange={(e) => setResultFilter(e.target.value)}
+                  onChange={(e) => handleFilterChange(e.target.value)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">All Results</option>
