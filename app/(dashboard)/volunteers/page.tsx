@@ -124,14 +124,18 @@ export default function VolunteersPage() {
 
   const handleEdit = (volunteer: any) => {
     setEditingVolunteer(volunteer);
+    const assignedEventIds = volunteer.assignedEvents?.map((e: any) => e._id || e) || [];
+    // Only pre-check entry points that belong to the volunteer's assigned events.
+    // assignedEntryPoints from the list view is already cleaned by the backend
+    // (orphaned/duplicate IDs removed), so we can use it directly.
+    const assignedEpIds = (volunteer.assignedEntryPoints || []).map((e: any) => e._id || e);
     setFormData({
       name: volunteer.name,
       email: volunteer.email || "",
       phone: volunteer.phone || "",
       password: "",
-      assignedEvents: volunteer.assignedEvents?.map((e: any) => e._id) || [],
-      assignedEntryPoints:
-        volunteer.assignedEntryPoints?.map((e: any) => e._id) || [],
+      assignedEvents: assignedEventIds,
+      assignedEntryPoints: assignedEpIds,
       assignedVenues: volunteer.assignedVenues || [],
     });
     setShowModal(true);
@@ -141,22 +145,10 @@ export default function VolunteersPage() {
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    // FIX BUG 3 (submit side): preserve entry points that belong to events
-    // NOT currently visible in the filter. Without this, editing a volunteer
-    // and saving without re-checking an already-assigned event would drop
-    // all its entry points from the payload.
-    const hiddenEpIds: string[] = editingVolunteer
-      ? (editingVolunteer.assignedEntryPoints || [])
-          .map((ep: any) => ep._id || ep)
-          .filter((epId: string) => {
-            // keep EPs whose event is NOT currently in assignedEvents list
-            const ep = availableEntryPoints?.find((e: any) => e._id === epId);
-            const epEventId = ep?.eventId?._id || ep?.eventId || "";
-            return !formData.assignedEvents.includes(epEventId);
-          })
-      : [];
-
-    const allEntryPointIds = Array.from(new Set([...formData.assignedEntryPoints, ...hiddenEpIds]));
+    // Send only the entry points currently checked in the form.
+    // The backend validates every ID against the assigned events and purges
+    // any orphaned/stale IDs — so we never accidentally re-add deleted ones.
+    const allEntryPointIds = Array.from(new Set([...formData.assignedEntryPoints]));
 
     const data = {
       ...formData,
