@@ -307,9 +307,14 @@ export default function VolunteersPage() {
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
                       {volunteer.assignedVenues?.map((vIndex: number) => {
-                        const eventVenue = selectedEventsVenues?.find(
-                          (v: any) => v.venueIndex === vIndex,
-                        );
+                        // Look up venue from this volunteer's own assigned events
+                        const volunteerVenues = (volunteer.assignedEvents || [])
+                          .flatMap((ev: any) =>
+                            (Array.isArray(ev.venue) ? ev.venue : []).map((v: any, i: number) => ({
+                              ...v, eventCode: ev.eventCode, venueIndex: i,
+                            }))
+                          );
+                        const eventVenue = volunteerVenues.find((v: any) => v.venueIndex === vIndex);
                         return eventVenue ? (
                           <span
                             key={vIndex}
