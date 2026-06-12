@@ -433,6 +433,103 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
 
+                  {/* Step 4.5: Seva Slot (Sub Category) */}
+                  <Card>
+                    <CardHeader>
+                      <h2 className="font-semibold">
+                        Step 4.5: Seva Slot
+                        <span className="ml-2 text-sm font-normal text-gray-500">optional — determines seating and bahumana</span>
+                      </h2>
+                    </CardHeader>
+                    <CardBody className="space-y-3">
+                      {sevaSlots && sevaSlots.length > 0 ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Select Slot</label>
+                          <select
+                            value={subCategory}
+                            onChange={(e) => setSubCategory(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          >
+                            <option value="">— No slot / General —</option>
+                            {sevaSlots.map((s: any) => (
+                              <option key={s._id} value={s.code}>
+                                {s.code} — {s.name}{s.time ? ` · ${s.time}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {subCategory && (() => {
+                            const s = sevaSlots.find((sl: any) => sl.code === subCategory);
+                            return s ? (
+                              <div className="mt-3 flex items-center gap-3 bg-orange-50 rounded-xl px-4 py-3 border border-orange-100">
+                                <span className={`font-mono font-black text-2xl px-3 py-1 rounded-full border ${
+                                  s.code === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                                  s.code === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+                                  s.code === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
+                                  "bg-purple-100 text-purple-800 border-purple-300"
+                                }`}>{s.code}</span>
+                                <div>
+                                  <p className="font-semibold text-gray-900">{s.name}</p>
+                                  {s.time && <p className="text-sm text-gray-500">🕐 {s.time}</p>}
+                                  {s.description && <p className="text-xs text-gray-400 mt-0.5">{s.description}</p>}
+                                </div>
+                              </div>
+                            ) : null;
+                          })()}
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Sub Category
+                            <span className="ml-1.5 text-xs text-gray-400 font-normal">
+                              e.g. A, B, C or SDGP, PA — 
+                              <a href={`/events/${selectedEvent}/seva-slots`} target="_blank" rel="noreferrer"
+                                className="text-orange-600 hover:underline ml-1">
+                                Configure slots for this event →
+                              </a>
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            value={subCategory}
+                            onChange={(e) => setSubCategory(e.target.value.toUpperCase())}
+                            placeholder="e.g. A"
+                            maxLength={12}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-mono font-bold uppercase tracking-widest"
+                          />
+                        </div>
+                      )}
+
+                      {/* Duplicate seva-slot warning */}
+                      {duplicateWarning && (
+                        <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
+                          <p className="text-sm font-semibold text-amber-800 mb-1">⚠️ Seva slot already issued</p>
+                          <p className="text-sm text-amber-700 mb-1">
+                            <strong>{duplicateWarning.existing?.holderName}</strong> already has an active pass
+                            {duplicateWarning.existing?.subCategory ? ` for slot "${duplicateWarning.existing.subCategory}"` : ""} on this number.
+                          </p>
+                          <p className="text-xs text-amber-600 mb-3">{duplicateWarning.hint}</p>
+                          <label className="block text-sm font-medium text-amber-800 mb-1">Reason for issuing additional pass *</label>
+                          <input
+                            type="text"
+                            value={overrideReason}
+                            onChange={(e) => setOverrideReason(e.target.value)}
+                            placeholder="e.g. Lost phone, Replacement, Family member"
+                            className="w-full px-3 py-2 border border-amber-400 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 mb-2"
+                          />
+                          {overrideReason.trim() && (
+                            <button
+                              type="button"
+                              onClick={() => createHolderMutation.mutate()}
+                              className="w-full py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700"
+                            >
+                              Issue Additional Pass Anyway
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </CardBody>
+                  </Card>
+
                   {/* Step 5: Delivery Method */}
                   <Card>
                     <CardHeader>
