@@ -22,6 +22,7 @@ export default function CreateHolderPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedVenue, setSelectedVenue] = useState("");
   const [preacher, setPreacher] = useState("");
+  const [subCategory, setSubCategory] = useState("");
   const [preacherId, setPreacherId] = useState("");
   const [formData, setFormData] = useState({
     name: "",
