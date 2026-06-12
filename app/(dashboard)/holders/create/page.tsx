@@ -144,7 +144,16 @@ export default function CreateHolderPage() {
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success("QR Pass generated successfully!");
+      const ds = data.qrPass?.deliveryStatus;
+      const de = data.qrPass?.deliveryError;
+      if (ds === "sent") {
+        toast.success("QR Pass generated & sent via WhatsApp ✓");
+      } else if (ds === "failed") {
+        toast.success("QR Pass generated ✓");
+        toast.error(`WhatsApp delivery failed: ${de || "Unknown error"}`, { duration: 8000 });
+      } else {
+        toast.success("QR Pass generated successfully!");
+      }
       setGeneratedQR(data.qrPass);
       setShowQRPreview(true);
       setDuplicateWarning(null);
