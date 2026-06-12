@@ -23,6 +23,8 @@ export default function CreateHolderPage() {
   const [selectedVenue, setSelectedVenue] = useState("");
   const [preacher, setPreacher] = useState("");
   const [subCategory, setSubCategory] = useState("");
+  const [overrideReason, setOverrideReason] = useState("");
+  const [duplicateWarning, setDuplicateWarning] = useState<any>(null);
   const [preacherId, setPreacherId] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -128,6 +130,8 @@ export default function CreateHolderPage() {
           preacher: preacher,
           preacherId: preacherId || undefined,
           venueName: selectedVenue || selectedEventData?.venue?.[0]?.name || "",
+          subCategory: subCategory.trim().toUpperCase() || undefined,
+          overrideReason: overrideReason.trim() || undefined,
         },
       );
       return response.data;
@@ -136,9 +140,16 @@ export default function CreateHolderPage() {
       toast.success("QR Pass generated successfully!");
       setGeneratedQR(data.qrPass);
       setShowQRPreview(true);
+      setDuplicateWarning(null);
+      setOverrideReason("");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to generate pass");
+      const errData = error.response?.data;
+      if (error.response?.status === 409 && errData?.code === "DUPLICATE_SEVA_SLOT") {
+        setDuplicateWarning(errData);
+      } else {
+        toast.error(errData?.error || "Failed to generate pass");
+      }
     },
   });
 
