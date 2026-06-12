@@ -102,6 +102,13 @@ export default function CreateHolderPage() {
   }, [categories, selectedHolderTypeId]);
 
   // Fetch preachers for the selected event
+  // Fetch seva slots for the selected event
+  const { data: sevaSlots } = useQuery({
+    queryKey: ["seva-slots", selectedEvent],
+    queryFn: async () => (await api.get(`/events/${selectedEvent}/seva-slots`)).data.slots,
+    enabled: !!selectedEvent,
+  });
+
   const { data: preachers } = useQuery({
     queryKey: ["preachers"],
     queryFn: async () => {

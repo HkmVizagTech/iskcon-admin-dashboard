@@ -160,6 +160,12 @@ export default function EventDetailsPage() {
             <Tags className="w-4 h-4 inline mr-1" />
             Categories
           </button>
+          <button
+            onClick={() => router.push(`/events/${eventId}/seva-slots`)}
+            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
+          >
+            🕉️ Seva Slots
+          </button>
         </nav>
       </div>
 
