@@ -154,6 +154,17 @@ export default function HolderDetailsPage() {
                 {holder?.holderType}
               </span>
             </div>
+            {holder?.subCategory && (
+              <div>
+                <p className="text-sm text-gray-500">Sub Category (Seva Slot)</p>
+                <span className={`mt-0.5 inline-flex px-3 py-1 rounded-full text-sm font-black font-mono border ${
+                  holder.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                  holder.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+                  holder.subCategory === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
+                  "bg-purple-100 text-purple-800 border-purple-300"
+                }`}>{holder.subCategory}</span>
+              </div>
+            )}
             {holder?.lifetimeDonation > 0 && (
               <div>
                 <p className="text-sm text-gray-500">Lifetime Donation</p>
