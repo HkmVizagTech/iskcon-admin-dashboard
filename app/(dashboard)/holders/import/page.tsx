@@ -262,10 +262,11 @@ export default function BulkImportPage() {
       ["Name", "Yes", "Full name of the devotee"],
       ["Phone Number", "Yes", "10-digit mobile number (91 prefix added automatically). One QR per unique Phone + SubCategory."],
       ["Email", "No", "Used for email delivery of QR pass"],
-      ["SubCategory", "No", "Seva slot code — must match a slot configured in the event (Events → Seva Slots). E.g. A, B, SDGP, PA. Different codes = different QRs for same phone."],
+      ["SubCategory", "Sponsors only", "Seva slot code — ONLY for Sponsor (SP) category. Must match a slot in Events → Seva Slots. E.g. A, B, SDGP, PA. Same phone + same code = skip. Same phone + different code = new QR."],
+      ["Sponsor Sevas", "Sponsors only", "Seva opted e.g. Pratistha Abhisheka (informational only)"],
+      ["Sponsor Category", "Sponsors only", "Tier e.g. Gold, Silver, Bronze (informational only)"],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name. Links holder to the preacher record."],
-      ["Sponsor Sevas", "No", "Name of the seva opted e.g. Pratistha Abhisheka"],
-      ["Sponsor Category", "No", "Tier e.g. Gold, Silver, Bronze"],
+
       ["Venue", "No", "Seating venue or hall name"],
     ];
 
