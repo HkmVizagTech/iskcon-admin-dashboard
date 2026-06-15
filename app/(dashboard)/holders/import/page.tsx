@@ -192,98 +192,27 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadSample = () => {
-    // ── Column headers (must match exactly what the backend reads) ──────────
-    // Name            → holder full name (required)
-    // Phone Number    → 10-digit mobile, will be normalised to 91XXXXXXXXXX
-    // Email           → optional email for delivery
-    // SubCategory     → seva slot code e.g. A, B, SDGP, PA (must match slot configured in event)
-    //                   one QR per unique Phone + SubCategory combination
-    // Preacher        → short code e.g. MKGD, or full name (links to preacher record)
-    // Sponsor Sevas   → notes on which seva they have opted for
-    // Sponsor Category→ tier label e.g. Gold, Silver, Bronze
-    // Venue           → seating venue / hall name
-    const headers = [
-      "Name",
-      "Phone Number",
-      "Email",
-      "SubCategory",
-      "Preacher",
-      "Sponsor Sevas",
-      "Sponsor Category",
-      "Venue",
-    ];
-
+    const headers = ["Name", "Phone Number", "Preacher", "Venue"];
     const examples = [
-      [
-        "Rajesh Kumar",
-        "9876543210",
-        "rajesh@email.com",
-        "A",
-        "MKGD",
-        "Pratistha Abhisheka",
-        "Gold",
-        "Main Hall",
-      ],
-      [
-        "Priya Sharma",
-        "9876543211",
-        "",
-        "B",
-        "MKGD",
-        "Prathama Abhisheka",
-        "Silver",
-        "Temple",
-      ],
-      [
-        "Amit Singh",
-        "9876543212",
-        "amit@email.com",
-        "SDGP",
-        "GPVP",
-        "Shodasha Daan Puja",
-        "Gold",
-        "Main Hall",
-      ],
-      [
-        "Sita Devi",
-        "9876543210",
-        "",
-        "C",
-        "MKGD",
-        "Archana",
-        "Bronze",
-        "Outside",
-      ],
+      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall"],
+      ["Priya Sharma",   "9876543211", "MKGD", "Temple"],
+      ["Amit Singh",     "9876543212", "GPVP", "Main Hall"],
+      ["Sita Devi Dasi", "9876543213", "",     "Outside"],
     ];
-
-    // Notes sheet explaining each column
     const notes = [
-      ["Column", "Required?", "Notes"],
-      ["Name", "Yes", "Full name of the devotee"],
-      ["Phone Number", "Yes", "10-digit mobile number (91 prefix added automatically). One QR per unique Phone + SubCategory."],
-      ["Email", "No", "Used for email delivery of QR pass"],
-      ["SubCategory", "Sponsors only", "Seva slot code — ONLY for Sponsor (SP) category. Must match a slot in Events → Seva Slots. E.g. A, B, SDGP, PA. Same phone + same code = skip. Same phone + different code = new QR."],
-      ["Sponsor Sevas", "Sponsors only", "Seva opted e.g. Pratistha Abhisheka (informational only)"],
-      ["Sponsor Category", "Sponsors only", "Tier e.g. Gold, Silver, Bronze (informational only)"],
-      ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name. Links holder to the preacher record."],
-
-      ["Venue", "No", "Seating venue or hall name"],
+      ["Column",       "Required?", "Notes"],
+      ["Name",         "Yes",       "Full name of the devotee"],
+      ["Phone Number", "Yes",       "10-digit mobile. 91 prefix added automatically."],
+      ["Preacher",     "No",        "Preacher short code (e.g. MKGD) or full name."],
+      ["Venue",        "No",        "Seating venue or hall name"],
+      ["", "", ""],
+      ["--- Sponsor-only columns ---", "", ""],
+      ["SubCategory",      "Sponsors only", "Seva slot code (e.g. A, B, SDGP). Same phone + same code = skip. Different code = new QR."],
+      ["Sponsor Sevas",    "Sponsors only", "Seva name e.g. Pratistha Abhisheka (informational)"],
+      ["Sponsor Category", "Sponsors only", "Tier e.g. Gold, Silver, Bronze (informational)"],
     ];
-
-    // Build Holders sheet
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [
-      { wch: 22 }, // Name
-      { wch: 15 }, // Phone Number
-      { wch: 25 }, // Email
-      { wch: 14 }, // SubCategory
-      { wch: 12 }, // Preacher
-      { wch: 25 }, // Sponsor Sevas
-      { wch: 18 }, // Sponsor Category
-      { wch: 18 }, // Venue
-    ];
-
-    // Style the header row bold + orange background
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }];
     const headerStyle = {
       font: { bold: true, color: { rgb: "FFFFFF" } },
       fill: { fgColor: { rgb: "E85D24" } },
@@ -294,15 +223,11 @@ export default function BulkImportPage() {
       if (!ws[cell]) ws[cell] = { v: headers[i] };
       ws[cell].s = headerStyle;
     });
-
-    // Build Notes sheet
     const wsNotes = XLSX.utils.aoa_to_sheet(notes);
-    wsNotes["!cols"] = [{ wch: 20 }, { wch: 12 }, { wch: 80 }];
-
+    wsNotes["!cols"] = [{ wch: 22 }, { wch: 14 }, { wch: 80 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Holders");
     XLSX.utils.book_append_sheet(wb, wsNotes, "Column Notes");
-
     XLSX.writeFile(wb, "iskcon_seva_pass_import.xlsx");
     toast.success("Sample sheet downloaded!");
   };
@@ -505,9 +430,10 @@ export default function BulkImportPage() {
                       📋 Required Format
                     </h4>
                     <pre className="text-xs text-blue-800 bg-white p-3 rounded overflow-x-auto">
-                      {`Name,Phone Number,Sponsor Sevas,Sponsor Category,Preacher,Venue,Slot
-Rajesh Kumar,9876543210,Annadana Seva,Gold,Prabhu Gauranga,Main Hall,Morning
-Priya Sharma,9876543211,Vidya Seva,Silver,Mataji Radhika,Temple,Evening`}
+                      {`Name,Phone Number,Preacher,Venue
+Rajesh Kumar,9876543210,MKGD,Main Hall
+Priya Sharma,9876543211,MKGD,Temple
+Amit Singh,9876543212,GPVP,Outside`}
                     </pre>
                     <p className="text-xs text-blue-600 mt-2">
                       • <strong>Name</strong> and <strong>Phone Number</strong>{" "}
@@ -516,7 +442,7 @@ Priya Sharma,9876543211,Vidya Seva,Silver,Mataji Radhika,Temple,Evening`}
                       (India)
                       <br />•{" "}
                       <strong>
-                        Sponsor Sevas, Sponsor Category, Preacher, Venue, Slot
+                        Preacher and Venue. For Sponsors, also add SubCategory
                       </strong>{" "}
                       are optional
                       <br />• Download the sample file to get started!

@@ -19,6 +19,8 @@ function buildFormData(eventData: any) {
     description: eventData?.description || "",
     dateStart: eventData?.dateStart ? utcToISTLocal(eventData.dateStart) : "",
     dateEnd: eventData?.dateEnd ? utcToISTLocal(eventData.dateEnd) : "",
+    scanStart: eventData?.scanStart ? utcToISTLocal(eventData.scanStart) : "",
+    scanEnd: eventData?.scanEnd ? utcToISTLocal(eventData.scanEnd) : "",
     donorThreshold: eventData?.donorThreshold || 0,
   };
 }
@@ -72,6 +74,8 @@ export default function EditEventPage() {
       payload.description = formData.description;
       if (formData.dateStart) payload.dateStart = istLocalToISO(formData.dateStart);
       if (formData.dateEnd) payload.dateEnd = istLocalToISO(formData.dateEnd);
+      payload.scanStart = formData.scanStart ? istLocalToISO(formData.scanStart) : null;
+      payload.scanEnd = formData.scanEnd ? istLocalToISO(formData.scanEnd) : null;
       if (formData.donorThreshold !== undefined) payload.donorThreshold = formData.donorThreshold;
       const cleanVenues = venues.filter((v) => v.name.trim());
       if (cleanVenues.length > 0) payload.venue = cleanVenues;
@@ -151,6 +155,29 @@ export default function EditEventPage() {
               type="datetime-local"
               value={formData.dateEnd}
               onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
+            />
+
+            {/* Scan Window */}
+            <div className="col-span-2 pt-2">
+              <p className="text-sm font-semibold text-gray-700 mb-1">
+                🔒 Scan Window
+                <span className="ml-2 text-xs font-normal text-gray-400">
+                  When QRs are valid at the gate — independent of ceremony time.
+                  Leave blank to use Event Start/End dates.
+                </span>
+              </p>
+            </div>
+            <Input
+              label="Gate Opens (Scan Start — IST)"
+              type="datetime-local"
+              value={formData.scanStart}
+              onChange={(e) => setFormData({ ...formData, scanStart: e.target.value })}
+            />
+            <Input
+              label="Gate Closes (Scan End — IST)"
+              type="datetime-local"
+              value={formData.scanEnd}
+              onChange={(e) => setFormData({ ...formData, scanEnd: e.target.value })}
             />
           </div>
         </CardBody>
