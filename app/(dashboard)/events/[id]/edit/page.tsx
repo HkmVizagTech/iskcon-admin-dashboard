@@ -76,6 +76,8 @@ export default function EditEventPage() {
       if (formData.dateEnd) payload.dateEnd = istLocalToISO(formData.dateEnd);
       payload.scanStart = formData.scanStart ? istLocalToISO(formData.scanStart) : null;
       payload.scanEnd = formData.scanEnd ? istLocalToISO(formData.scanEnd) : null;
+      payload.scanStart = formData.scanStart ? istLocalToISO(formData.scanStart) : null;
+      payload.scanEnd = formData.scanEnd ? istLocalToISO(formData.scanEnd) : null;
       if (formData.donorThreshold !== undefined) payload.donorThreshold = formData.donorThreshold;
       const cleanVenues = venues.filter((v) => v.name.trim());
       if (cleanVenues.length > 0) payload.venue = cleanVenues;
@@ -156,6 +158,28 @@ export default function EditEventPage() {
               value={formData.dateEnd}
               onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
             />
+            <div className="col-span-2 pt-4 border-t border-orange-100">
+              <p className="text-sm font-semibold text-gray-800 mb-0.5">🔒 Scan Window</p>
+              <p className="text-xs text-gray-400 mb-3">When the scanner accepts QRs at the gate — set this independent of ceremony time so scanning can start before the event begins. If not set, falls back to event start/end dates.</p>
+            </div>
+            <div>
+              <Input
+                label="Gate Opens — Scan Start (IST)"
+                type="datetime-local"
+                value={formData.scanStart}
+                onChange={(e) => setFormData({ ...formData, scanStart: e.target.value })}
+              />
+              <p className="text-xs text-gray-400 mt-1">QRs become scannable from this time (e.g. 2 hrs before ceremony)</p>
+            </div>
+            <div>
+              <Input
+                label="Gate Closes — Scan End (IST)"
+                type="datetime-local"
+                value={formData.scanEnd}
+                onChange={(e) => setFormData({ ...formData, scanEnd: e.target.value })}
+              />
+              <p className="text-xs text-gray-400 mt-1">QRs stop working after this time</p>
+            </div>
 
             {/* Scan Window */}
             <div className="col-span-2 pt-2">

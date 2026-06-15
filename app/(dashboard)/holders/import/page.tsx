@@ -200,15 +200,15 @@ export default function BulkImportPage() {
       ["Sita Devi Dasi", "9876543213", "",     "Outside"],
     ];
     const notes = [
-      ["Column",       "Required?", "Notes"],
-      ["Name",         "Yes",       "Full name of the devotee"],
-      ["Phone Number", "Yes",       "10-digit mobile. 91 prefix added automatically."],
-      ["Preacher",     "No",        "Preacher short code (e.g. MKGD) or full name."],
-      ["Venue",        "No",        "Seating venue or hall name"],
+      ["Column", "Required?", "Notes"],
+      ["Name", "Yes", "Full name of the devotee"],
+      ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
+      ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
+      ["Venue", "No", "Seating venue or hall name"],
       ["", "", ""],
       ["--- Sponsor-only columns ---", "", ""],
-      ["SubCategory",      "Sponsors only", "Seva slot code (e.g. A, B, SDGP). Same phone + same code = skip. Different code = new QR."],
-      ["Sponsor Sevas",    "Sponsors only", "Seva name e.g. Pratistha Abhisheka (informational)"],
+      ["SubCategory", "Sponsors only", "Seva slot code (e.g. A, B, SDGP). Same phone + same code = skip. Different code = new QR."],
+      ["Sponsor Sevas", "Sponsors only", "Seva name e.g. Pratistha Abhisheka (informational)"],
       ["Sponsor Category", "Sponsors only", "Tier e.g. Gold, Silver, Bronze (informational)"],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
