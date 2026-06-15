@@ -104,8 +104,8 @@ export default function SevaSlotsPage() {
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-500 max-w-[200px] truncate">{s.description || "—"}</td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEdit(s)} className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => openEdit(s)} className="p-1.5 text-orange-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
                       <button onClick={() => { if (confirm(`Remove "${s.code} — ${s.name}"?`)) deleteMutation.mutate(s._id); }}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                     </div>
