@@ -192,52 +192,103 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadSample = () => {
-    const headers = ["Name", "Phone Number", "Preacher", "Venue"];
+    // ── Column headers (must match exactly what the backend reads) ──────────
+    // Name            → holder full name (required)
+    // Phone Number    → 10-digit mobile, will be normalised to 91XXXXXXXXXX
+    // Email           → optional email for delivery
+    // SubCategory     → seva slot code e.g. A, B, SDGP, PA (must match slot configured in event)
+    //                   one QR per unique Phone + SubCategory combination
+    // Preacher        → short code e.g. MKGD, or full name (links to preacher record)
+    // Sponsor Sevas   → notes on which seva they have opted for
+    // Sponsor Category→ tier label e.g. Gold, Silver, Bronze
+    // Venue           → seating venue / hall name
+    const headers = [
+      "Name",
+      "Phone Number",
+      "Email",
+      "SubCategory",
+      "Preacher",
+      "Sponsor Sevas",
+      "Sponsor Category",
+      "Venue",
+    ];
 
     const examples = [
-      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall"],
-      ["Priya Sharma",   "9876543211", "MKGD", "Temple"],
-      ["Amit Singh",     "9876543212", "GPVP", "Main Hall"],
-      ["Sita Devi Dasi", "9876543213", "",     "Outside"],
+      [
+        "Rajesh Kumar",
+        "9876543210",
+        "rajesh@email.com",
+        "A",
+        "MKGD",
+        "Pratistha Abhisheka",
+        "Gold",
+        "Main Hall",
+      ],
+      [
+        "Priya Sharma",
+        "9876543211",
+        "",
+        "B",
+        "MKGD",
+        "Prathama Abhisheka",
+        "Silver",
+        "Temple",
+      ],
+      [
+        "Amit Singh",
+        "9876543212",
+        "amit@email.com",
+        "SDGP",
+        "GPVP",
+        "Shodasha Daan Puja",
+        "Gold",
+        "Main Hall",
+      ],
+      [
+        "Sita Devi",
+        "9876543210",
+        "",
+        "C",
+        "MKGD",
+        "Archana",
+        "Bronze",
+        "Outside",
+      ],
     ];
 
+    // Notes sheet explaining each column
     const notes = [
-      ["Column",       "Required?", "Notes"],
-      ["Name",         "Yes",       "Full name of the devotee"],
-      ["Phone Number", "Yes",       "10-digit mobile number. 91 prefix added automatically. One QR per phone per event."],
-      ["Preacher",     "No",        "Preacher short code (e.g. MKGD) or full name. Links holder to the preacher record."],
-      ["Venue",        "No",        "Seating venue or hall name"],
-      ["",             "",          ""],
-      ["--- Sponsor-only columns (add only when importing Sponsor category) ---", "", ""],
-      ["SubCategory",      "Sponsors only", "Seva slot code matching Events → Seva Slots (e.g. A, B, SDGP). Same phone + same code = skip. Same phone + different code = new QR."],
-      ["Sponsor Sevas",    "Sponsors only", "Seva name e.g. Pratistha Abhisheka (informational)"],
-      ["Sponsor Category", "Sponsors only", "Tier e.g. Gold, Silver, Bronze (informational)"],
+      ["Column", "Required?", "Notes"],
+      ["Name", "Yes", "Full name of the devotee"],
+      ["Phone Number", "Yes", "10-digit mobile number (91 prefix added automatically). One QR per unique Phone + SubCategory."],
+      ["Email", "No", "Used for email delivery of QR pass"],
+      ["SubCategory", "Sponsors only", "Seva slot code — ONLY for Sponsor (SP) category. Must match a slot in Events → Seva Slots. E.g. A, B, SDGP, PA. Same phone + same code = skip. Same phone + different code = new QR."],
+      ["Sponsor Sevas", "Sponsors only", "Seva opted e.g. Pratistha Abhisheka (informational only)"],
+      ["Sponsor Category", "Sponsors only", "Tier e.g. Gold, Silver, Bronze (informational only)"],
+      ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name. Links holder to the preacher record."],
+
+      ["Venue", "No", "Seating venue or hall name"],
     ];
 
+    // Build Holders sheet
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }];
+    ws["!cols"] = [
+      { wch: 22 }, // Name
+      { wch: 15 }, // Phone Number
+      { wch: 25 }, // Email
+      { wch: 14 }, // SubCategory
+      { wch: 12 }, // Preacher
+      { wch: 25 }, // Sponsor Sevas
+      { wch: 18 }, // Sponsor Category
+      { wch: 18 }, // Venue
+    ];
 
+    // Style the header row bold + orange background
     const headerStyle = {
       font: { bold: true, color: { rgb: "FFFFFF" } },
       fill: { fgColor: { rgb: "E85D24" } },
       alignment: { horizontal: "center" },
     };
-    headers.forEach((_, i) => {
-      const cell = XLSX.utils.encode_cell({ r: 0, c: i });
-      if (!ws[cell]) ws[cell] = { v: headers[i] };
-      ws[cell].s = headerStyle;
-    });
-
-    const wsNotes = XLSX.utils.aoa_to_sheet(notes);
-    wsNotes["!cols"] = [{ wch: 25 }, { wch: 14 }, { wch: 80 }];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Holders");
-    XLSX.utils.book_append_sheet(wb, wsNotes, "Column Notes");
-
-    XLSX.writeFile(wb, "iskcon_seva_pass_import.xlsx");
-    toast.success("Sample sheet downloaded!");
-  };
     headers.forEach((_, i) => {
       const cell = XLSX.utils.encode_cell({ r: 0, c: i });
       if (!ws[cell]) ws[cell] = { v: headers[i] };
