@@ -13,10 +13,11 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import StatCard from "@/components/ui/StatCard";
 import toast from "react-hot-toast";
+import AnalyticsPanel from "@/components/reports/AnalyticsPanel";
 
 export default function ReportsPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "holders">("overview");
+  const [activeTab, setActiveTab] = useState<"analytics" | "overview" | "holders">("analytics");
   const [holderTypeFilter, setHolderTypeFilter] = useState("");
   const [venueFilter, setVenueFilter] = useState("");
   const [preacherFilter, setPreacherFilter] = useState("");
@@ -117,30 +118,53 @@ export default function ReportsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardBody>
-          <select
-            value={selectedEvent}
-            onChange={(e) => {
-              setSelectedEvent(e.target.value);
-              setHolderTypeFilter(""); setVenueFilter("");
-              setPreacherFilter(""); setEntryPointFilter("");
-            }}
-            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="">Select an event...</option>
-            {events?.map((event: any) => (
-              <option key={event._id} value={event._id}>{event.name} ({event.eventCode})</option>
-            ))}
-          </select>
-        </CardBody>
-      </Card>
+      {/* Tabs — always visible */}
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-6 overflow-x-auto">
+          {(["analytics", "overview", "holders"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`py-3 px-1 border-b-2 font-medium text-sm capitalize whitespace-nowrap ${
+                activeTab === tab ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab === "holders" ? "Holder Details" : tab === "analytics" ? "📊 Analytics" : "Overview"}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-      {selectedEvent && (
+      {/* Analytics tab — has its own scope toggle, no event selection needed */}
+      {activeTab === "analytics" && <AnalyticsPanel events={events || []} />}
+
+      {/* Event selector — only for Overview / Holders tabs */}
+      {activeTab !== "analytics" && (
+        <Card>
+          <CardBody>
+            <select
+              value={selectedEvent}
+              onChange={(e) => {
+                setSelectedEvent(e.target.value);
+                setHolderTypeFilter(""); setVenueFilter("");
+                setPreacherFilter(""); setEntryPointFilter("");
+              }}
+              className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">Select an event...</option>
+              {events?.map((event: any) => (
+                <option key={event._id} value={event._id}>{event.name} ({event.eventCode})</option>
+              ))}
+            </select>
+          </CardBody>
+        </Card>
+      )}
+
+      {activeTab !== "analytics" && selectedEvent && (
         <>
-          <div className="border-b border-gray-200">
+          <div className="hidden">
             <nav className="flex space-x-6">
-              {(["overview", "holders"] as const).map((tab) => (
+              {([] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -148,7 +172,7 @@ export default function ReportsPage() {
                     activeTab === tab ? "border-orange-500 text-orange-600" : "border-transparent text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {tab === "holders" ? "Holder Details" : "Overview"}
+                  {tab === "holders" ? "Holder Details" : tab === "analytics" ? "📊 Analytics" : "Overview"}
                 </button>
               ))}
             </nav>
