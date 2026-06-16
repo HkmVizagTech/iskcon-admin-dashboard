@@ -271,15 +271,18 @@ export default function BulkImportPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleDownloadGeneralSample}>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            variant="outline"
+            onClick={selectedCategoryData?.catCode === "SP" ? handleDownloadSponsorSample : handleDownloadGeneralSample}
+            className={selectedCategoryData?.catCode === "SP" ? "border-purple-300 text-purple-700 hover:bg-purple-50" : ""}
+          >
             <Download className="w-4 h-4 mr-2" />
-            General Sample
+            {selectedCategoryData?.catCode === "SP" ? "Sponsor Sample" : "General Sample"}
           </Button>
-          <Button variant="outline" onClick={handleDownloadSponsorSample} className="border-purple-300 text-purple-700 hover:bg-purple-50">
-            <Download className="w-4 h-4 mr-2" />
-            Sponsor Sample
-          </Button>
+          {!selectedCategory && (
+            <span className="text-xs text-gray-400">Select a category to get the right sample</span>
+          )}
         </div>
       </div>
 
