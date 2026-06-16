@@ -191,7 +191,7 @@ export default function BulkImportPage() {
     setProgress({ current: 0, total: 0 });
   };
 
-  const handleDownloadSample = () => {
+  const handleDownloadGeneralSample = () => {
     const headers = ["Name", "Phone Number", "Preacher", "Venue"];
     const examples = [
       ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall"],
@@ -205,33 +205,54 @@ export default function BulkImportPage() {
       ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
       ["Venue", "No", "Seating venue or hall name"],
-      ["", "", ""],
-      ["--- Sponsor-only columns ---", "", ""],
-      ["Tier", "Sponsors only", "Bahumana tier A / B / C — decides which gift/kit the desk gives. Independent of slot."],
-      ["SubCategory", "Sponsors only", "Seva slot code (e.g. SDGP, PA) — the timing/seating. Same phone + same slot = skip. Different slot = new QR."],
-      ["Sponsor Sevas", "Sponsors only", "Seva name e.g. Pratistha Abhisheka (informational)"],
-      ["Sponsor Category", "Sponsors only", "Sponsor tier label e.g. Gold, Silver (informational only)"],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
     ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }];
-    const headerStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" } },
-      fill: { fgColor: { rgb: "E85D24" } },
-      alignment: { horizontal: "center" },
-    };
-    headers.forEach((_, i) => {
-      const cell = XLSX.utils.encode_cell({ r: 0, c: i });
-      if (!ws[cell]) ws[cell] = { v: headers[i] };
-      ws[cell].s = headerStyle;
-    });
-    const wsNotes = XLSX.utils.aoa_to_sheet(notes);
-    wsNotes["!cols"] = [{ wch: 22 }, { wch: 14 }, { wch: 80 }];
+    const s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
+    headers.forEach((_, i) => { const c2 = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c2]) ws[c2] = { v: headers[i] }; ws[c2].s = s; });
+    const wsN = XLSX.utils.aoa_to_sheet(notes);
+    wsN["!cols"] = [{ wch: 18 }, { wch: 12 }, { wch: 60 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Holders");
-    XLSX.utils.book_append_sheet(wb, wsNotes, "Column Notes");
-    XLSX.writeFile(wb, "iskcon_seva_pass_import.xlsx");
-    toast.success("Sample sheet downloaded!");
+    XLSX.utils.book_append_sheet(wb, wsN, "Column Notes");
+    XLSX.writeFile(wb, "iskcon_general_import.xlsx");
+    toast.success("General sample downloaded!");
   };
+
+  const handleDownloadSponsorSample = () => {
+    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Tier", "SubCategory"];
+    const examples = [
+      ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall", "A", "SDGP"],
+      ["Hari Dasa",          "9876543211", "GPVP", "Temple",    "B", "PA"],
+      ["Radha Devi Dasi",    "9876543212", "MKGD", "Main Hall", "A", "PA"],
+      ["Shadgoswami Prabhu", "9876543210", "GPVP", "Outside",   "A", "PA"],
+    ];
+    const notes = [
+      ["Column", "Required?", "Notes"],
+      ["Name", "Yes", "Full name of the devotee"],
+      ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
+      ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
+      ["Venue", "No", "Seating venue or hall name"],
+      ["Tier", "Sponsors", "Bahumana tier — A / B / C. Decides the gift/kit. Independent of slot."],
+      ["SubCategory", "Sponsors", "Seva slot code matching Events → Seva Slots (e.g. SDGP, PA, A, B). Same phone + same slot = skip. Same phone + different slot = new QR."],
+      ["", "", ""],
+      ["Note:", "", "Row 1 and Row 4 have same phone but same SubCategory (PA) — Row 4 will be skipped. Use different SubCategory codes for multiple QRs on same number."],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 8 }, { wch: 14 }];
+    const base = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
+    const spon = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7B3FA0" } } };
+    headers.forEach((_, i) => { const c2 = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c2]) ws[c2] = { v: headers[i] }; ws[c2].s = i >= 4 ? spon : base; });
+    const wsN = XLSX.utils.aoa_to_sheet(notes);
+    wsN["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 90 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sponsor Holders");
+    XLSX.utils.book_append_sheet(wb, wsN, "Column Notes");
+    XLSX.writeFile(wb, "iskcon_sponsor_import.xlsx");
+    toast.success("Sponsor sample downloaded!");
+  };
+
+  const handleDownloadSample = handleDownloadGeneralSample;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -250,10 +271,16 @@ export default function BulkImportPage() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={handleDownloadSample}>
-          <Download className="w-4 h-4 mr-2" />
-          Download Sample
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownloadGeneralSample}>
+            <Download className="w-4 h-4 mr-2" />
+            General Sample
+          </Button>
+          <Button variant="outline" onClick={handleDownloadSponsorSample} className="border-purple-300 text-purple-700 hover:bg-purple-50">
+            <Download className="w-4 h-4 mr-2" />
+            Sponsor Sample
+          </Button>
+        </div>
       </div>
 
       {!importResult ? (
