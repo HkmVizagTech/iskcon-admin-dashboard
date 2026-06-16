@@ -252,6 +252,7 @@ export default function BulkImportPage() {
     toast.success("Sponsor sample downloaded!");
   };
 
+  // Smart: auto-selects sponsor or general sheet based on selected category
   const handleDownloadSample = handleDownloadGeneralSample;
 
   return (
