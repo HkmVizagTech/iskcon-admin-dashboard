@@ -88,7 +88,7 @@ export default function EventsPage() {
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {events?.map((event: any) => (
             <Card key={event._id} padding={false}>
               <div className="h-32 bg-gradient-to-r from-orange-400 to-red-500 relative">

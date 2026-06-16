@@ -7,15 +7,15 @@ import {
   Calendar,
   Users,
   QrCode,
-  BarChart3,
+  Upload,
 } from "lucide-react";
 
 const mobileItems = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Events", href: "/events", icon: Calendar },
   { name: "Holders", href: "/holders", icon: Users },
-  { name: "QR", href: "/holders/create", icon: QrCode },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
+  { name: "Issue QR", href: "/holders/create", icon: QrCode },
+  { name: "Import", href: "/holders/import", icon: Upload },
 ];
 
 export default function MobileNav() {

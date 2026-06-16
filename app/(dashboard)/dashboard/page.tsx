@@ -54,7 +54,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Events" value={stats?.totalEvents || 0} icon={<Calendar className="w-6 h-6" />} color="blue" loading={statsLoading} />
         <StatCard title="Active Passes" value={stats?.activePasses || 0} icon={<QrCode className="w-6 h-6" />} color="green" loading={statsLoading} />
         <StatCard title="Total Holders" value={stats?.totalHolders || 0} icon={<Users className="w-6 h-6" />} color="purple" loading={statsLoading} />
@@ -62,7 +62,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Events + Scan Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         {/* Recent Events */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">

@@ -258,7 +258,7 @@ export default function BulkImportPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center space-x-4">
           <Link href="/holders" className="text-gray-600 hover:text-gray-900">
             <ArrowLeft className="w-6 h-6" />
@@ -272,7 +272,7 @@ export default function BulkImportPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-start sm:items-end gap-1">
           <Button
             variant="outline"
             onClick={selectedCategoryData?.catCode === "SP" ? handleDownloadSponsorSample : handleDownloadGeneralSample}

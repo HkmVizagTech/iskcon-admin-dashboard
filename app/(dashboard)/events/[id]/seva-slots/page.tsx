@@ -74,7 +74,7 @@ export default function SevaSlotsPage() {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
@@ -140,7 +140,7 @@ export default function SevaSlotsPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 sm:mx-0 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-5 border-b border-gray-100">
               <h2 className="text-lg font-semibold">{editing ? "Edit Slot" : "Add Seva Slot"}</h2>
               <p className="text-xs text-gray-400 mt-0.5">The code is used as the sub-category on QR passes</p>

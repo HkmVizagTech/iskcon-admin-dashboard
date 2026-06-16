@@ -191,7 +191,7 @@ export default function CreateHolderPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link href="/holders" className="text-gray-600 hover:text-gray-900">

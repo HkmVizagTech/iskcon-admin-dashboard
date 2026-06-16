@@ -124,7 +124,7 @@ export default function EditEventPage() {
       <Card>
         <CardHeader><h2 className="text-lg font-semibold">Basic Information</h2></CardHeader>
         <CardBody className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Event Name"
               value={formData.name}
@@ -145,7 +145,7 @@ export default function EditEventPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Start Date & Time (IST)"
               type="datetime-local"
