@@ -207,9 +207,10 @@ export default function BulkImportPage() {
       ["Venue", "No", "Seating venue or hall name"],
       ["", "", ""],
       ["--- Sponsor-only columns ---", "", ""],
-      ["SubCategory", "Sponsors only", "Seva slot code (e.g. A, B, SDGP). Same phone + same code = skip. Different code = new QR."],
+      ["Tier", "Sponsors only", "Bahumana tier A / B / C — decides which gift/kit the desk gives. Independent of slot."],
+      ["SubCategory", "Sponsors only", "Seva slot code (e.g. SDGP, PA) — the timing/seating. Same phone + same slot = skip. Different slot = new QR."],
       ["Sponsor Sevas", "Sponsors only", "Seva name e.g. Pratistha Abhisheka (informational)"],
-      ["Sponsor Category", "Sponsors only", "Tier e.g. Gold, Silver, Bronze (informational)"],
+      ["Sponsor Category", "Sponsors only", "Sponsor tier label e.g. Gold, Silver (informational only)"],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
     ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }];

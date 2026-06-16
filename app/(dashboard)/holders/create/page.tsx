@@ -22,7 +22,8 @@ export default function CreateHolderPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedVenue, setSelectedVenue] = useState("");
   const [preacher, setPreacher] = useState("");
-  const [subCategory, setSubCategory] = useState("");
+  const [tier, setTier] = useState("");          // bahumana A/B/C
+  const [slotCode, setSlotCode] = useState("");  // seva slot code
   const [overrideReason, setOverrideReason] = useState("");
   const [duplicateWarning, setDuplicateWarning] = useState<any>(null);
   const [preacherId, setPreacherId] = useState("");
@@ -137,7 +138,8 @@ export default function CreateHolderPage() {
           preacher: preacher,
           preacherId: preacherId || undefined,
           venueName: selectedVenue || selectedEventData?.venue?.[0]?.name || "",
-          subCategory: subCategory.trim().toUpperCase() || undefined,
+          subCategory: tier.trim().toUpperCase() || undefined,      // bahumana tier
+          sevaSlotCode: slotCode.trim().toUpperCase() || undefined,  // seva slot
           overrideReason: overrideReason.trim() || undefined,
         },
       );
@@ -442,79 +444,119 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
 
-                  {/* Step 4.5: Seva Slot (Sub Category) */}
+                  {/* Step 4.5: Sponsor details — Bahumana Tier + Seva Slot */}
                   <Card>
                     <CardHeader>
                       <h2 className="font-semibold">
-                        Step 4.5: Seva Slot
-                        <span className="ml-2 text-sm font-normal text-gray-500">optional — determines seating and bahumana</span>
+                        Step 4.5: Sponsor Details
+                        <span className="ml-2 text-sm font-normal text-gray-500">tier (bahumana) and seva slot (timing) — for sponsors</span>
                       </h2>
                     </CardHeader>
-                    <CardBody className="space-y-3">
-                      {sevaSlots && sevaSlots.length > 0 ? (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Select Slot</label>
+                    <CardBody className="space-y-4">
+                      {/* Bahumana Tier */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Bahumana Tier
+                          <span className="ml-1.5 text-xs text-gray-400 font-normal">A / B / C — decides the gift/kit</span>
+                        </label>
+                        <div className="flex gap-2">
+                          {["", "A", "B", "C"].map((t) => (
+                            <button
+                              key={t || "none"}
+                              type="button"
+                              onClick={() => setTier(t)}
+                              className={`flex-1 py-2.5 rounded-xl border-2 font-black text-lg transition-colors ${
+                                tier === t
+                                  ? t === "A" ? "bg-amber-100 text-amber-800 border-amber-400"
+                                  : t === "B" ? "bg-slate-100 text-slate-700 border-slate-400"
+                                  : t === "C" ? "bg-orange-100 text-orange-800 border-orange-400"
+                                  : "bg-gray-100 text-gray-500 border-gray-300"
+                                  : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              {t || "None"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Seva Slot (timing) */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Seva Slot <span className="ml-1.5 text-xs text-gray-400 font-normal">timing / seating</span>
+                        </label>
+                        {sevaSlots && sevaSlots.length > 0 ? (
                           <select
-                            value={subCategory}
-                            onChange={(e) => setSubCategory(e.target.value)}
+                            value={slotCode}
+                            onChange={(e) => setSlotCode(e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                           >
-                            <option value="">— No slot / General —</option>
+                            <option value="">— No slot —</option>
                             {sevaSlots.map((s: any) => (
                               <option key={s._id} value={s.code}>
-                                {s.code} — {s.name}{s.time ? ` · ${s.time}` : ""}
+                                {s.name}{s.time ? ` · ${s.time}` : ""}
                               </option>
                             ))}
                           </select>
-                          {subCategory && (() => {
-                            const s = sevaSlots.find((sl: any) => sl.code === subCategory);
-                            return s ? (
-                              <div className="mt-3 flex items-center gap-3 bg-orange-50 rounded-xl px-4 py-3 border border-orange-100">
-                                <span className={`font-mono font-black text-2xl px-3 py-1 rounded-full border ${
-                                  s.code === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
-                                  s.code === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
-                                  s.code === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
-                                  "bg-purple-100 text-purple-800 border-purple-300"
-                                }`}>{s.code}</span>
+                        ) : (
+                          <div>
+                            <input
+                              type="text"
+                              value={slotCode}
+                              onChange={(e) => setSlotCode(e.target.value.toUpperCase())}
+                              placeholder="e.g. SDGP, PA"
+                              maxLength={12}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-mono font-bold uppercase tracking-widest"
+                            />
+                            <a href={`/events/${selectedEvent}/seva-slots`} target="_blank" rel="noreferrer"
+                              className="text-xs text-orange-600 hover:underline mt-1 inline-block">
+                              Configure seva slots for this event →
+                            </a>
+                          </div>
+                        )}
+                        {slotCode && sevaSlots && (() => {
+                          const s = sevaSlots.find((sl: any) => sl.code === slotCode);
+                          return s ? (
+                            <p className="mt-2 text-sm text-gray-600">
+                              🕉️ {s.name}{s.time ? ` · 🕐 ${s.time}` : ""}
+                              {s.description ? <span className="block text-xs text-gray-400">{s.description}</span> : null}
+                            </p>
+                          ) : null;
+                        })()}
+                      </div>
+
+                      {/* Combined preview */}
+                      {(tier || slotCode) && (
+                        <div className="bg-orange-50 rounded-xl px-4 py-3 border border-orange-100">
+                          <p className="text-xs text-gray-500 mb-1">Scanner will show:</p>
+                          <div className="flex items-center gap-3">
+                            {tier && (
+                              <span className={`font-black text-2xl px-3 py-1 rounded-xl border ${
+                                tier === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                                tier === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+                                tier === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
+                                "bg-purple-100 text-purple-800 border-purple-300"
+                              }`}>{tier}</span>
+                            )}
+                            {slotCode && sevaSlots && (() => {
+                              const s = sevaSlots.find((sl: any) => sl.code === slotCode);
+                              return s ? (
                                 <div>
-                                  <p className="font-semibold text-gray-900">{s.name}</p>
-                                  {s.time && <p className="text-sm text-gray-500">🕐 {s.time}</p>}
-                                  {s.description && <p className="text-xs text-gray-400 mt-0.5">{s.description}</p>}
+                                  <p className="text-sm font-semibold text-gray-900">{s.name}</p>
+                                  {s.time && <p className="text-xs text-gray-500">{s.time}</p>}
                                 </div>
-                              </div>
-                            ) : null;
-                          })()}
-                        </div>
-                      ) : (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Sub Category
-                            <span className="ml-1.5 text-xs text-gray-400 font-normal">
-                              e.g. A, B, C or SDGP, PA — 
-                              <a href={`/events/${selectedEvent}/seva-slots`} target="_blank" rel="noreferrer"
-                                className="text-orange-600 hover:underline ml-1">
-                                Configure slots for this event →
-                              </a>
-                            </span>
-                          </label>
-                          <input
-                            type="text"
-                            value={subCategory}
-                            onChange={(e) => setSubCategory(e.target.value.toUpperCase())}
-                            placeholder="e.g. A"
-                            maxLength={12}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-mono font-bold uppercase tracking-widest"
-                          />
+                              ) : null;
+                            })()}
+                          </div>
                         </div>
                       )}
 
-                      {/* Duplicate seva-slot warning */}
+                      {/* Duplicate warning */}
                       {duplicateWarning && (
                         <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
                           <p className="text-sm font-semibold text-amber-800 mb-1">⚠️ Seva slot already issued</p>
                           <p className="text-sm text-amber-700 mb-1">
-                            <strong>{duplicateWarning.existing?.holderName}</strong> already has an active pass
-                            {duplicateWarning.existing?.subCategory ? ` for slot "${duplicateWarning.existing.subCategory}"` : ""} on this number.
+                            <strong>{duplicateWarning.existing?.holderName}</strong> already has an active pass on this number for this seva slot.
                           </p>
                           <p className="text-xs text-amber-600 mb-3">{duplicateWarning.hint}</p>
                           <label className="block text-sm font-medium text-amber-800 mb-1">Reason for issuing additional pass *</label>
