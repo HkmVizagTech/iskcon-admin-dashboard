@@ -31,7 +31,10 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function HolderDetailsPage() {
   const params = useParams();
   const { user } = useAuth();
-  const canManualEntry = user?.permissions?.canManualEntry === true;
+  const canManualEntry =
+    user?.role === "super_admin" ||
+    user?.role === "event_admin" ||
+    user?.permissions?.canManualEntry === true;
   const router = useRouter();
   const holderId = params.id as string;
 

@@ -14,7 +14,10 @@ export default function GatePage() {
   const params = useParams();
   const eventId = params.id as string;
   const { user } = useAuth();
-  const canManualEntry = user?.permissions?.canManualEntry === true;
+  const canManualEntry =
+    user?.role === "super_admin" ||
+    user?.role === "event_admin" ||
+    user?.permissions?.canManualEntry === true;
 
   const [query, setQuery] = useState("");
   const [markedIds, setMarkedIds] = useState<Set<string>>(new Set());
