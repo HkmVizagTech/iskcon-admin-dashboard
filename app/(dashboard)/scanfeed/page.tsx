@@ -79,7 +79,7 @@ export default function ScanFeedPage() {
       if (!selectedEvent) return null;
       // FIX: use cursor-based pagination — old page param returned same first page every time
       const params = new URLSearchParams();
-      params.append("limit", "20");
+      params.append("limit", "50");
       if (cursor) params.append("before", cursor);
       if (resultFilter) params.append("result", resultFilter);
       if (slotFilter === "morning" || slotFilter === "evening") params.append("session", slotFilter);
@@ -392,7 +392,7 @@ export default function ScanFeedPage() {
               </div>
 
               {/* Pagination */}
-              {scanData?.pagination && scanData.pagination.pages > 1 && (
+              {scanData?.pagination?.hasMore && (
                 <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                   <span className="text-sm text-gray-500">
                     Page {scanData.pagination.page} of{" "}
