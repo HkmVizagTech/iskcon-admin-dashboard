@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { ArrowLeft, RefreshCw, Maximize2, Printer } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import toast from "react-hot-toast";
 
 const TIER_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
   A: { bg: "bg-amber-50",  text: "text-amber-900",  border: "border-amber-300", label: "Tier A" },
@@ -23,32 +23,35 @@ const TIER_CHIP: Record<string, string> = {
   C: "bg-orange-400 text-white",
 };
 
+type Session = "all" | "morning" | "evening";
+
 export default function BahumanaAnnouncementPage() {
   const params = useParams();
   const eventId = params.id as string;
   const [fullscreen, setFullscreen] = useState(false);
-  const [selectedSlotId, setSelectedSlotId] = useState<string>("all");
+  const [session, setSession] = useState<Session>("all");
   const { user, logout } = useAuth();
   const isAnnouncer = user?.role === "announcer" || user?.permissions?.canBahumanaView === true;
 
-  // Fetch seva slots for this event
-  const { data: slotsData } = useQuery({
-    queryKey: ["seva-slots", eventId],
-    queryFn: async () => (await api.get(`/events/${eventId}/seva-slots`)).data,
-  });
-  const sevaSlots: any[] = slotsData?.slots || [];
-
   const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
-    queryKey: ["bahumana-announcement", eventId, selectedSlotId],
+    queryKey: ["bahumana-announcement", eventId, session],
     queryFn: async () => {
-      const params = selectedSlotId !== "all" ? `?slotId=${selectedSlotId}` : "";
-      const res = await api.get(`/reports/events/${eventId}/bahumana-announcement${params}`);
+      const res = await api.get(
+        `/reports/events/${eventId}/bahumana-announcement?session=${session}`
+      );
       return res.data;
     },
     refetchInterval: 30000,
   });
 
+  const sessions = data?.sessions || {};
   const grouped: { tier: string; holders: any[] }[] = data?.grouped || [];
+
+  const SESSION_TABS: { key: Session; emoji: string; label: string }[] = [
+    { key: "all",     emoji: "🕉️", label: "All Sessions" },
+    { key: "morning", emoji: "🌅", label: "Morning" },
+    { key: "evening", emoji: "🌆", label: "Evening" },
+  ];
 
   return (
     <div className={fullscreen ? "fixed inset-0 z-[200] bg-white overflow-auto" : "space-y-4"}>
@@ -69,66 +72,48 @@ export default function BahumanaAnnouncementPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => refetch()}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-            title="Refresh"
-          >
+          <button onClick={() => refetch()} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Refresh">
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
-          <button
-            onClick={() => window.print()}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-            title="Print"
-          >
+          <button onClick={() => window.print()} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Print">
             <Printer className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setFullscreen(!fullscreen)}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-            title={fullscreen ? "Exit fullscreen" : "Fullscreen for announcer"}
-          >
+          <button onClick={() => setFullscreen(!fullscreen)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
             <Maximize2 className="w-4 h-4" />
           </button>
           {isAnnouncer && (
-            <button
-              onClick={logout}
-              className="ml-2 px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50"
-            >
+            <button onClick={logout} className="ml-2 px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">
               Log out
             </button>
           )}
         </div>
       </div>
 
-      {/* Slot filter tabs */}
-      {sevaSlots.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            onClick={() => setSelectedSlotId("all")}
-            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
-              selectedSlotId === "all"
-                ? "bg-orange-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            🕉️ All Slots
-          </button>
-          {sevaSlots.map((s: any) => (
+      {/* Morning / Evening session tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {SESSION_TABS.map(({ key, emoji, label }) => {
+          const count = sessions[key]?.count;
+          const sub = key === "morning" ? "Before 2:00 PM" : key === "evening" ? "From 2:00 PM" : null;
+          return (
             <button
-              key={s._id}
-              onClick={() => setSelectedSlotId(s._id)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
-                selectedSlotId === s._id
-                  ? "bg-orange-600 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              key={key}
+              onClick={() => setSession(key)}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex flex-col items-center min-w-[110px] ${
+                session === key
+                  ? "bg-orange-600 text-white shadow-sm"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
               }`}
             >
-              {s.code} — {s.name}{s.time ? ` · ${s.time}` : ""}
+              <span>{emoji} {label}</span>
+              {count !== undefined && (
+                <span className={`text-xs mt-0.5 font-normal ${session === key ? "text-orange-100" : "text-gray-400"}`}>
+                  {count} attended{sub ? ` · ${sub}` : ""}
+                </span>
+              )}
             </button>
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center py-16">
@@ -137,7 +122,13 @@ export default function BahumanaAnnouncementPage() {
       ) : grouped.length === 0 ? (
         <Card>
           <CardBody>
-            <p className="text-center text-gray-400 py-8">No sponsors have attended yet. Scan some QRs first.</p>
+            <p className="text-center text-gray-400 py-8">
+              {session === "morning"
+                ? "No sponsors attended before 2:00 PM yet."
+                : session === "evening"
+                ? "No sponsors attended from 2:00 PM yet."
+                : "No sponsors have attended yet. Scan some QRs first."}
+            </p>
           </CardBody>
         </Card>
       ) : (
@@ -147,7 +138,6 @@ export default function BahumanaAnnouncementPage() {
             const chip = TIER_CHIP[tier];
             return (
               <div key={tier} className={`rounded-2xl border-2 ${style.border} ${style.bg} overflow-hidden`}>
-                {/* Tier header */}
                 <div className={`px-5 py-3 flex items-center gap-3 border-b ${style.border}`}>
                   {chip && (
                     <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl ${chip}`}>
@@ -159,29 +149,21 @@ export default function BahumanaAnnouncementPage() {
                     <p className={`text-sm ${style.text} opacity-60`}>{holders.length} attended</p>
                   </div>
                 </div>
-
-                {/* Names list */}
                 <div className="divide-y divide-gray-100">
                   {holders.map((h: any, i: number) => (
                     <div key={h._id} className="px-5 py-3 flex items-start gap-4">
-                      {/* Number */}
                       <span className={`text-2xl font-black opacity-30 w-8 text-right shrink-0 ${style.text}`}>
                         {i + 1}
                       </span>
-                      {/* Name */}
                       <div className="flex-1">
-                        <p className={`text-lg font-bold leading-tight ${style.text}`}>
-                          {h.name}
-                        </p>
+                        <p className={`text-lg font-bold leading-tight ${style.text}`}>{h.name}</p>
                         {h.sevaSlotId && (
                           <p className={`text-sm mt-0.5 opacity-70 ${style.text}`}>
                             🕉️ {h.sevaSlotId.name}{h.sevaSlotId.time ? ` · ${h.sevaSlotId.time}` : ""}
                           </p>
                         )}
                         {h.venueName && (
-                          <p className={`text-xs mt-0.5 opacity-50 ${style.text}`}>
-                            📍 {h.venueName}
-                          </p>
+                          <p className={`text-xs mt-0.5 opacity-50 ${style.text}`}>📍 {h.venueName}</p>
                         )}
                       </div>
                     </div>
