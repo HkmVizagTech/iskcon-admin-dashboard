@@ -82,7 +82,7 @@ export default function ScanFeedPage() {
       params.append("limit", "20");
       if (cursor) params.append("before", cursor);
       if (resultFilter) params.append("result", resultFilter);
-      if (slotFilter) params.append("slotId", slotFilter);
+      if (slotFilter === "morning" || slotFilter === "evening") params.append("session", slotFilter);
       const response = await api.get(
         `/reports/events/${selectedEvent}/scan-log?${params}`,
       );
@@ -235,20 +235,26 @@ export default function ScanFeedPage() {
                   <option value="not_included">❌ Not Included</option>
                   <option value="invalid">❌ Invalid</option>
                 </select>
-                {sevaSlots.length > 0 && (
-                  <select
-                    value={slotFilter}
-                    onChange={(e) => handleSlotFilterChange(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="">All Slots</option>
-                    {sevaSlots.map((s: any) => (
-                      <option key={s._id} value={s._id}>
-                        {s.code} — {s.name}{s.time ? ` · ${s.time}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                {/* Morning / Evening session filter */}
+                <div className="flex gap-1">
+                  {([
+                    { val: "", label: "All" },
+                    { val: "morning", label: "🌅 Morning" },
+                    { val: "evening", label: "🌆 Evening" },
+                  ]).map(({ val, label }) => (
+                    <button
+                      key={val}
+                      onClick={() => handleSlotFilterChange(val)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        slotFilter === val
+                          ? "bg-orange-600 text-white"
+                          : "border border-gray-300 text-gray-600 hover:border-orange-400"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </>
             )}
           </div>
