@@ -27,16 +27,25 @@ export default function BahumanaAnnouncementPage() {
   const params = useParams();
   const eventId = params.id as string;
   const [fullscreen, setFullscreen] = useState(false);
+  const [selectedSlotId, setSelectedSlotId] = useState<string>("all");
   const { user, logout } = useAuth();
   const isAnnouncer = user?.role === "announcer" || user?.permissions?.canBahumanaView === true;
 
+  // Fetch seva slots for this event
+  const { data: slotsData } = useQuery({
+    queryKey: ["seva-slots", eventId],
+    queryFn: async () => (await api.get(`/events/${eventId}/seva-slots`)).data,
+  });
+  const sevaSlots: any[] = slotsData?.slots || [];
+
   const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
-    queryKey: ["bahumana-announcement", eventId],
+    queryKey: ["bahumana-announcement", eventId, selectedSlotId],
     queryFn: async () => {
-      const res = await api.get(`/reports/events/${eventId}/bahumana-announcement`);
+      const params = selectedSlotId !== "all" ? `?slotId=${selectedSlotId}` : "";
+      const res = await api.get(`/reports/events/${eventId}/bahumana-announcement${params}`);
       return res.data;
     },
-    refetchInterval: 30000, // auto-refresh every 30s
+    refetchInterval: 30000,
   });
 
   const grouped: { tier: string; holders: any[] }[] = data?.grouped || [];
@@ -91,6 +100,35 @@ export default function BahumanaAnnouncementPage() {
           )}
         </div>
       </div>
+
+      {/* Slot filter tabs */}
+      {sevaSlots.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setSelectedSlotId("all")}
+            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
+              selectedSlotId === "all"
+                ? "bg-orange-600 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            🕉️ All Slots
+          </button>
+          {sevaSlots.map((s: any) => (
+            <button
+              key={s._id}
+              onClick={() => setSelectedSlotId(s._id)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
+                selectedSlotId === s._id
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {s.code} — {s.name}{s.time ? ` · ${s.time}` : ""}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-16">

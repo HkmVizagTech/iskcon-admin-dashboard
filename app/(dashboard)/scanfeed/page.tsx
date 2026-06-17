@@ -37,6 +37,10 @@ export default function ScanFeedPage() {
     setCursor(null);
     setCursors([]);
   };
+  const handleSlotFilterChange = (slotId: string) => {
+    setSlotFilter(slotId);
+    setCursor(null);
+  };
   const handleFilterChange = (filter: string) => {
     setResultFilter(filter);
     setCursor(null);
@@ -46,6 +50,18 @@ export default function ScanFeedPage() {
   const [cursors, setCursors] = useState<string[]>([]); // history for back navigation
   const [searchFilter, setSearchFilter] = useState("");
   const [resultFilter, setResultFilter] = useState("");
+  const [slotFilter, setSlotFilter] = useState("");
+
+  // Fetch seva slots for selected event
+  const { data: slotsData } = useQuery({
+    queryKey: ["seva-slots-feed", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return null;
+      return (await api.get(`/events/${selectedEvent}/seva-slots`)).data;
+    },
+    enabled: !!selectedEvent,
+  });
+  const sevaSlots: any[] = slotsData?.slots || [];
 
   // Fetch events for filter
   const { data: events } = useQuery({
@@ -58,7 +74,7 @@ export default function ScanFeedPage() {
 
   // Fetch scan logs
   const { data: scanData, isLoading: scansLoading } = useQuery({
-    queryKey: ["scan-logs", selectedEvent, cursor, resultFilter],
+    queryKey: ["scan-logs", selectedEvent, cursor, resultFilter, slotFilter],
     queryFn: async () => {
       if (!selectedEvent) return null;
       // FIX: use cursor-based pagination — old page param returned same first page every time
@@ -66,6 +82,7 @@ export default function ScanFeedPage() {
       params.append("limit", "20");
       if (cursor) params.append("before", cursor);
       if (resultFilter) params.append("result", resultFilter);
+      if (slotFilter) params.append("slotId", slotFilter);
       const response = await api.get(
         `/reports/events/${selectedEvent}/scan-log?${params}`,
       );
