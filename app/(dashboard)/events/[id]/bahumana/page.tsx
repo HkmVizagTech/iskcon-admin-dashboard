@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -26,6 +27,8 @@ export default function BahumanaAnnouncementPage() {
   const params = useParams();
   const eventId = params.id as string;
   const [fullscreen, setFullscreen] = useState(false);
+  const { user, logout } = useAuth();
+  const isAnnouncer = user?.role === "announcer";
 
   const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["bahumana-announcement", eventId],
@@ -43,7 +46,7 @@ export default function BahumanaAnnouncementPage() {
       {/* Header */}
       <div className={`flex items-center justify-between ${fullscreen ? "sticky top-0 bg-white border-b px-6 py-3 z-10" : ""}`}>
         <div className="flex items-center gap-3">
-          {!fullscreen && (
+          {!fullscreen && !isAnnouncer && (
             <Link href={`/events/${eventId}`}>
               <ArrowLeft className="w-5 h-5 text-gray-500 hover:text-gray-700" />
             </Link>
@@ -78,6 +81,14 @@ export default function BahumanaAnnouncementPage() {
           >
             <Maximize2 className="w-4 h-4" />
           </button>
+          {isAnnouncer && (
+            <button
+              onClick={logout}
+              className="ml-2 px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50"
+            >
+              Log out
+            </button>
+          )}
         </div>
       </div>
 

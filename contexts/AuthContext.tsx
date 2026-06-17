@@ -63,7 +63,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", token);
       setUser(user);
       toast.success("Welcome back! Hare Krishna 🙏");
-      router.push("/dashboard");
+      // Announcer role: redirect directly to their bahumana view
+      if (user.role === "announcer") {
+        const eventId = user.permissions?.allowedEvents?.[0];
+        if (eventId) {
+          router.push(`/events/${eventId}/bahumana`);
+        } else {
+          router.push("/bahumana-select");
+        }
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Login failed");
       throw error;

@@ -12,7 +12,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +30,17 @@ export default function DashboardLayout({
   }
 
   if (!isAuthenticated) return null;
+
+  // Announcer role: clean fullscreen layout with no sidebar/nav
+  if (user?.role === "announcer") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
+        <div className="max-w-2xl mx-auto p-4">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
