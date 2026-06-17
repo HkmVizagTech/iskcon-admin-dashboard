@@ -49,6 +49,18 @@ export default function EventDetailsPage() {
     refetchOnWindowFocus: true,
   });
 
+  // Fetch live stats from the reports summary endpoint
+  const { data: summaryData } = useQuery({
+    queryKey: ["event-summary", eventId],
+    queryFn: async () => {
+      const res = await api.get(`/reports/events/${eventId}/summary`);
+      return res.data;
+    },
+    staleTime: 30000,
+    refetchInterval: 60000, // auto-refresh every minute
+    enabled: !!eventId,
+  });
+
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["event", eventId] });
     refetch();
@@ -166,6 +178,12 @@ export default function EventDetailsPage() {
           >
             🕉️ Seva Slots
           </button>
+          <Link
+            href={`/events/${eventId}/bahumana`}
+            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
+          >
+            🎁 Bahumana View
+          </Link>
         </nav>
       </div>
 
@@ -175,19 +193,21 @@ export default function EventDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard
               title="Total Passes"
-              value={event?.stats?.totalPasses || 0}
+              value={summaryData?.totalIssued ?? 0}
               icon={<QrCode className="w-6 h-6" />}
               color="blue"
             />
             <StatCard
               title="Scanned Passes"
-              value={event?.stats?.scannedPasses || 0}
+              value={summaryData?.totalScanned ?? 0}
               icon={<Users className="w-6 h-6" />}
               color="green"
             />
             <StatCard
               title="Scan Rate"
-              value={`${event?.stats?.scanRate || 0}%`}
+              value={summaryData?.totalIssued
+                ? `${Math.round((summaryData.totalScanned / summaryData.totalIssued) * 100)}%`
+                : "0%"}
               icon={<Calendar className="w-6 h-6" />}
               color="orange"
             />
