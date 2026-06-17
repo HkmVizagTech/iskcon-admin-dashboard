@@ -73,12 +73,12 @@ export default function HolderDetailsPage() {
   // All hooks MUST be before early returns (React rules)
   const [showQRModal, setShowQRModal] = useState(false);
   // QR image endpoint is public (no auth needed).
-  // Use NEXT_PUBLIC_API_URL, falling back to the known Railway backend.
-  const BACKEND_BASE = (
+  // QR image base — use NEXT_PUBLIC_API_URL directly (it already ends with /api)
+  // Fallback to the Railway backend URL for safety
+  const API_ROOT = (
     process.env.NEXT_PUBLIC_API_URL ||
     "https://iskcon-seva-pass-backend-production.up.railway.app/api"
-  ).replace(/\/api\/?$/, "").replace(/\/$/, "")
-    || "https://iskcon-seva-pass-backend-production.up.railway.app";
+  ).replace(/\/$/, ""); // strip trailing slash only
 
   if (isLoading) {
     return (
@@ -91,7 +91,7 @@ export default function HolderDetailsPage() {
   const holder = data?.holder;
   const qrPass = data?.qrPass;
   const qrImageUrl = qrPass?.qrId
-    ? `${BACKEND_BASE}/api/qr/${qrPass.qrId}/image`
+    ? `${API_ROOT}/qr/${qrPass.qrId}/image`
     : null;
 
   return (
