@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import { ArrowLeft, RefreshCw, Maximize2, Printer } from "lucide-react";
+import { ArrowLeft, RefreshCw, Maximize2, Printer, Download } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import toast from "react-hot-toast";
 
@@ -32,6 +32,24 @@ export default function BahumanaAnnouncementPage() {
   const [session, setSession] = useState<Session>("all");
   const { user, logout } = useAuth();
   const isAnnouncer = user?.role === "announcer" || user?.permissions?.canBahumanaView === true;
+
+  const exportCSV = async () => {
+    try {
+      const res = await api.get(
+        `/reports/events/${eventId}/bahumana-announcement/export?session=${session}`,
+        { responseType: "blob" }
+      );
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bahumana_${session}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("CSV downloaded");
+    } catch {
+      toast.error("Export failed");
+    }
+  };
 
   const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["bahumana-announcement", eventId, session],
@@ -74,6 +92,14 @@ export default function BahumanaAnnouncementPage() {
         <div className="flex items-center gap-2">
           <button onClick={() => refetch()} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Refresh">
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+          </button>
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700"
+            title="Download CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            CSV
           </button>
           <button onClick={() => window.print()} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Print">
             <Printer className="w-4 h-4" />
