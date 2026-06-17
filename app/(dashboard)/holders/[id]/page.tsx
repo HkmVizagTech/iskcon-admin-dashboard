@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
@@ -70,6 +70,11 @@ export default function HolderDetailsPage() {
       toast.error(error.response?.data?.error || "Failed to revoke"),
   });
 
+  // All hooks MUST be before early returns (React rules)
+  const [showQRModal, setShowQRModal] = useState(false);
+  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace("/api","")
+    || "https://iskcon-seva-pass-backend-production.up.railway.app";
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -80,6 +85,9 @@ export default function HolderDetailsPage() {
 
   const holder = data?.holder;
   const qrPass = data?.qrPass;
+  const qrImageUrl = qrPass?.qrId
+    ? `${API_BASE}/api/qr/${qrPass.qrId}/image`
+    : null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -194,6 +202,35 @@ export default function HolderDetailsPage() {
             </h2>
           </CardHeader>
           <CardBody className="space-y-3">
+            {/* QR Image */}
+            {qrImageUrl && (
+              <div className="flex flex-col items-center gap-3 py-2">
+                <div
+                  className="cursor-pointer rounded-2xl border-2 border-orange-200 p-3 bg-white shadow hover:shadow-md transition-shadow"
+                  onClick={() => setShowQRModal(true)}
+                  title="Click to view fullscreen"
+                >
+                  <img
+                    src={qrImageUrl}
+                    alt="QR Code"
+                    className="w-40 h-40 object-contain"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowQRModal(true)}
+                  className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                >
+                  🖥️ Show on Screen — Scan at Desk
+                </button>
+                <a
+                  href={qrImageUrl}
+                  download={`${qrPass.qrId}.png`}
+                  className="w-full py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium text-center transition-colors"
+                >
+                  ⬇️ Download QR
+                </a>
+              </div>
+            )}
             <div>
               <p className="text-sm text-gray-500">QR ID</p>
               <p className="font-mono text-sm text-gray-900">
@@ -358,6 +395,28 @@ export default function HolderDetailsPage() {
             </div>
           </CardBody>
         </Card>
+      )}
+
+      {/* Fullscreen QR modal — tap screen to scan at desk */}
+      {showQRModal && qrImageUrl && (
+        <div
+          className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center gap-6 cursor-pointer"
+          onClick={() => setShowQRModal(false)}
+        >
+          <p className="text-white/50 text-sm">Tap anywhere to close</p>
+          <div className="bg-white rounded-3xl p-6 shadow-2xl">
+            <img
+              src={qrImageUrl}
+              alt="QR Code"
+              className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
+            />
+          </div>
+          <div className="text-center px-6">
+            <p className="text-white font-bold text-xl">{data?.holder?.name}</p>
+            <p className="text-white/60 text-sm font-mono mt-1">{qrPass?.qrId}</p>
+          </div>
+          <p className="text-white/40 text-xs">Point the QR scanner at this screen</p>
+        </div>
       )}
     </div>
   );
