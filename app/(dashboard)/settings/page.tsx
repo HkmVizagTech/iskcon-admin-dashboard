@@ -195,7 +195,7 @@ export default function SettingsPage() {
 function StaffUsersSection() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "announcer", eventId: "", canManualEntry: false });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "announcer", eventId: "", canManualEntry: false, canBahumanaView: false });
 
   const { data: eventsData } = useQuery({
     queryKey: ["events-all"],
@@ -212,7 +212,7 @@ function StaffUsersSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff-users"] });
       setShowForm(false);
-      setForm({ name: "", email: "", password: "", role: "announcer", eventId: "", canManualEntry: false });
+      setForm({ name: "", email: "", password: "", role: "announcer", eventId: "", canManualEntry: false, canBahumanaView: false });
       toast.success("Staff user created");
     },
     onError: (e: any) => toast.error(e.response?.data?.error || "Failed to create user"),
@@ -224,6 +224,16 @@ function StaffUsersSection() {
       queryClient.invalidateQueries({ queryKey: ["staff-users"] });
       toast.success("User deleted");
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: any }) =>
+      api.patch(`/auth/staff/${userId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff-users"] });
+      toast.success("User updated");
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || "Failed to update"),
   });
 
   return (
@@ -288,6 +298,17 @@ function StaffUsersSection() {
                   🖐 Allow Manual Entry <span className="text-gray-400 text-xs">(mark attendance without QR scan)</span>
                 </span>
               </label>
+              <label className="flex items-center gap-2 sm:col-span-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.canBahumanaView}
+                  onChange={e => setForm({...form, canBahumanaView: e.target.checked})}
+                  className="w-4 h-4 rounded text-orange-600"
+                />
+                <span className="text-sm text-gray-700">
+                  🎁 Bahumana View Access <span className="text-gray-400 text-xs">(can see the announcement view)</span>
+                </span>
+              </label>
               <select
                 value={form.eventId}
                 onChange={e => setForm({...form, eventId: e.target.value})}
@@ -305,6 +326,7 @@ function StaffUsersSection() {
                   name: form.name, email: form.email, password: form.password,
                   role: form.role,
                   canManualEntry: form.canManualEntry,
+                  canBahumanaView: form.canBahumanaView,
                   allowedEvents: form.eventId ? [form.eventId] : [],
                 })}
                 disabled={!form.name || !form.email || !form.password || createMutation.isPending}
@@ -339,6 +361,11 @@ function StaffUsersSection() {
                         🖐 Manual Entry
                       </span>
                     )}
+                    {u.canBahumanaView && (
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                        🎁 Bahumana View
+                      </span>
+                    )}
                     {u.allowedEvents?.map((ev: any) => (
                       <span key={ev._id} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                         {ev.eventCode || ev.name}
@@ -346,12 +373,28 @@ function StaffUsersSection() {
                     ))}
                   </div>
                 </div>
-                <button
-                  onClick={() => confirm("Delete this user?") && deleteMutation.mutate(u._id)}
-                  className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50"
-                >
-                  🗑
-                </button>
+                <div className="flex items-center gap-1">
+                  <select
+                    defaultValue={u.role}
+                    onChange={(e) => updateMutation.mutate({
+                      userId: u._id,
+                      data: { role: e.target.value }
+                    })}
+                    className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:ring-1 focus:ring-orange-400"
+                  >
+                    <option value="announcer">🎁 Announcer</option>
+                    <option value="event_admin">Event Admin</option>
+                    <option value="campaign_manager">Campaign Manager</option>
+                    <option value="volunteer">Volunteer</option>
+                    <option value="preacher">Preacher</option>
+                  </select>
+                  <button
+                    onClick={() => confirm("Delete this user?") && deleteMutation.mutate(u._id)}
+                    className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50"
+                  >
+                    🗑
+                  </button>
+                </div>
               </div>
             ))}
           </div>

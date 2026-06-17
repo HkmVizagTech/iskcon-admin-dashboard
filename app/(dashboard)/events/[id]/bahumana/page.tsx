@@ -28,7 +28,7 @@ export default function BahumanaAnnouncementPage() {
   const eventId = params.id as string;
   const [fullscreen, setFullscreen] = useState(false);
   const { user, logout } = useAuth();
-  const isAnnouncer = user?.role === "announcer";
+  const isAnnouncer = user?.role === "announcer" || user?.permissions?.canBahumanaView === true;
 
   const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["bahumana-announcement", eventId],

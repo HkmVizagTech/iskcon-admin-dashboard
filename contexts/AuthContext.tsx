@@ -16,6 +16,7 @@ interface User {
   permissions: {
     canOverride: boolean;
     canManualEntry: boolean;
+    canBahumanaView: boolean;
     allowedEvents: string[];
   };
 }
@@ -65,12 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user);
       toast.success("Welcome back! Hare Krishna 🙏");
       // Announcer role: redirect directly to their bahumana view
-      if (user.role === "announcer") {
+      const isBahumanaOnly = user.role === "announcer" || user.permissions?.canBahumanaView;
+      if (isBahumanaOnly) {
         const eventId = user.permissions?.allowedEvents?.[0];
         if (eventId) {
           router.push(`/events/${eventId}/bahumana`);
         } else {
-          router.push("/bahumana-select");
+          router.push("/dashboard");
         }
       } else {
         router.push("/dashboard");
