@@ -72,7 +72,12 @@ export default function HolderDetailsPage() {
 
   // All hooks MUST be before early returns (React rules)
   const [showQRModal, setShowQRModal] = useState(false);
-  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "").replace("/api","")
+  // QR image endpoint is public (no auth needed).
+  // Use NEXT_PUBLIC_API_URL, falling back to the known Railway backend.
+  const BACKEND_BASE = (
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://iskcon-seva-pass-backend-production.up.railway.app/api"
+  ).replace(/\/api\/?$/, "").replace(/\/$/, "")
     || "https://iskcon-seva-pass-backend-production.up.railway.app";
 
   if (isLoading) {
@@ -86,7 +91,7 @@ export default function HolderDetailsPage() {
   const holder = data?.holder;
   const qrPass = data?.qrPass;
   const qrImageUrl = qrPass?.qrId
-    ? `${API_BASE}/api/qr/${qrPass.qrId}/image`
+    ? `${BACKEND_BASE}/api/qr/${qrPass.qrId}/image`
     : null;
 
   return (
@@ -211,8 +216,9 @@ export default function HolderDetailsPage() {
                   title="Click to view fullscreen"
                 >
                   <img
-                    src={qrImageUrl}
+                    src={qrImageUrl!}
                     alt="QR Code"
+                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
                     className="w-40 h-40 object-contain"
                   />
                 </div>
@@ -406,8 +412,9 @@ export default function HolderDetailsPage() {
           <p className="text-white/50 text-sm">Tap anywhere to close</p>
           <div className="bg-white rounded-3xl p-6 shadow-2xl">
             <img
-              src={qrImageUrl}
+              src={qrImageUrl!}
               alt="QR Code"
+              onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
               className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
             />
           </div>
