@@ -235,6 +235,20 @@ export default function ScanFeedPage() {
                   <option value="not_included">❌ Not Included</option>
                   <option value="invalid">❌ Invalid</option>
                 </select>
+                {sevaSlots.length > 0 && (
+                  <select
+                    value={slotFilter}
+                    onChange={(e) => handleSlotFilterChange(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">All Slots</option>
+                    {sevaSlots.map((s: any) => (
+                      <option key={s._id} value={s._id}>
+                        {s.code} — {s.name}{s.time ? ` · ${s.time}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </>
             )}
           </div>
