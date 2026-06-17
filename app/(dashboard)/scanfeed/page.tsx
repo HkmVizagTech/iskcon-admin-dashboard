@@ -284,31 +284,54 @@ export default function ScanFeedPage() {
                   scanData?.logs?.map((log: any) => (
                     <div
                       key={log._id}
-                      className="px-6 py-4 grid grid-cols-5 gap-4 items-center hover:bg-gray-50"
+                      className="px-4 py-3 grid grid-cols-1 sm:grid-cols-5 gap-2 sm:gap-4 items-start hover:bg-gray-50 border-b border-gray-100 last:border-0"
                     >
-                      <div>
-                        <div className="flex items-center">
-                          <User className="w-4 h-4 text-gray-400 mr-2" />
-                          <span className="font-medium text-gray-900 text-sm">
+                      {/* Holder name + phone + category + tier/slot */}
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <User className="w-4 h-4 text-gray-400 shrink-0" />
+                          <span className="font-semibold text-gray-900 text-sm">
                             {log.holderId?.name || "Unknown"}
                           </span>
+                          {log.holderId?.catId && (
+                            <span
+                              className="text-xs px-1.5 py-0.5 rounded-full font-medium text-white"
+                              style={{ background: log.holderId.catId.color || "#9CA3AF" }}
+                            >
+                              {log.holderId.catId.name}
+                            </span>
+                          )}
+                          {log.holderId?.subCategory && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold border ${
+                              log.holderId.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                              log.holderId.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+                              log.holderId.subCategory === "C" ? "bg-orange-100 text-orange-700 border-orange-300" :
+                              "bg-purple-100 text-purple-700 border-purple-300"
+                            }`}>
+                              {log.holderId.subCategory}
+                            </span>
+                          )}
                         </div>
                         {log.holderId?.phone && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            {log.holderId.phone}
+                          <p className="text-xs text-gray-400 mt-0.5 ml-5">{log.holderId.phone}</p>
+                        )}
+                        {log.holderId?.sevaSlotId && (
+                          <p className="text-xs text-blue-600 mt-0.5 ml-5">
+                            🕉️ {log.holderId.sevaSlotId.name}{log.holderId.sevaSlotId.time ? ` · ${log.holderId.sevaSlotId.time}` : ""}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="w-3 h-3 mr-1 text-gray-400" />
+                      {/* Station */}
+                      <div className="flex items-center text-sm text-gray-600 gap-1">
+                        <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
                         {log.stationLabel || log.epId?.name || "Unknown"}
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {log.scannedBy?.name || "Unknown"}
+                      {/* Scanned by + time */}
+                      <div>
+                        <p className="text-sm text-gray-600">{log.scannedBy?.name || "—"}</p>
+                        <p className="text-xs text-gray-400">{formatIST(log.scannedAt, "MMM d, h:mm a")}</p>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {formatIST(log.scannedAt, "MMM d, h:mm a")}
-                      </div>
+                      {/* Result */}
                       <div>{getResultBadge(log.result)}</div>
                     </div>
                   ))
