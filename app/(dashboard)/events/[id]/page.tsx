@@ -184,6 +184,12 @@ export default function EventDetailsPage() {
           >
             🎁 Bahumana View
           </Link>
+          <Link
+            href={`/events/${eventId}/gate`}
+            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-amber-600 hover:text-amber-700 font-semibold whitespace-nowrap"
+          >
+            🖐 Gate Entry
+          </Link>
         </nav>
       </div>
 

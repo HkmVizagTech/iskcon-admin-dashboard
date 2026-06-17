@@ -15,6 +15,7 @@ interface User {
   phone?: string;
   permissions: {
     canOverride: boolean;
+    canManualEntry: boolean;
     allowedEvents: string[];
   };
 }

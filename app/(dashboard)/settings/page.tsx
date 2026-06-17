@@ -195,7 +195,7 @@ export default function SettingsPage() {
 function StaffUsersSection() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "announcer", eventId: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "announcer", eventId: "", canManualEntry: false });
 
   const { data: eventsData } = useQuery({
     queryKey: ["events-all"],
@@ -212,7 +212,7 @@ function StaffUsersSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff-users"] });
       setShowForm(false);
-      setForm({ name: "", email: "", password: "", role: "announcer", eventId: "" });
+      setForm({ name: "", email: "", password: "", role: "announcer", eventId: "", canManualEntry: false });
       toast.success("Staff user created");
     },
     onError: (e: any) => toast.error(e.response?.data?.error || "Failed to create user"),
@@ -277,6 +277,17 @@ function StaffUsersSection() {
                 <option value="campaign_manager">Campaign Manager</option>
                 <option value="volunteer">Volunteer</option>
               </select>
+              <label className="flex items-center gap-2 sm:col-span-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.canManualEntry}
+                  onChange={e => setForm({...form, canManualEntry: e.target.checked})}
+                  className="w-4 h-4 rounded text-orange-600"
+                />
+                <span className="text-sm text-gray-700">
+                  🖐 Allow Manual Entry <span className="text-gray-400 text-xs">(mark attendance without QR scan)</span>
+                </span>
+              </label>
               <select
                 value={form.eventId}
                 onChange={e => setForm({...form, eventId: e.target.value})}
@@ -293,6 +304,7 @@ function StaffUsersSection() {
                 onClick={() => createMutation.mutate({
                   name: form.name, email: form.email, password: form.password,
                   role: form.role,
+                  canManualEntry: form.canManualEntry,
                   allowedEvents: form.eventId ? [form.eventId] : [],
                 })}
                 disabled={!form.name || !form.email || !form.password || createMutation.isPending}
@@ -322,6 +334,11 @@ function StaffUsersSection() {
                     <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
                       {u.role}
                     </span>
+                    {u.canManualEntry && (
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                        🖐 Manual Entry
+                      </span>
+                    )}
                     {u.allowedEvents?.map((ev: any) => (
                       <span key={ev._id} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                         {ev.eventCode || ev.name}

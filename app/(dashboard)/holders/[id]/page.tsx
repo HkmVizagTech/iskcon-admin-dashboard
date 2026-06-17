@@ -25,10 +25,13 @@ import {
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 export default function HolderDetailsPage() {
   const params = useParams();
+  const { user } = useAuth();
+  const canManualEntry = user?.permissions?.canManualEntry === true;
   const router = useRouter();
   const holderId = params.id as string;
 
@@ -53,6 +56,18 @@ export default function HolderDetailsPage() {
     onSuccess: () => toast.success("QR resent successfully!"),
     onError: (error: any) =>
       toast.error(error.response?.data?.error || "Failed to resend"),
+  });
+
+  const manualEntryMutation = useMutation({
+    mutationFn: async () => api.post(`/qr/${qrPass?.qrId}/manual-entry`, {
+      stationLabel: "Admin Dashboard",
+      reason: "Manual entry by admin",
+    }),
+    onSuccess: (res) => {
+      toast.success(res.data.message || "Marked as attended ✅");
+      refetch();
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || "Failed"),
   });
 
   const revokeMutation = useMutation({
