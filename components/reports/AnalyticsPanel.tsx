@@ -21,26 +21,27 @@ interface Props {
 
 export default function AnalyticsPanel({ events }: Props) {
   const [scope, setScope] = useState<string>("all");
+  const [session, setSession] = useState<"all" | "morning" | "evening">("all");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["analytics", scope],
+    queryKey: ["analytics", scope, session],
     queryFn: async () => {
-      const params = scope && scope !== "all" ? `?eventId=${scope}` : "?eventId=all";
-      return (await api.get(`/reports/analytics${params}`)).data;
+      const eventParam = scope && scope !== "all" ? `eventId=${scope}` : "eventId=all";
+      return (await api.get(`/reports/analytics?${eventParam}&session=${session}`)).data;
     },
   });
 
   const exportAngle = async (angle: string) => {
     try {
-      const params = `?eventId=${scope || "all"}&angle=${angle}`;
+      const params = `?eventId=${scope || "all"}&angle=${angle}&session=${session}`;
       const res = await api.get(`/reports/analytics/export${params}`, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `report_${angle}_${scope}.csv`;
+      a.download = `report_${angle}_${session}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
-      toast.success(`${angle} report exported`);
+      toast.success(`${angle} (${session}) exported`);
     } catch {
       toast.error("Export failed");
     }
@@ -67,6 +68,35 @@ export default function AnalyticsPanel({ events }: Props) {
           </div>
         </CardBody>
       </Card>
+
+      {/* Morning / Evening session tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {([
+          { key: "all",     emoji: "🕉️", label: "All",     sub: null },
+          { key: "morning", emoji: "🌅", label: "Morning", sub: "Before 2 PM" },
+          { key: "evening", emoji: "🌆", label: "Evening", sub: "From 2 PM" },
+        ] as const).map(({ key, emoji, label, sub }) => {
+          const count = data?.sessions?.[key]?.count;
+          return (
+            <button
+              key={key}
+              onClick={() => setSession(key)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                session === key
+                  ? "bg-orange-600 text-white shadow-sm"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
+              }`}
+            >
+              {emoji} {label}
+              {count !== undefined && (
+                <span className={`ml-1.5 text-xs font-normal ${session === key ? "text-orange-100" : "text-gray-400"}`}>
+                  {count}{sub ? ` · ${sub}` : ""}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
