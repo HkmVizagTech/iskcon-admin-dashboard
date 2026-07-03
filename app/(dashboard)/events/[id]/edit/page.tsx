@@ -19,6 +19,7 @@ function buildFormData(eventData: any) {
     description: eventData?.description || "",
     dateStart: eventData?.dateStart ? utcToISTLocal(eventData.dateStart) : "",
     dateEnd: eventData?.dateEnd ? utcToISTLocal(eventData.dateEnd) : "",
+    thirdPartyEventId: eventData?.thirdPartyEventId || "",
     scanStart: eventData?.scanStart ? utcToISTLocal(eventData.scanStart) : "",
     scanEnd: eventData?.scanEnd ? utcToISTLocal(eventData.scanEnd) : "",
     donorThreshold: eventData?.donorThreshold || 0,
@@ -76,8 +77,7 @@ export default function EditEventPage() {
       if (formData.dateEnd) payload.dateEnd = istLocalToISO(formData.dateEnd);
       payload.scanStart = formData.scanStart ? istLocalToISO(formData.scanStart) : null;
       payload.scanEnd = formData.scanEnd ? istLocalToISO(formData.scanEnd) : null;
-      payload.scanStart = formData.scanStart ? istLocalToISO(formData.scanStart) : null;
-      payload.scanEnd = formData.scanEnd ? istLocalToISO(formData.scanEnd) : null;
+      payload.thirdPartyEventId = formData.thirdPartyEventId?.trim() || null;
       if (formData.donorThreshold !== undefined) payload.donorThreshold = formData.donorThreshold;
       const cleanVenues = venues.filter((v) => v.name.trim());
       if (cleanVenues.length > 0) payload.venue = cleanVenues;
@@ -181,28 +181,23 @@ export default function EditEventPage() {
               <p className="text-xs text-gray-400 mt-1">QRs stop working after this time</p>
             </div>
 
-            {/* Scan Window */}
-            <div className="col-span-2 pt-2">
-              <p className="text-sm font-semibold text-gray-700 mb-1">
-                🔒 Scan Window
-                <span className="ml-2 text-xs font-normal text-gray-400">
-                  When QRs are valid at the gate — independent of ceremony time.
-                  Leave blank to use Event Start/End dates.
-                </span>
+            <div className="col-span-2 pt-4 border-t border-orange-100">
+              <p className="text-sm font-semibold text-gray-800 mb-0.5">🔗 Community App Sync</p>
+              <p className="text-xs text-gray-400 mb-3">
+                If set, every QR issued for this event is automatically pushed to
+                harekrishnavizag.co.in's community app using this event_id. Leave blank to disable sync for this event.
               </p>
             </div>
-            <Input
-              label="Gate Opens (Scan Start — IST)"
-              type="datetime-local"
-              value={formData.scanStart}
-              onChange={(e) => setFormData({ ...formData, scanStart: e.target.value })}
-            />
-            <Input
-              label="Gate Closes (Scan End — IST)"
-              type="datetime-local"
-              value={formData.scanEnd}
-              onChange={(e) => setFormData({ ...formData, scanEnd: e.target.value })}
-            />
+            <div className="col-span-2 sm:col-span-1">
+              <Input
+                label="Community App event_id"
+                type="text"
+                placeholder="e.g. event_5"
+                value={formData.thirdPartyEventId}
+                onChange={(e) => setFormData({ ...formData, thirdPartyEventId: e.target.value })}
+              />
+              <p className="text-xs text-gray-400 mt-1">Their event ID — ask their team, or agree on one together</p>
+            </div>
           </div>
         </CardBody>
       </Card>
