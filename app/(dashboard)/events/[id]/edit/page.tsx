@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { utcToISTLocal, istLocalToISO } from "@/lib/dateUtils";
 import toast from "react-hot-toast";
-import { ArrowLeft, MapPin, Plus, X } from "lucide-react";
+import { ArrowLeft, MapPin, Plus, X, Tags } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -52,18 +52,32 @@ export default function EditEventPage() {
   });
 
   // FIX: Initialise directly from cache if available so fields are never blank.
-  // Previously used useEffect + populated guard which caused a blank-then-filled flash
-  // because React renders the empty initial state before the effect runs.
   const [formData, setFormData] = useState(() => buildFormData(eventData));
   const [venues, setVenues] = useState<{ name: string; address: string }[]>(
     () => buildVenues(eventData),
   );
 
-  // Sync when server data arrives (handles the async fetch case)
+  // Devotee app categories — which categories the Seva Pass app can show
+  const [devCats, setDevCats] = useState<{ catCode: string; name: string; limit: number | null }[]>(
+    () => eventData?.devoteeAppCategories || [],
+  );
+
+  // Fetch all categories for this event
+  const { data: allCategories } = useQuery({
+    queryKey: ["categories", eventId],
+    queryFn: async () => {
+      const response = await api.get(`/events/${eventId}/categories`);
+      return response.data;
+    },
+    enabled: !!eventId,
+  });
+
+  // Sync when server data arrives
   useEffect(() => {
     if (eventData) {
       setFormData(buildFormData(eventData));
       setVenues(buildVenues(eventData));
+      setDevCats(eventData.devoteeAppCategories || []);
     }
   }, [eventData]);
 
@@ -81,6 +95,14 @@ export default function EditEventPage() {
       if (formData.donorThreshold !== undefined) payload.donorThreshold = formData.donorThreshold;
       const cleanVenues = venues.filter((v) => v.name.trim());
       if (cleanVenues.length > 0) payload.venue = cleanVenues;
+
+      // Save devoteeAppCategories — null clears the restriction (all categories shown)
+      if (devCats.length > 0) {
+        payload.devoteeAppCategories = devCats;
+      } else {
+        payload.devoteeAppCategories = null; // null = unset = show all
+      }
+
       const response = await api.patch(`/events/${eventId}`, payload);
       return response.data;
     },
@@ -99,6 +121,23 @@ export default function EditEventPage() {
   const addVenue = () => setVenues([...venues, { name: "", address: "" }]);
   const removeVenue = (index: number) => {
     if (venues.length > 1) setVenues(venues.filter((_, i) => i !== index));
+  };
+
+  // ── Devotee app category helpers ──────────────────────────────────────
+  const toggleDevCat = (cat: any) => {
+    setDevCats((prev) => {
+      const exists = prev.find((c) => c.catCode === cat.catCode);
+      if (exists) {
+        return prev.filter((c) => c.catCode !== cat.catCode);
+      }
+      return [...prev, { catCode: cat.catCode, name: cat.name, limit: null }];
+    });
+  };
+
+  const setDevCatLimit = (catCode: string, limit: number | null) => {
+    setDevCats((prev) =>
+      prev.map((c) => (c.catCode === catCode ? { ...c, limit } : c)),
+    );
   };
 
   if (isLoading && !eventData) {
@@ -185,7 +224,7 @@ export default function EditEventPage() {
               <p className="text-sm font-semibold text-gray-800 mb-0.5">🔗 Community App Sync</p>
               <p className="text-xs text-gray-400 mb-3">
                 If set, every QR issued for this event is automatically pushed to
-                harekrishnavizag.co.in's community app using this event_id. Leave blank to disable sync for this event.
+                harekrishnavizag.co.in&apos;s community app using this event_id. Leave blank to disable sync for this event.
               </p>
             </div>
             <div className="col-span-2 sm:col-span-1">
@@ -266,6 +305,89 @@ export default function EditEventPage() {
               setFormData({ ...formData, donorThreshold: parseInt(e.target.value) || 0 })
             }
           />
+        </CardBody>
+      </Card>
+
+      {/* ── Devotee App Categories ────────────────────────────────────── */}
+      <Card>
+        <CardHeader>
+          <h2 className="text-lg font-semibold">
+            <Tags className="w-5 h-5 inline mr-2" />
+            Devotee App — Pass Types
+          </h2>
+        </CardHeader>
+        <CardBody>
+          <p className="text-sm text-gray-500 mb-4">
+            Choose which categories the <strong>Seva Pass devotee app</strong> can show when issuing passes for this event.
+            Leave <strong>all unchecked</strong> to allow every category. You can also set a max pass limit per category.
+          </p>
+
+          {!allCategories || allCategories.length === 0 ? (
+            <p className="text-sm text-gray-400 italic">No categories found. Create categories under the Categories tab first.</p>
+          ) : (
+            <div className="space-y-3">
+              {allCategories.map((cat: any) => {
+                const isEnabled = devCats.some((c) => c.catCode === cat.catCode);
+                const devCat = devCats.find((c) => c.catCode === cat.catCode);
+
+                return (
+                  <div
+                    key={cat.catCode}
+                    className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
+                      isEnabled
+                        ? "border-orange-400 bg-orange-50"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <label className="flex items-center space-x-3 cursor-pointer flex-1">
+                      <input
+                        type="checkbox"
+                        checked={isEnabled}
+                        onChange={() => toggleDevCat(cat)}
+                        className="rounded border-gray-300 text-orange-600"
+                      />
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
+                        style={{ backgroundColor: (cat.color || "#FF6B6B") + "20" }}
+                      >
+                        {cat.icon || "🏷️"}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{cat.name}</p>
+                        <p className="text-xs text-gray-500 font-mono">{cat.catCode}</p>
+                      </div>
+                    </label>
+
+                    {isEnabled && (
+                      <div className="flex items-center space-x-2 ml-4">
+                        <label className="text-xs text-gray-500">Max passes:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          inputMode="numeric"
+                          className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-lg"
+                          placeholder="∞"
+                          value={devCat?.limit ?? ""}
+                          onChange={(e) =>
+                            setDevCatLimit(
+                              cat.catCode,
+                              e.target.value ? Number(e.target.value) : null,
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {devCats.length > 0 && (
+            <p className="text-xs text-orange-600 mt-3">
+              {devCats.length} {devCats.length === 1 ? "category" : "categories"} enabled for the devotee app
+            </p>
+          )}
         </CardBody>
       </Card>
 
