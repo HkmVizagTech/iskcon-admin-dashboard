@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
 import toast from "react-hot-toast";
@@ -163,14 +163,59 @@ export default function VolunteersPage() {
     }
   };
 
+  // ─── FIX: auto-select/deselect stations when toggling events ─────────────
+  // Track which event was just added so the effect below can auto-select
+  // its stations once the entry-point query refetches.
+  const justAddedEventRef = useRef<string | null>(null);
+
   const toggleEvent = (eventId: string) => {
+    const removing = formData.assignedEvents.includes(eventId);
+
     setFormData((prev) => ({
       ...prev,
-      assignedEvents: prev.assignedEvents.includes(eventId)
+      assignedEvents: removing
         ? prev.assignedEvents.filter((id) => id !== eventId)
         : [...prev.assignedEvents, eventId],
+      // When REMOVING an event, also drop its entry points so the
+      // backend doesn't silently keep old stations the volunteer can no
+      // longer use.
+      assignedEntryPoints: removing
+        ? prev.assignedEntryPoints.filter((epId) => {
+            const ep = availableEntryPoints?.find((e: any) => e._id === epId);
+            return ep && (ep.eventId?._id || ep.eventId) !== eventId;
+          })
+        : prev.assignedEntryPoints,
     }));
+
+    // Track which event was just added so the effect below can auto-select
+    // its stations once the entry-point query refetches.
+    if (!removing) {
+      justAddedEventRef.current = eventId;
+    }
   };
+
+  // When a new event is toggled on and the available entry points
+  // refetch, auto-select all stations belonging to that event so the
+  // volunteer actually has scanners for the new event.
+  useEffect(() => {
+    const eventId = justAddedEventRef.current;
+    if (!eventId || !availableEntryPoints) return;
+    justAddedEventRef.current = null;
+
+    const stationsForEvent = availableEntryPoints
+      .filter((ep: any) => (ep.eventId?._id || ep.eventId) === eventId)
+      .map((ep: any) => ep._id);
+
+    if (stationsForEvent.length === 0) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      assignedEntryPoints: Array.from(
+        new Set([...prev.assignedEntryPoints, ...stationsForEvent])
+      ),
+    }));
+  }, [availableEntryPoints]);
+  // ─────────────────────────────────────────────────────────────────────────
 
   const toggleVenue = (venueKey: string) => {
     setFormData((prev) => {
