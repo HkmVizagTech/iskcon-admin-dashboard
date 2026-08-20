@@ -45,6 +45,7 @@ interface CategoryFormData {
   color: string;
   icon: string;
   entryPointIds: string[];
+  holderTypeId: string;
   issuerRoleRequired: string;
   overrideAllowedBy: string;
 }
@@ -56,6 +57,7 @@ const EMPTY_CAT_FORM: CategoryFormData = {
   color: "#FF6B6B",
   icon: "🎟️",
   entryPointIds: [],
+  holderTypeId: "",
   issuerRoleRequired: "event_admin",
   overrideAllowedBy: "event_admin",
 };
