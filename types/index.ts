@@ -123,7 +123,7 @@ export interface QRPass {
   status: "active" | "used" | "revoked" | "expired";
   paymentId?: string;
   paymentAmount?: number;
-  deliveryMethod: "whatsapp" | "email" | "print" | "screen" | "none";
+  deliveryMethod: "whatsapp" | "email" | "both" | "mobile" | "mobile_whatsapp" | "print" | "screen" | "none";
   deliveredAt?: string;
   deliveryStatus: "pending" | "sent" | "delivered" | "failed";
   redemptionHistory: Redemption[];

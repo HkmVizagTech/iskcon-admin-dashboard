@@ -298,7 +298,10 @@ export default function HolderDetailsPage() {
             <div>
               <p className="text-sm text-gray-500">Delivery Method</p>
               <p className="text-sm text-gray-900 capitalize">
-                {qrPass?.deliveryMethod === "none" ? "None (App only)" : qrPass?.deliveryMethod || "N/A"}
+                {qrPass?.deliveryMethod === "none" ? "None" :
+                 qrPass?.deliveryMethod === "mobile" ? "Mobile App" :
+                 qrPass?.deliveryMethod === "mobile_whatsapp" ? "Mobile + WhatsApp" :
+                 qrPass?.deliveryMethod || "N/A"}
               </p>
             </div>
             <div>

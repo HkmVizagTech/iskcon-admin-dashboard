@@ -34,7 +34,7 @@ export default function CreateHolderPage() {
     lifetimeDonation: "",
   });
   const [deliveryMethod, setDeliveryMethod] = useState<
-    "whatsapp" | "email" | "both" | "none"
+    "whatsapp" | "email" | "both" | "none" | "mobile" | "mobile_whatsapp"
   >("whatsapp");
   const [generatedQR, setGeneratedQR] = useState<any>(null);
   const [showQRPreview, setShowQRPreview] = useState(false);
@@ -149,10 +149,12 @@ export default function CreateHolderPage() {
       const ds = data.qrPass?.deliveryStatus;
       const de = data.qrPass?.deliveryError;
       if (ds === "sent") {
-        toast.success("QR Pass generated & sent via WhatsApp ✓");
+        const method = deliveryMethod === "mobile" ? "mobile app" :
+          deliveryMethod === "mobile_whatsapp" ? "WhatsApp & mobile app" : "WhatsApp";
+        toast.success(`QR Pass generated & sent via ${method}`);
       } else if (ds === "failed") {
-        toast.success("QR Pass generated ✓");
-        toast.error(`WhatsApp delivery failed: ${de || "Unknown error"}`, { duration: 8000 });
+        toast.success("QR Pass generated");
+        toast.error(`Delivery failed: ${de || "Unknown error"}`, { duration: 8000 });
       } else {
         toast.success("QR Pass generated successfully!");
       }
@@ -587,7 +589,7 @@ export default function CreateHolderPage() {
                       <h2 className="font-semibold">Step 5: Delivery Method</h2>
                     </CardHeader>
                     <CardBody>
-                      <div className="flex space-x-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <label className="flex items-center">
                           <input
                             type="radio"
@@ -627,6 +629,30 @@ export default function CreateHolderPage() {
                         <label className="flex items-center">
                           <input
                             type="radio"
+                            value="mobile"
+                            checked={deliveryMethod === "mobile"}
+                            onChange={(e) =>
+                              setDeliveryMethod(e.target.value as any)
+                            }
+                            className="text-orange-600 focus:ring-orange-500"
+                          />
+                          <span className="ml-2">Mobile App</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            value="mobile_whatsapp"
+                            checked={deliveryMethod === "mobile_whatsapp"}
+                            onChange={(e) =>
+                              setDeliveryMethod(e.target.value as any)
+                            }
+                            className="text-orange-600 focus:ring-orange-500"
+                          />
+                          <span className="ml-2">Mobile + WhatsApp</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
                             value="none"
                             checked={deliveryMethod === "none"}
                             onChange={(e) =>
@@ -634,12 +660,22 @@ export default function CreateHolderPage() {
                             }
                             className="text-orange-600 focus:ring-orange-500"
                           />
-                          <span className="ml-2">None (App only)</span>
+                          <span className="ml-2">None</span>
                         </label>
                       </div>
+                      {deliveryMethod === "mobile" && (
+                        <p className="mt-2 text-sm text-gray-500">
+                          QR will be pushed to the community mobile app only.
+                        </p>
+                      )}
+                      {deliveryMethod === "mobile_whatsapp" && (
+                        <p className="mt-2 text-sm text-gray-500">
+                          QR will be sent via WhatsApp and also pushed to the community mobile app.
+                        </p>
+                      )}
                       {deliveryMethod === "none" && (
                         <p className="mt-2 text-sm text-gray-500">
-                          QR will be generated but not sent. The devotee can fetch it via the mobile app.
+                          QR will be generated but not sent anywhere.
                         </p>
                       )}
                     </CardBody>
