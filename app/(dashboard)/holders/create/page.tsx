@@ -34,7 +34,7 @@ export default function CreateHolderPage() {
     lifetimeDonation: "",
   });
   const [deliveryMethod, setDeliveryMethod] = useState<
-    "whatsapp" | "email" | "both"
+    "whatsapp" | "email" | "both" | "none"
   >("whatsapp");
   const [generatedQR, setGeneratedQR] = useState<any>(null);
   const [showQRPreview, setShowQRPreview] = useState(false);
@@ -624,7 +624,24 @@ export default function CreateHolderPage() {
                           />
                           <span className="ml-2">Both</span>
                         </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            value="none"
+                            checked={deliveryMethod === "none"}
+                            onChange={(e) =>
+                              setDeliveryMethod(e.target.value as any)
+                            }
+                            className="text-orange-600 focus:ring-orange-500"
+                          />
+                          <span className="ml-2">None (App only)</span>
+                        </label>
                       </div>
+                      {deliveryMethod === "none" && (
+                        <p className="mt-2 text-sm text-gray-500">
+                          QR will be generated but not sent. The devotee can fetch it via the mobile app.
+                        </p>
+                      )}
                     </CardBody>
                   </Card>
 
