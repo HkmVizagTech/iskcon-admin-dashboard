@@ -377,8 +377,8 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
 
-                  {/* Step 3.5: Category & Slot — only if holder type has categories or is sponsor */}
-                  {(selectedHolderType?.categories?.length > 0 || selectedHolderType?.catCode === "SP") && (
+                  {/* Step 3.5: Category & Slot — only if holder type has categories or is sponsor/donor */}
+                  {(selectedHolderType?.categories?.length > 0 || ["SP", "DN"].includes(selectedHolderType?.catCode)) && (
                   <Card>
                     <CardHeader>
                       <h2 className="font-semibold">
@@ -390,14 +390,14 @@ export default function CreateHolderPage() {
                     </CardHeader>
                     <CardBody className="space-y-4">
                       {/* Category */}
-                      {selectedHolderType?.categories?.length > 0 && (
+                      {(selectedHolderType?.categories?.length > 0 || ["SP", "DN"].includes(selectedHolderType?.catCode)) && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Category
                           <span className="ml-1.5 text-xs text-gray-400 font-normal">select a category for this holder</span>
                         </label>
                         <div className="flex gap-2">
-                          {["", ...(selectedHolderType.categories || [])].map((t: string) => (
+                          {["", ...(selectedHolderType.categories?.length > 0 ? selectedHolderType.categories : ["A", "B", "C"])].map((t: string) => (
                             <button
                               key={t || "none"}
                               type="button"
