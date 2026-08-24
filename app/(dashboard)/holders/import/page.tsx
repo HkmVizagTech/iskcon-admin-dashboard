@@ -32,6 +32,9 @@ export default function BulkImportPage() {
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
   const [selectedPreacherId, setSelectedPreacherId] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<
+    "whatsapp" | "email" | "both" | "mobile" | "mobile_whatsapp" | "none"
+  >("whatsapp");
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -148,7 +151,7 @@ export default function BulkImportPage() {
         "holderType",
         selectedHolderType?.code?.toLowerCase() || "custom",
       );
-      formData.append("deliveryMethod", "whatsapp");
+      formData.append("deliveryMethod", deliveryMethod);
 
       const response = await api.post(
         `/events/${selectedEvent}/holders/bulk`,
@@ -397,6 +400,42 @@ export default function BulkImportPage() {
                       )}
                     </div>
                   )}
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Step 2.5: Delivery Method */}
+            {selectedCategory && (
+              <Card>
+                <CardHeader>
+                  <h2 className="font-semibold">Step 2.5: Delivery Method</h2>
+                </CardHeader>
+                <CardBody>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {[
+                      { value: "whatsapp", label: "WhatsApp" },
+                      { value: "email", label: "Email" },
+                      { value: "both", label: "Both" },
+                      { value: "mobile", label: "Mobile App" },
+                      { value: "mobile_whatsapp", label: "Mobile + WhatsApp" },
+                      { value: "none", label: "None" },
+                    ].map((opt) => (
+                      <label key={opt.value} className="flex items-center">
+                        <input
+                          type="radio"
+                          value={opt.value}
+                          checked={deliveryMethod === opt.value}
+                          onChange={(e) => setDeliveryMethod(e.target.value as any)}
+                          className="text-orange-600 focus:ring-orange-500"
+                        />
+                        <span className="ml-2">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-3">
+                    Applies to every holder in this import. "Mobile App" pushes the QR
+                    to the community app instead of / in addition to WhatsApp.
+                  </p>
                 </CardBody>
               </Card>
             )}
