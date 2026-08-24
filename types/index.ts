@@ -75,7 +75,9 @@ export interface EntryPoint {
   };
 }
 
-export interface Category {
+// Merged pass-type entity: HolderType absorbed Category (rename-in-place).
+// catId/catCode field names are legacy but stable across the API.
+export interface HolderType {
   _id: string;
   eventId: string;
   name: string;
@@ -83,12 +85,15 @@ export interface Category {
   description?: string;
   color: string;
   icon?: string;
-  defaultEntryPoints: EntryPoint[];
+  entryPoints?: EntryPoint[] | string[];
   issuerRoleRequired: "super_admin" | "event_admin" | "campaign_manager";
   overrideAllowedBy: "super_admin" | "event_admin" | "none";
   isCustom: boolean;
   isActive: boolean;
+  isDefault: boolean;
 }
+
+export type Category = HolderType;
 
 export interface Holder {
   _id: string;

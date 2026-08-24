@@ -62,11 +62,11 @@ export default function EditEventPage() {
     () => eventData?.devoteeAppCategories || [],
   );
 
-  // Fetch all categories for this event
+  // Fetch all pass types for this event (merged HolderType entity)
   const { data: allCategories } = useQuery({
-    queryKey: ["categories", eventId],
+    queryKey: ["holder-types", eventId],
     queryFn: async () => {
-      const response = await api.get(`/events/${eventId}/categories`);
+      const response = await api.get(`/events/${eventId}/holder-types`);
       return response.data;
     },
     enabled: !!eventId,
@@ -323,7 +323,7 @@ export default function EditEventPage() {
           </p>
 
           {!allCategories || allCategories.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No categories found. Create categories under the Categories tab first.</p>
+            <p className="text-sm text-gray-400 italic">No pass types found. Create them under the Pass Types tab first.</p>
           ) : (
             <div className="space-y-3">
               {allCategories.map((cat: any) => {

@@ -180,9 +180,9 @@ export default function HolderDetailsPage() {
               </div>
             )}
             <div>
-              <p className="text-sm text-gray-500">Holder Type</p>
+              <p className="text-sm text-gray-500">Pass Type</p>
               <span className="inline-block px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700 capitalize">
-                {holder?.holderType}
+                {holder?.catId?.name || holder?.holderType || "N/A"}
               </span>
             </div>
             {holder?.subCategory && (

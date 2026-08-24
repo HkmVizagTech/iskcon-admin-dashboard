@@ -2,7 +2,7 @@
 
 import api from "@/lib/api";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
@@ -19,7 +19,6 @@ export default function CreateHolderPage() {
   const router = useRouter();
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedVenue, setSelectedVenue] = useState("");
   const [preacher, setPreacher] = useState("");
   const [tier, setTier] = useState("");          // bahumana A/B/C
@@ -67,7 +66,7 @@ export default function CreateHolderPage() {
     ? selectedEventData.venue
     : [];
 
-  // Fetch holder types from API
+  // Fetch pass types from API (merged HolderType entity)
   const { data: holderTypes } = useQuery({
     queryKey: ["holder-types", selectedEvent],
     queryFn: async () => {
@@ -80,29 +79,6 @@ export default function CreateHolderPage() {
     enabled: !!selectedEvent,
   });
 
-  // Fetch categories from API
-  const { data: categories } = useQuery({
-    queryKey: ["categories", selectedEvent],
-    queryFn: async () => {
-      if (!selectedEvent) return [];
-      const response = await api.get(
-        `/events/${selectedEvent}/categories`,
-      );
-      return response.data;
-    },
-    enabled: !!selectedEvent,
-  });
-
-  // Filter categories by selected holder type
-  const filteredCategories = useMemo(() => {
-    if (!categories || !selectedHolderTypeId) return categories || [];
-    return categories.filter((cat: any) => {
-      const catHolderTypeId = cat.holderTypeId?._id || cat.holderTypeId;
-      return catHolderTypeId === selectedHolderTypeId;
-    });
-  }, [categories, selectedHolderTypeId]);
-
-  // Fetch preachers for the selected event
   // Fetch seva slots for the selected event
   const { data: sevaSlots } = useQuery({
     queryKey: ["seva-slots", selectedEvent],
@@ -128,11 +104,7 @@ export default function CreateHolderPage() {
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
-          catId: selectedCategory,
-          holderType:
-            holderTypes
-              ?.find((ht: any) => ht._id === selectedHolderTypeId)
-              ?.code?.toLowerCase() || "custom",
+          catId: selectedHolderTypeId,
           lifetimeDonation: parseInt(formData.lifetimeDonation) || 0,
           deliveryMethod,
           preacher: preacher,
@@ -181,7 +153,6 @@ export default function CreateHolderPage() {
     e.preventDefault();
     if (
       !selectedEvent ||
-      !selectedCategory ||
       !selectedHolderTypeId ||
       !formData.name ||
       !formData.phone
@@ -220,7 +191,6 @@ export default function CreateHolderPage() {
                 onChange={(e) => {
                   setSelectedEvent(e.target.value);
                   setSelectedHolderTypeId("");
-                  setSelectedCategory("");
                   setSelectedVenue("");
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
@@ -264,15 +234,15 @@ export default function CreateHolderPage() {
 
           {selectedEvent && (
             <>
-              {/* Step 2: Select Holder Type */}
+              {/* Step 2: Select Pass Type */}
               <Card>
                 <CardHeader>
-                  <h2 className="font-semibold">Step 2: Select Holder Type</h2>
+                  <h2 className="font-semibold">Step 2: Select Pass Type</h2>
                 </CardHeader>
                 <CardBody>
                   {!holderTypes || holderTypes.length === 0 ? (
                     <p className="text-sm text-gray-500">
-                      No holder types found.
+                      No pass types found. Create them under the event's Pass Types tab first.
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -280,10 +250,7 @@ export default function CreateHolderPage() {
                         <button
                           key={ht._id}
                           type="button"
-                          onClick={() => {
-                            setSelectedHolderTypeId(ht._id);
-                            setSelectedCategory("");
-                          }}
+                          onClick={() => setSelectedHolderTypeId(ht._id)}
                           className={`p-4 rounded-lg border-2 transition-all ${
                             selectedHolderTypeId === ht._id
                               ? "border-orange-500 bg-orange-50 shadow-md"
@@ -292,7 +259,7 @@ export default function CreateHolderPage() {
                         >
                           <div className="text-2xl mb-2">{ht.icon || "👤"}</div>
                           <div className="font-medium text-sm">{ht.name}</div>
-                          <div className="text-xs text-gray-500">{ht.code}</div>
+                          <div className="text-xs text-gray-500">{ht.catCode}</div>
                         </button>
                       ))}
                     </div>
@@ -300,48 +267,12 @@ export default function CreateHolderPage() {
                 </CardBody>
               </Card>
 
-              {/* Step 3: Select Category */}
+              {/* Step 3: Holder Details */}
               {selectedHolderTypeId && (
-                <Card>
-                  <CardHeader>
-                    <h2 className="font-semibold">Step 3: Select Category</h2>
-                    {selectedHolderType && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Showing categories for:{" "}
-                        <span
-                          className="font-medium"
-                          style={{ color: selectedHolderType.color }}
-                        >
-                          {selectedHolderType.icon} {selectedHolderType.name}
-                        </span>
-                      </p>
-                    )}
-                  </CardHeader>
-                  <CardBody>
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                      required
-                    >
-                      <option value="">Choose a category...</option>
-                      {filteredCategories?.map((cat: any) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.icon || "🏷️"} {cat.name} ({cat.catCode}) —{" "}
-                          {cat.entryPoints?.length || 0} access points
-                        </option>
-                      ))}
-                    </select>
-                  </CardBody>
-                </Card>
-              )}
-
-              {/* Step 4: Holder Details */}
-              {selectedCategory && (
                 <>
                   <Card>
                     <CardHeader>
-                      <h2 className="font-semibold">Step 4: Holder Details</h2>
+                      <h2 className="font-semibold">Step 3: Holder Details</h2>
                     </CardHeader>
                     <CardBody className="space-y-4">
                       <Input
@@ -429,7 +360,7 @@ export default function CreateHolderPage() {
                           icon={<User className="w-4 h-4" />}
                         />
                       )}
-                      {selectedHolderType?.code === "DN" && (
+                      {selectedHolderType?.catCode === "DN" && (
                         <Input
                           label="Lifetime Donation (₹)"
                           type="number"
@@ -446,11 +377,11 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
 
-                  {/* Step 4.5: Sponsor details — Bahumana Tier + Seva Slot */}
+                  {/* Step 3.5: Sponsor details — Bahumana Tier + Seva Slot */}
                   <Card>
                     <CardHeader>
                       <h2 className="font-semibold">
-                        Step 4.5: Sponsor Details
+                        Step 3.5: Sponsor Details
                         <span className="ml-2 text-sm font-normal text-gray-500">tier (bahumana) and seva slot (timing) — for sponsors</span>
                       </h2>
                     </CardHeader>
@@ -583,10 +514,10 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
 
-                  {/* Step 5: Delivery Method */}
+                  {/* Step 4: Delivery Method */}
                   <Card>
                     <CardHeader>
-                      <h2 className="font-semibold">Step 5: Delivery Method</h2>
+                      <h2 className="font-semibold">Step 4: Delivery Method</h2>
                     </CardHeader>
                     <CardBody>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -715,7 +646,6 @@ export default function CreateHolderPage() {
             setShowQRPreview(false);
             setSelectedEvent("");
             setSelectedHolderTypeId("");
-            setSelectedCategory("");
             setSelectedVenue("");
             setPreacher("");
             setPreacherId("");

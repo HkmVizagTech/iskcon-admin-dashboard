@@ -17,7 +17,6 @@ import {
   Trash2,
   DoorOpen,
   Tags,
-  UserPlus,
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -31,7 +30,7 @@ export default function EventDetailsPage() {
   const eventId = params.id as string;
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "entry-points" | "holder-types" | "categories"
+    "overview" | "entry-points" | "holder-types"
   >("overview");
 
   const {
@@ -162,15 +161,8 @@ export default function EventDetailsPage() {
             onClick={() => router.push(`/events/${eventId}/holder-types`)}
             className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
           >
-            <UserPlus className="w-4 h-4 inline mr-1" />
-            Holder Types
-          </button>
-          <button
-            onClick={() => router.push(`/events/${eventId}/categories`)}
-            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
-          >
             <Tags className="w-4 h-4 inline mr-1" />
-            Categories
+            Pass Types
           </button>
           <button
             onClick={() => router.push(`/events/${eventId}/seva-slots`)}

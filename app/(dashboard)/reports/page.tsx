@@ -18,7 +18,7 @@ import AnalyticsPanel from "@/components/reports/AnalyticsPanel";
 export default function ReportsPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [activeTab, setActiveTab] = useState<"analytics" | "overview" | "holders">("analytics");
-  const [holderTypeFilter, setHolderTypeFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [venueFilter, setVenueFilter] = useState("");
   const [preacherFilter, setPreacherFilter] = useState("");
   const [entryPointFilter, setEntryPointFilter] = useState(""); // FIX: now wired to query
@@ -53,6 +53,16 @@ export default function ReportsPage() {
     enabled: !!selectedEvent,
   });
 
+  const { data: passTypes } = useQuery({
+    queryKey: ["holder-types", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      const response = await api.get(`/events/${selectedEvent}/holder-types`);
+      return response.data;
+    },
+    enabled: !!selectedEvent,
+  });
+
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ["event-summary", selectedEvent],
     queryFn: async () => {
@@ -74,11 +84,11 @@ export default function ReportsPage() {
   });
 
   const { data: holdersReport, isLoading: holdersLoading } = useQuery({
-    queryKey: ["holders-report", selectedEvent, holderTypeFilter, venueFilter, preacherFilter, entryPointFilter],
+    queryKey: ["holders-report", selectedEvent, categoryFilter, venueFilter, preacherFilter, entryPointFilter],
     queryFn: async () => {
       if (!selectedEvent) return null;
       const params = new URLSearchParams();
-      if (holderTypeFilter) params.append("holderType", holderTypeFilter);
+      if (categoryFilter) params.append("catCode", categoryFilter);
       if (venueFilter) params.append("venue", venueFilter);
       if (preacherFilter) params.append("preacher", preacherFilter);
       // FIX: entryPointFilter now actually sent to the backend
@@ -146,7 +156,7 @@ export default function ReportsPage() {
               value={selectedEvent}
               onChange={(e) => {
                 setSelectedEvent(e.target.value);
-                setHolderTypeFilter(""); setVenueFilter("");
+                setCategoryFilter(""); setVenueFilter("");
                 setPreacherFilter(""); setEntryPointFilter("");
               }}
               className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
@@ -221,13 +231,11 @@ export default function ReportsPage() {
             <Card padding={false}>
               <div className="p-4 bg-gray-50 border-b border-gray-200 flex flex-wrap gap-4">
                 <Filter className="w-5 h-5 text-gray-400 mt-2" />
-                <select value={holderTypeFilter} onChange={(e) => setHolderTypeFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                  <option value="">All Holder Types</option>
-                  <option value="SP">Sponsor</option>
-                  <option value="DN">Donor</option>
-                  <option value="VL">Volunteer</option>
-                  <option value="GN">General Public</option>
-                  <option value="VP">VIP Guest</option>
+                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  <option value="">All Pass Types</option>
+                  {passTypes?.map((pt: any) => (
+                    <option key={pt._id} value={pt.catCode}>{pt.name}</option>
+                  ))}
                 </select>
                 <select value={venueFilter} onChange={(e) => setVenueFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                   <option value="">All Venues</option>

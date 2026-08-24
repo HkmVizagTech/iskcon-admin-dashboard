@@ -31,7 +31,6 @@ export default function BulkImportPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
   const [selectedPreacherId, setSelectedPreacherId] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<
     "whatsapp" | "email" | "both" | "mobile" | "mobile_whatsapp" | "none"
   >("whatsapp");
@@ -73,30 +72,11 @@ export default function BulkImportPage() {
     enabled: !!selectedEvent,
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ["categories", selectedEvent],
-    queryFn: async () => {
-      if (!selectedEvent) return [];
-      const response = await api.get(
-        `/events/${selectedEvent}/categories`,
-      );
-      return response.data;
-    },
-    enabled: !!selectedEvent,
-  });
-
-  const filteredCategories = useMemo(() => {
-    if (!categories || !selectedHolderTypeId) return categories || [];
-    return categories.filter((cat: any) => {
-      const catHolderTypeId = cat.holderTypeId?._id || cat.holderTypeId;
-      return catHolderTypeId === selectedHolderTypeId;
-    });
-  }, [categories, selectedHolderTypeId]);
-
-  const selectedCategoryData = useMemo(() => {
-    if (!selectedCategory || !categories) return null;
-    return categories.find((c: any) => c._id === selectedCategory);
-  }, [selectedCategory, categories]);
+  // Selected pass type (merged HolderType entity) — carries entry points directly
+  const selectedTypeData = useMemo(() => {
+    if (!selectedHolderTypeId || !holderTypes) return null;
+    return holderTypes.find((ht: any) => ht._id === selectedHolderTypeId);
+  }, [selectedHolderTypeId, holderTypes]);
 
   // Fetch preachers for selected event
   const { data: preachers } = useQuery({
@@ -133,7 +113,7 @@ export default function BulkImportPage() {
   };
 
   const handleImport = async () => {
-    if (!selectedEvent || !selectedCategory || !selectedHolderTypeId || !file) {
+    if (!selectedEvent || !selectedHolderTypeId || !file) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -145,12 +125,8 @@ export default function BulkImportPage() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("eventId", selectedEvent);
-      formData.append("categoryId", selectedCategory);
+      formData.append("categoryId", selectedHolderTypeId);
       if (selectedPreacherId) formData.append("preacherId", selectedPreacherId);
-      formData.append(
-        "holderType",
-        selectedHolderType?.code?.toLowerCase() || "custom",
-      );
       formData.append("deliveryMethod", deliveryMethod);
 
       const response = await api.post(
@@ -278,14 +254,14 @@ export default function BulkImportPage() {
         <div className="flex flex-col items-start sm:items-end gap-1">
           <Button
             variant="outline"
-            onClick={selectedCategoryData?.catCode === "SP" ? handleDownloadSponsorSample : handleDownloadGeneralSample}
-            className={selectedCategoryData?.catCode === "SP" ? "border-purple-300 text-purple-700 hover:bg-purple-50" : ""}
+            onClick={selectedTypeData?.catCode === "SP" ? handleDownloadSponsorSample : handleDownloadGeneralSample}
+            className={selectedTypeData?.catCode === "SP" ? "border-purple-300 text-purple-700 hover:bg-purple-50" : ""}
           >
             <Download className="w-4 h-4 mr-2" />
-            {selectedCategoryData?.catCode === "SP" ? "Sponsor Sample" : "General Sample"}
+            {selectedTypeData?.catCode === "SP" ? "Sponsor Sample" : "General Sample"}
           </Button>
-          {!selectedCategory && (
-            <span className="text-xs text-gray-400">Select a category to get the right sample</span>
+          {!selectedHolderTypeId && (
+            <span className="text-xs text-gray-400">Select a pass type to get the right sample</span>
           )}
         </div>
       </div>
@@ -305,7 +281,6 @@ export default function BulkImportPage() {
                   onChange={(e) => {
                     setSelectedEvent(e.target.value);
                     setSelectedHolderTypeId("");
-                    setSelectedCategory("");
                   }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   required
@@ -324,80 +299,39 @@ export default function BulkImportPage() {
               </CardBody>
             </Card>
 
-            {/* Step 2: Select Holder Type & Category */}
+            {/* Step 2: Select Pass Type */}
             {selectedEvent && (
               <Card>
                 <CardHeader>
                   <h2 className="font-semibold">
-                    Step 2: Select Holder Type & Category
+                    Step 2: Select Pass Type
                   </h2>
                 </CardHeader>
                 <CardBody>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Holder Type
-                    </label>
-                    {!holderTypes || holderTypes.length === 0 ? (
-                      <p className="text-sm text-gray-500">
-                        No holder types found.
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {holderTypes.map((ht: any) => (
-                          <button
-                            key={ht._id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedHolderTypeId(ht._id);
-                              setSelectedCategory("");
-                            }}
-                            className={`p-3 rounded-lg border-2 text-center transition-all ${
-                              selectedHolderTypeId === ht._id
-                                ? "border-orange-500 bg-orange-50 shadow-md"
-                                : "border-gray-200 hover:border-orange-300"
-                            }`}
-                          >
-                            <div className="text-2xl mb-1">
-                              {ht.icon || "👤"}
-                            </div>
-                            <div className="text-xs font-medium">{ht.name}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {selectedHolderTypeId && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Category{" "}
-                        {selectedHolderType && (
-                          <span style={{ color: selectedHolderType.color }}>
-                            ({selectedHolderType.icon} {selectedHolderType.name}
-                            )
-                          </span>
-                        )}
-                      </label>
-                      <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                        required
-                      >
-                        <option value="">Select a category...</option>
-                        {filteredCategories?.map((cat: any) => (
-                          <option key={cat._id} value={cat._id}>
-                            {cat.icon || "🏷️"} {cat.name} ({cat.catCode}) —{" "}
-                            {cat.entryPoints?.length || 0} entry points
-                          </option>
-                        ))}
-                      </select>
-                      {filteredCategories?.length === 0 && (
-                        <p className="text-sm text-amber-600 mt-2">
-                          No categories for this holder type. Create them in
-                          Categories tab.
-                        </p>
-                      )}
+                  {!holderTypes || holderTypes.length === 0 ? (
+                    <p className="text-sm text-gray-500">
+                      No pass types found. Create them under the event's Pass Types tab first.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                      {holderTypes.map((ht: any) => (
+                        <button
+                          key={ht._id}
+                          type="button"
+                          onClick={() => setSelectedHolderTypeId(ht._id)}
+                          className={`p-3 rounded-lg border-2 text-center transition-all ${
+                            selectedHolderTypeId === ht._id
+                              ? "border-orange-500 bg-orange-50 shadow-md"
+                              : "border-gray-200 hover:border-orange-300"
+                          }`}
+                        >
+                          <div className="text-2xl mb-1">
+                            {ht.icon || "👤"}
+                          </div>
+                          <div className="text-xs font-medium">{ht.name}</div>
+                          <div className="text-xs text-gray-500">{ht.catCode}</div>
+                        </button>
+                      ))}
                     </div>
                   )}
                 </CardBody>
@@ -405,7 +339,7 @@ export default function BulkImportPage() {
             )}
 
             {/* Step 2.5: Delivery Method */}
-            {selectedCategory && (
+            {selectedHolderTypeId && (
               <Card>
                 <CardHeader>
                   <h2 className="font-semibold">Step 2.5: Delivery Method</h2>
@@ -441,7 +375,7 @@ export default function BulkImportPage() {
             )}
 
             {/* Step 3: Upload File */}
-            {selectedCategory && (
+            {selectedHolderTypeId && (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -564,13 +498,13 @@ Amit Singh,9876543212,GPVP,Outside`}
                     {selectedHolderType.description ||
                       `${selectedHolderType.name} access pass`}
                   </p>
-                  {selectedCategoryData && (
+                  {selectedTypeData && (
                     <>
                       <h4 className="text-sm font-medium text-gray-700 mb-2">
                         Entry Points:
                       </h4>
                       <div className="space-y-1">
-                        {selectedCategoryData.entryPoints?.map((ep: any) => (
+                        {selectedTypeData.entryPoints?.map((ep: any) => (
                           <div
                             key={ep._id || ep}
                             className="flex items-center text-sm text-gray-600"
@@ -585,7 +519,7 @@ Amit Singh,9876543212,GPVP,Outside`}
                 </CardBody>
               </Card>
             )}
-            {selectedCategoryData && (
+            {selectedTypeData && (
               <Card>
                 <CardHeader>
                   <h2 className="font-semibold flex items-center">
@@ -604,7 +538,7 @@ Amit Singh,9876543212,GPVP,Outside`}
                     </p>
                     <p className="mb-1">
                       *Access:*{" "}
-                      {selectedCategoryData.entryPoints
+                      {selectedTypeData.entryPoints
                         ?.map((ep: any) => ep.name || ep)
                         .join(", ")}
                     </p>
