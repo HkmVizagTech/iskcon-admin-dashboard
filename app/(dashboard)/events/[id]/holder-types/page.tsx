@@ -339,27 +339,33 @@ export default function HolderTypesPage() {
                   )}
                 </div>
 
-                {/* Categories */}
+                {/* Categories — shown as a clickable pill that expands */}
                 {ht.categories?.length > 0 && (
                   <div className="mb-3">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
-                      Categories
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {ht.categories.map((cat: string) => (
-                        <span
-                          key={cat}
-                          className={`px-2 py-0.5 text-xs font-bold font-mono rounded border ${
-                            cat === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
-                            cat === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
-                            cat === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
-                            "bg-purple-100 text-purple-800 border-purple-300"
-                          }`}
-                        >
-                          {cat}
+                    <details className="group">
+                      <summary className="cursor-pointer list-none flex items-center gap-1.5 text-xs font-medium text-gray-400 uppercase tracking-wide hover:text-gray-600 transition-colors">
+                        <span>Categories</span>
+                        <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-mono font-bold">
+                          {ht.categories.length}
                         </span>
-                      ))}
-                    </div>
+                        <span className="text-gray-300 group-open:rotate-90 transition-transform">▸</span>
+                      </summary>
+                      <div className="flex flex-wrap gap-1 mt-1.5 pl-0.5">
+                        {ht.categories.map((cat: string) => (
+                          <span
+                            key={cat}
+                            className={`px-2 py-0.5 text-xs font-bold font-mono rounded border ${
+                              cat === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                              cat === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+                              cat === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
+                              "bg-purple-100 text-purple-800 border-purple-300"
+                            }`}
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    </details>
                   </div>
                 )}
 
@@ -499,13 +505,19 @@ export default function HolderTypesPage() {
           )}
 
           {/* Categories */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Categories
-              <span className="ml-1.5 text-xs text-gray-400 font-normal">
-                A / B / C — holders of this type can be assigned to these categories
-              </span>
-            </label>
+          <details className="border border-gray-200 rounded-lg p-3 group">
+            <summary className="cursor-pointer list-none flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700">
+                Sub-Categories
+                <span className="ml-1.5 text-xs text-gray-400 font-normal">
+                  optional tiers within this holder type
+                </span>
+              </label>
+              <span className="text-gray-400 group-open:rotate-90 transition-transform text-sm">▸</span>
+            </summary>
+            <p className="text-xs text-gray-400 mt-2 mb-3">
+              Enable tiers so each holder can be classified (e.g. Donor A, Donor B). Leave empty if not needed.
+            </p>
             <div className="flex flex-wrap gap-2 mb-2">
               {["A", "B", "C", "D", "E"].map((cat) => (
                 <button
@@ -574,7 +586,7 @@ export default function HolderTypesPage() {
                 ))}
               </div>
             )}
-          </div>
+          </details>
 
           {/* Issuer Role */}
           <div>
