@@ -68,6 +68,8 @@ export default function HolderTypesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<HolderTypeFormData>(EMPTY_FORM);
+  const [reassign, setReassign] = useState<{ htId: string; name: string; count: number } | null>(null);
+  const [moveToId, setMoveToId] = useState("");
 
   // ── Queries ────────────────────────────────────────────────────────────
   const { data: eventData } = useQuery({
@@ -126,15 +128,27 @@ export default function HolderTypesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/events/${eventId}/holder-types/${id}`);
+    mutationFn: async ({ id, moveToTypeId }: { id: string; moveToTypeId?: string }) => {
+      const url = `/events/${eventId}/holder-types/${id}` +
+        (moveToTypeId ? `?moveToTypeId=${moveToTypeId}` : "");
+      const response = await api.delete(url);
+      return response.data;
     },
-    onSuccess: () => {
-      toast.success("Pass type deleted");
+    onSuccess: (data) => {
+      toast.success(data?.message || "Pass type deleted");
+      setReassign(null);
+      setMoveToId("");
       queryClient.invalidateQueries({ queryKey: ["holder-types", eventId] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || "Failed to delete");
+    onError: (error: any, variables) => {
+      const data = error.response?.data;
+      if (error.response?.status === 409 && data?.activeHolderCount > 0) {
+        const ht = holderTypes?.find((t: any) => t._id === variables.id);
+        setReassign({ htId: variables.id, name: ht?.name || "this type", count: data.activeHolderCount });
+        setMoveToId("");
+        return;
+      }
+      toast.error(data?.error || "Failed to delete");
     },
   });
 
@@ -186,9 +200,22 @@ export default function HolderTypesPage() {
       toast.error("Default pass types cannot be deleted. Deactivate them instead.");
       return;
     }
-    if (confirm(`Delete "${ht.name}"? Holders must be reassigned first.`)) {
-      deleteMutation.mutate(ht._id);
+    if (
+      !confirm(
+        `Delete "${ht.name}"? If holders are assigned to it, you'll be asked where to move them.`,
+      )
+    ) {
+      return;
     }
+    deleteMutation.mutate({ id: ht._id });
+  };
+
+  const handleReassignConfirm = () => {
+    if (!moveToId) {
+      toast.error("Choose a pass type to move the holders to");
+      return;
+    }
+    deleteMutation.mutate({ id: reassign!.htId, moveToTypeId: moveToId });
   };
 
   const sortedTypes = [...(holderTypes || [])].sort(
@@ -475,6 +502,52 @@ export default function HolderTypesPage() {
               <option value="none">No Override Allowed</option>
             </select>
           </div>
+        </div>
+      </Modal>
+
+      {/* ── Reassign & Delete Modal ─────────────────────────────────────── */}
+      <Modal
+        isOpen={!!reassign}
+        onClose={() => {
+          setReassign(null);
+          setMoveToId("");
+        }}
+        title="Reassign holders before delete"
+        size="md"
+        onConfirm={handleReassignConfirm}
+        confirmText={`Move ${reassign?.count ?? 0} & Delete`}
+        loading={deleteMutation.isPending}
+      >
+        <div className="space-y-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+            <strong>{reassign?.count}</strong> holder(s) and their QR passes are
+            assigned to <strong>{reassign?.name}</strong>. Choose another pass
+            type to move them to — the type will then be deleted.
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Move holders to *
+            </label>
+            <select
+              value={moveToId}
+              onChange={(e) => setMoveToId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">Choose a pass type...</option>
+              {(holderTypes || [])
+                .filter((t: any) => t._id !== reassign?.htId)
+                .map((t: any) => (
+                  <option key={t._id} value={t._id}>
+                    {t.icon || "🏷️"} {t.name} ({t.catCode})
+                    {!t.isActive ? " — inactive" : ""}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <p className="text-xs text-gray-400">
+            Existing QR passes stay scannable at their current entry points —
+            they&apos;ll simply display and report under the new pass type.
+          </p>
         </div>
       </Modal>
     </div>
