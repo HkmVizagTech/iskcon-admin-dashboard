@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 export default function HoldersPage() {
   const [search, setSearch] = useState("");
   const [selectedEvent, setSelectedEvent] = useState("");
+  const [filterType, setFilterType] = useState("");
   const [page, setPage] = useState(1);
 
   const { data: events } = useQuery({
@@ -39,12 +40,23 @@ export default function HoldersPage() {
 
   const selectedEventData = events?.find((e: any) => e._id === selectedEvent);
 
+  const { data: holderTypes } = useQuery({
+    queryKey: ["holder-types-filter", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return [];
+      const response = await api.get(`/events/${selectedEvent}/holder-types`);
+      return response.data;
+    },
+    enabled: !!selectedEvent,
+  });
+
   const { data: holdersData, isLoading } = useQuery({
-    queryKey: ["holders", selectedEvent, search, page],
+    queryKey: ["holders", selectedEvent, search, filterType, page],
     queryFn: async () => {
       if (!selectedEvent) return null;
       const params = new URLSearchParams();
       if (search) params.append("search", search);
+      if (filterType) params.append("catId", filterType);
       params.append("page", page.toString());
       params.append("limit", "20");
       const response = await api.get(
@@ -130,7 +142,11 @@ export default function HoldersPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <select
             value={selectedEvent}
-            onChange={(e) => setSelectedEvent(e.target.value)}
+            onChange={(e) => {
+              setSelectedEvent(e.target.value);
+              setFilterType("");
+              setPage(1);
+            }}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           >
             <option value="">Select an event...</option>
@@ -140,6 +156,21 @@ export default function HoldersPage() {
               </option>
             ))}
           </select>
+
+          {selectedEvent && holderTypes && holderTypes.length > 0 && (
+            <select
+              value={filterType}
+              onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">All Types</option>
+              {holderTypes.map((ht: any) => (
+                <option key={ht._id} value={ht._id}>
+                  {ht.icon || "👤"} {ht.name}
+                </option>
+              ))}
+            </select>
+          )}
 
           <div className="flex-1">
             <Input
@@ -178,7 +209,7 @@ export default function HoldersPage() {
                     Holder
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
+                    Type / Category
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     QR ID
@@ -213,15 +244,25 @@ export default function HoldersPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className="px-2 py-1 text-xs rounded-full"
-                        style={{
-                          backgroundColor: holder.catId?.color + "20",
-                          color: holder.catId?.color,
-                        }}
-                      >
-                        {holder.catId?.name || holder.holderType}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="px-2 py-1 text-xs rounded-full"
+                          style={{
+                            backgroundColor: holder.catId?.color + "20",
+                            color: holder.catId?.color,
+                          }}
+                        >
+                          {holder.catId?.name || holder.holderType}
+                        </span>
+                        {holder.subCategory && (
+                          <span className={`px-1.5 py-0.5 text-[10px] font-black font-mono rounded border ${
+                            holder.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                            holder.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+                            holder.subCategory === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
+                            "bg-purple-100 text-purple-800 border-purple-300"
+                          }`}>{holder.subCategory}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <code className="text-xs bg-gray-100 px-2 py-1 rounded">

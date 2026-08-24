@@ -171,12 +171,12 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadGeneralSample = () => {
-    const headers = ["Name", "Phone Number", "Preacher", "Venue"];
+    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category"];
     const examples = [
-      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall"],
-      ["Priya Sharma",   "9876543211", "MKGD", "Temple"],
-      ["Amit Singh",     "9876543212", "GPVP", "Main Hall"],
-      ["Sita Devi Dasi", "9876543213", "",     "Outside"],
+      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall", "A"],
+      ["Priya Sharma",   "9876543211", "MKGD", "Temple",    "B"],
+      ["Amit Singh",     "9876543212", "GPVP", "Main Hall", "C"],
+      ["Sita Devi Dasi", "9876543213", "",     "Outside",   "NONE"],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
@@ -184,11 +184,13 @@ export default function BulkImportPage() {
       ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
       ["Venue", "No", "Seating venue or hall name"],
+      ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana and grouping."],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }];
-    const s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
-    headers.forEach((_, i) => { const c2 = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c2]) ws[c2] = { v: headers[i] }; ws[c2].s = s; });
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }, { wch: 12 }];
+    const base = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
+    const catStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7B3FA0" } } };
+    headers.forEach((_, i) => { const c2 = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c2]) ws[c2] = { v: headers[i] }; ws[c2].s = i >= 4 ? catStyle : base; });
     const wsN = XLSX.utils.aoa_to_sheet(notes);
     wsN["!cols"] = [{ wch: 18 }, { wch: 12 }, { wch: 60 }];
     const wb = XLSX.utils.book_new();
@@ -199,7 +201,7 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadSponsorSample = () => {
-    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Tier", "SubCategory"];
+    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "SubCategory"];
     const examples = [
       ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall", "A", "SDGP"],
       ["Hari Dasa",          "9876543211", "GPVP", "Temple",    "B", "PA"],
@@ -212,13 +214,13 @@ export default function BulkImportPage() {
       ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
       ["Venue", "No", "Seating venue or hall name"],
-      ["Tier", "Sponsors", "Bahumana tier — A / B / C. Decides the gift/kit. Independent of slot."],
-      ["SubCategory", "Sponsors", "Seva slot code matching Events → Seva Slots (e.g. SDGP, PA, A, B). Same phone + same slot = skip. Same phone + different slot = new QR."],
+      ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana gift/kit. Independent of slot."],
+      ["SubCategory", "Sponsors", "Seva slot code matching Events → Seva Slots (e.g. SDGP, PA). Same phone + same slot = skip. Same phone + different slot = new QR."],
       ["", "", ""],
-      ["Note:", "", "Row 1 and Row 4 have same phone but same SubCategory (PA) — Row 4 will be skipped. Use different SubCategory codes for multiple QRs on same number."],
+      ["Note:", "", "Row 1 and Row 4 have same phone but different SubCategory — both get a QR. Same phone + same SubCategory = skip."],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 8 }, { wch: 14 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 14 }];
     const base = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
     const spon = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7B3FA0" } } };
     headers.forEach((_, i) => { const c2 = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c2]) ws[c2] = { v: headers[i] }; ws[c2].s = i >= 4 ? spon : base; });
@@ -261,7 +263,7 @@ export default function BulkImportPage() {
             {selectedTypeData?.catCode === "SP" ? "Sponsor Sample" : "General Sample"}
           </Button>
           {!selectedHolderTypeId && (
-            <span className="text-xs text-gray-400">Select a pass type to get the right sample</span>
+            <span className="text-xs text-gray-400">Select a holder type to get the right sample</span>
           )}
         </div>
       </div>
@@ -304,13 +306,13 @@ export default function BulkImportPage() {
               <Card>
                 <CardHeader>
                   <h2 className="font-semibold">
-                    Step 2: Select Pass Type
+                    Step 2: Select Holder Type
                   </h2>
                 </CardHeader>
                 <CardBody>
                   {!holderTypes || holderTypes.length === 0 ? (
                     <p className="text-sm text-gray-500">
-                      No pass types found. Create them under the event's Pass Types tab first.
+                      No holder types found. Create them under the event's Holder Types tab first.
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -435,21 +437,21 @@ export default function BulkImportPage() {
                       📋 Required Format
                     </h4>
                     <pre className="text-xs text-blue-800 bg-white p-3 rounded overflow-x-auto">
-                      {`Name,Phone Number,Preacher,Venue
-Rajesh Kumar,9876543210,MKGD,Main Hall
-Priya Sharma,9876543211,MKGD,Temple
-Amit Singh,9876543212,GPVP,Outside`}
+                      {`Name,Phone Number,Preacher,Venue,Category
+Rajesh Kumar,9876543210,MKGD,Main Hall,A
+Priya Sharma,9876543211,MKGD,Temple,B
+Amit Singh,9876543212,GPVP,Outside,NONE`}
                     </pre>
                     <p className="text-xs text-blue-600 mt-2">
                       • <strong>Name</strong> and <strong>Phone Number</strong>{" "}
                       are required
                       <br />• <strong>Phone Number</strong> should be 10 digits
                       (India)
+                      <br />• <strong>Category</strong> — tier A / B / C or NONE
+                      (optional, for all holder types)
                       <br />•{" "}
-                      <strong>
-                        Preacher and Venue. For Sponsors, also add SubCategory
-                      </strong>{" "}
-                      are optional
+                      <strong>Preacher, Venue</strong> are optional.{" "}
+                      For Sponsors, add <strong>SubCategory</strong> (seva slot code)
                       <br />• Download the sample file to get started!
                     </p>
                   </div>

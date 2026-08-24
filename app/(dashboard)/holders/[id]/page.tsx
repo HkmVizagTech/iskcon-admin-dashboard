@@ -180,14 +180,14 @@ export default function HolderDetailsPage() {
               </div>
             )}
             <div>
-              <p className="text-sm text-gray-500">Pass Type</p>
+              <p className="text-sm text-gray-500">Holder Type</p>
               <span className="inline-block px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-700 capitalize">
                 {holder?.catId?.name || holder?.holderType || "N/A"}
               </span>
             </div>
             {holder?.subCategory && (
               <div>
-                <p className="text-sm text-gray-500">Sub Category (Seva Slot)</p>
+                <p className="text-sm text-gray-500">Category</p>
                 <span className={`mt-0.5 inline-flex px-3 py-1 rounded-full text-sm font-black font-mono border ${
                   holder.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
                   holder.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :

@@ -91,6 +91,7 @@ export interface HolderType {
   isCustom: boolean;
   isActive: boolean;
   isDefault: boolean;
+  categories?: string[];
 }
 
 export type Category = HolderType;

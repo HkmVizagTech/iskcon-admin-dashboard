@@ -237,12 +237,12 @@ export default function CreateHolderPage() {
               {/* Step 2: Select Pass Type */}
               <Card>
                 <CardHeader>
-                  <h2 className="font-semibold">Step 2: Select Pass Type</h2>
+                  <h2 className="font-semibold">Step 2: Select Holder Type</h2>
                 </CardHeader>
                 <CardBody>
                   {!holderTypes || holderTypes.length === 0 ? (
                     <p className="text-sm text-gray-500">
-                      No pass types found. Create them under the event's Pass Types tab first.
+                      No holder types found. Create them under the event's Holder Types tab first.
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -377,23 +377,27 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
 
-                  {/* Step 3.5: Sponsor details — Bahumana Tier + Seva Slot */}
+                  {/* Step 3.5: Category & Slot — only if holder type has categories or is sponsor */}
+                  {(selectedHolderType?.categories?.length > 0 || selectedHolderType?.catCode === "SP") && (
                   <Card>
                     <CardHeader>
                       <h2 className="font-semibold">
-                        Step 3.5: Sponsor Details
-                        <span className="ml-2 text-sm font-normal text-gray-500">tier (bahumana) and seva slot (timing) — for sponsors</span>
+                        Step 3.5: Category{selectedHolderType?.catCode === "SP" ? " & Slot" : ""}
+                        <span className="ml-2 text-sm font-normal text-gray-500">
+                          {selectedHolderType?.catCode === "SP" ? "category + seva slot (timing)" : "select category for this holder"}
+                        </span>
                       </h2>
                     </CardHeader>
                     <CardBody className="space-y-4">
-                      {/* Bahumana Tier */}
+                      {/* Category */}
+                      {selectedHolderType?.categories?.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Bahumana Tier
-                          <span className="ml-1.5 text-xs text-gray-400 font-normal">A / B / C — decides the gift/kit</span>
+                          Category
+                          <span className="ml-1.5 text-xs text-gray-400 font-normal">select a category for this holder</span>
                         </label>
                         <div className="flex gap-2">
-                          {["", "A", "B", "C"].map((t) => (
+                          {["", ...(selectedHolderType.categories || [])].map((t: string) => (
                             <button
                               key={t || "none"}
                               type="button"
@@ -403,7 +407,8 @@ export default function CreateHolderPage() {
                                   ? t === "A" ? "bg-amber-100 text-amber-800 border-amber-400"
                                   : t === "B" ? "bg-slate-100 text-slate-700 border-slate-400"
                                   : t === "C" ? "bg-orange-100 text-orange-800 border-orange-400"
-                                  : "bg-gray-100 text-gray-500 border-gray-300"
+                                  : t === "" ? "bg-gray-100 text-gray-500 border-gray-300"
+                                  : "bg-purple-100 text-purple-800 border-purple-400"
                                   : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"
                               }`}
                             >
@@ -412,8 +417,10 @@ export default function CreateHolderPage() {
                           ))}
                         </div>
                       </div>
+                      )}
 
-                      {/* Seva Slot (timing) */}
+                      {/* Seva Slot (timing) — sponsors only */}
+                      {selectedHolderType?.catCode === "SP" && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Seva Slot <span className="ml-1.5 text-xs text-gray-400 font-normal">timing / seating</span>
@@ -457,6 +464,7 @@ export default function CreateHolderPage() {
                           ) : null;
                         })()}
                       </div>
+                      )}
 
                       {/* Combined preview */}
                       {(tier || slotCode) && (
@@ -513,6 +521,7 @@ export default function CreateHolderPage() {
                       )}
                     </CardBody>
                   </Card>
+                  )}
 
                   {/* Step 4: Delivery Method */}
                   <Card>

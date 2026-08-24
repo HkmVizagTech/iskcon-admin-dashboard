@@ -232,7 +232,7 @@ export default function ReportsPage() {
               <div className="p-4 bg-gray-50 border-b border-gray-200 flex flex-wrap gap-4">
                 <Filter className="w-5 h-5 text-gray-400 mt-2" />
                 <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                  <option value="">All Pass Types</option>
+                  <option value="">All Holder Types</option>
                   {passTypes?.map((pt: any) => (
                     <option key={pt._id} value={pt.catCode}>{pt.name}</option>
                   ))}

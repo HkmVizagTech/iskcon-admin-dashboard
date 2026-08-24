@@ -152,10 +152,10 @@ export default function DashboardPage() {
         <QuickAction title="Manage Events" description="Configure events" href="/events" icon={<Calendar className="w-5 h-5" />} />
       </div>
 
-      {/* Pass Type Breakdown */}
+      {/* Holder Type Breakdown */}
       {stats?.holderTypeStats?.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">Pass Types</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">Holder Types</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {stats.holderTypeStats.map((ht: any) => (
               <div key={ht._id} className="bg-gray-50 rounded-lg p-3 text-center">

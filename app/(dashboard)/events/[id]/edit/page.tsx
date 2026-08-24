@@ -313,7 +313,7 @@ export default function EditEventPage() {
         <CardHeader>
           <h2 className="text-lg font-semibold">
             <Tags className="w-5 h-5 inline mr-2" />
-            Devotee App — Pass Types
+            Devotee App — Holder Types
           </h2>
         </CardHeader>
         <CardBody>
@@ -323,7 +323,7 @@ export default function EditEventPage() {
           </p>
 
           {!allCategories || allCategories.length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No pass types found. Create them under the Pass Types tab first.</p>
+            <p className="text-sm text-gray-400 italic">No holder types found. Create them under the Holder Types tab first.</p>
           ) : (
             <div className="space-y-3">
               {allCategories.map((cat: any) => {
