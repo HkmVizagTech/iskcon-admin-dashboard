@@ -171,12 +171,12 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadGeneralSample = () => {
-    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category"];
+    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "Instruction1", "Instruction2", "Instruction3"];
     const examples = [
-      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall", "A"],
-      ["Priya Sharma",   "9876543211", "MKGD", "Temple",    "B"],
-      ["Amit Singh",     "9876543212", "GPVP", "Main Hall", "C"],
-      ["Sita Devi Dasi", "9876543213", "",     "Outside",   "NONE"],
+      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall", "A",    "Arrive by 8:00 AM", "Bring your ID", ""],
+      ["Priya Sharma",   "9876543211", "MKGD", "Temple",    "B",    "", "", ""],
+      ["Amit Singh",     "9876543212", "GPVP", "Main Hall", "C",    "", "", ""],
+      ["Sita Devi Dasi", "9876543213", "",     "Outside",   "NONE", "", "", ""],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
@@ -185,14 +185,20 @@ export default function BulkImportPage() {
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
       ["Venue", "No", "Seating venue or hall name"],
       ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana and grouping."],
+      ["Instruction1, Instruction2, ...", "No", "Custom instructions shown on the community app. Add as many numbered columns as needed (Instruction1, Instruction2, Instruction3...) — each becomes a bullet point. Leave all blank to show the default seva/category info instead."],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }, { wch: 12 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
     const base = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
     const catStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7B3FA0" } } };
-    headers.forEach((_, i) => { const c2 = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c2]) ws[c2] = { v: headers[i] }; ws[c2].s = i >= 4 ? catStyle : base; });
+    const instrStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2563EB" } } };
+    headers.forEach((_, i) => {
+      const c2 = XLSX.utils.encode_cell({ r: 0, c: i });
+      if (!ws[c2]) ws[c2] = { v: headers[i] };
+      ws[c2].s = i === 4 ? catStyle : i >= 5 ? instrStyle : base;
+    });
     const wsN = XLSX.utils.aoa_to_sheet(notes);
-    wsN["!cols"] = [{ wch: 18 }, { wch: 12 }, { wch: 60 }];
+    wsN["!cols"] = [{ wch: 22 }, { wch: 12 }, { wch: 70 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Holders");
     XLSX.utils.book_append_sheet(wb, wsN, "Column Notes");
@@ -201,12 +207,12 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadSponsorSample = () => {
-    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "SubCategory"];
+    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "SubCategory", "Instruction1", "Instruction2", "Instruction3"];
     const examples = [
-      ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall", "A", "SDGP"],
-      ["Hari Dasa",          "9876543211", "GPVP", "Temple",    "B", "PA"],
-      ["Radha Devi Dasi",    "9876543212", "MKGD", "Main Hall", "A", "PA"],
-      ["Shadgoswami Prabhu", "9876543210", "GPVP", "Outside",   "A", "PA"],
+      ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall", "A", "SDGP", "Arrive by 8:00 AM", "Bring your ID", "Formal attire"],
+      ["Hari Dasa",          "9876543211", "GPVP", "Temple",    "B", "PA",   "", "", ""],
+      ["Radha Devi Dasi",    "9876543212", "MKGD", "Main Hall", "A", "PA",   "", "", ""],
+      ["Shadgoswami Prabhu", "9876543210", "GPVP", "Outside",   "A", "PA",   "", "", ""],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
@@ -216,16 +222,22 @@ export default function BulkImportPage() {
       ["Venue", "No", "Seating venue or hall name"],
       ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana gift/kit. Independent of slot."],
       ["SubCategory", "Sponsors", "Seva slot code matching Events → Seva Slots (e.g. SDGP, PA). Same phone + same slot = skip. Same phone + different slot = new QR."],
+      ["Instruction1, Instruction2, ...", "No", "Custom instructions shown on the community app. Add as many numbered columns as needed (Instruction1, Instruction2, Instruction3...) — each becomes a bullet point. Leave all blank to show the default seva/category info instead."],
       ["", "", ""],
       ["Note:", "", "Row 1 and Row 4 have same phone but different SubCategory — both get a QR. Same phone + same SubCategory = skip."],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 14 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
     const base = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
     const spon = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7B3FA0" } } };
-    headers.forEach((_, i) => { const c2 = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c2]) ws[c2] = { v: headers[i] }; ws[c2].s = i >= 4 ? spon : base; });
+    const instrStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2563EB" } } };
+    headers.forEach((_, i) => {
+      const c2 = XLSX.utils.encode_cell({ r: 0, c: i });
+      if (!ws[c2]) ws[c2] = { v: headers[i] };
+      ws[c2].s = i >= 4 && i <= 5 ? spon : i >= 6 ? instrStyle : base;
+    });
     const wsN = XLSX.utils.aoa_to_sheet(notes);
-    wsN["!cols"] = [{ wch: 14 }, { wch: 12 }, { wch: 90 }];
+    wsN["!cols"] = [{ wch: 22 }, { wch: 12 }, { wch: 90 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sponsor Holders");
     XLSX.utils.book_append_sheet(wb, wsN, "Column Notes");

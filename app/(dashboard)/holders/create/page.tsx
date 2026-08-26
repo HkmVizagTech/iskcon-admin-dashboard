@@ -11,6 +11,7 @@ import { ArrowLeft, User, Phone, Mail, QrCode, MapPin } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import Link from "next/link";
 import QRPreview from "@/components/qr/QRPreview";
 
@@ -23,6 +24,7 @@ export default function CreateHolderPage() {
   const [preacher, setPreacher] = useState("");
   const [tier, setTier] = useState("");          // bahumana A/B/C
   const [slotCode, setSlotCode] = useState("");  // seva slot code
+  const [instruction, setInstruction] = useState(""); // custom rich-text instruction for community app
   const [overrideReason, setOverrideReason] = useState("");
   const [duplicateWarning, setDuplicateWarning] = useState<any>(null);
   const [preacherId, setPreacherId] = useState("");
@@ -112,6 +114,7 @@ export default function CreateHolderPage() {
           venueName: selectedVenue || selectedEventData?.venue?.[0]?.name || "",
           subCategory: tier.trim().toUpperCase() || undefined,      // bahumana tier
           sevaSlotCode: slotCode.trim().toUpperCase() || undefined,  // seva slot
+          instruction: instruction.trim() || undefined,             // custom instruction for community app
           overrideReason: overrideReason.trim() || undefined,
         },
       );
@@ -522,6 +525,21 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
                   )}
+
+                  {/* Step 3.5: Custom Instructions (optional) */}
+                  <Card>
+                    <CardHeader>
+                      <h2 className="font-semibold">Instructions for Devotee</h2>
+                    </CardHeader>
+                    <CardBody>
+                      <RichTextEditor
+                        value={instruction}
+                        onChange={setInstruction}
+                        placeholder="e.g. Arrive by 8:00 AM. Bring your ID. Formal attire preferred."
+                        helperText="Shown on the community app alongside the QR pass. Leave blank to show the default seva/category info instead."
+                      />
+                    </CardBody>
+                  </Card>
 
                   {/* Step 4: Delivery Method */}
                   <Card>
