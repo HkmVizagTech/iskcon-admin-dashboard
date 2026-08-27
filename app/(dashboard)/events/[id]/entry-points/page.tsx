@@ -47,6 +47,7 @@ export default function EntryPointsPage() {
     multiEntryAllowed: false,
     allowGroupCount: false,
     linkedEpId: "",
+    combineWithId: "", // another EP to share one combined scan with
   });
 
   const { data: eventData } = useQuery({
@@ -131,10 +132,22 @@ export default function EntryPointsPage() {
       multiEntryAllowed: false,
       allowGroupCount: false,
       linkedEpId: "",
+      combineWithId: "",
     });
   };
 
   const handleEdit = (ep: any) => {
+    // If this EP already belongs to a redeem group, find its sibling(s) and
+    // pre-select the first one as the "combined with" partner so the admin
+    // sees the existing pairing and can edit/clear it.
+    let combineWithId = "";
+    if (ep.redemptionGroupId) {
+      const sibling = (entryPoints || []).find(
+        (e: any) =>
+          e.redemptionGroupId === ep.redemptionGroupId && e._id !== ep._id,
+      );
+      combineWithId = sibling?._id || "";
+    }
     setEditingEntryPoint(ep);
     setFormData({
       name: ep.name,
@@ -144,12 +157,32 @@ export default function EntryPointsPage() {
       multiEntryAllowed: ep.multiEntryAllowed || false,
       allowGroupCount: ep.allowGroupCount || false,
       linkedEpId: ep.linkedEpId || "",
+      combineWithId,
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = { ...formData };
+    const { combineWithId, ...rest } = formData;
+    const data: any = { ...rest };
+    if (combineWithId) {
+      // Combine this EP with the chosen sibling under one shared group id.
+      // Reuse the sibling's existing group id when possible so a chain stays
+      // in one group; otherwise generate a fresh group id and backfill the
+      // sibling so the pairing is symmetrical and either can be scanned first.
+      const sibling = (entryPoints || []).find((ep: any) => ep._id === combineWithId);
+      let groupId = sibling?.redemptionGroupId;
+      if (!groupId && editingEntryPoint?.redemptionGroupId) {
+        groupId = editingEntryPoint.redemptionGroupId;
+      }
+      if (!groupId) groupId = `rg_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+      data.redemptionGroupId = groupId;
+      if (!sibling?.redemptionGroupId) {
+        updateMutation.mutate({ id: combineWithId, data: { redemptionGroupId: groupId } });
+      }
+    } else {
+      data.redemptionGroupId = null; // explicit: standalone — no combined scan
+    }
     if (editingEntryPoint) {
       updateMutation.mutate({ id: editingEntryPoint._id, data });
     } else {
@@ -234,6 +267,26 @@ export default function EntryPointsPage() {
                       entryPoints?.find((e: any) => e._id === ep.linkedEpId)
                         ?.name
                     }
+                  </p>
+                )}
+                {ep.redemptionGroupId && (
+                  <p className="text-purple-600 flex items-center">
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Combined one scan with:{" "}
+                    {entryPoints
+                      ?.filter(
+                        (e: any) =>
+                          e.redemptionGroupId === ep.redemptionGroupId &&
+                          e._id !== ep._id,
+                      )
+                      .map((e: any) => e.name)
+                      .join(", ") || "this group"}
+                  </p>
+                )}
+                {ep.type === "bahumana" && (
+                  <p className="text-purple-600 flex items-center">
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Combined one scan with all Bahumana entries (any one venue)
                   </p>
                 )}
                 {ep.multiEntryAllowed && (
@@ -366,6 +419,30 @@ export default function EntryPointsPage() {
               })) || []),
             ]}
           />
+
+          {/* Combine group: single combined scan across both EPs (e.g. 2 Bahumana venues) */}
+          <Select
+            label="Combine as One Scan With (Optional)"
+            value={formData.combineWithId}
+            onChange={(e) =>
+              setFormData({ ...formData, combineWithId: e.target.value })
+            }
+            options={[
+              { value: "", label: "None - scan independently" },
+              ...((entryPoints || [])
+                .filter((ep: any) => ep._id !== editingEntryPoint?._id)
+                .map((ep: any) => ({
+                  value: ep._id,
+                  label: `Share one scan with ${ep.name}`,
+                })) || []),
+            ]}
+          />
+          <p className="text-xs text-gray-400 -mt-2 ml-1">
+            <strong>Bahumana</strong> entries are combined automatically — a pass
+            can claim bahumana at any <strong>one</strong> venue only. Use this
+            field only to group <strong>other</strong> entry points (e.g. two
+            volunteer stations) into a single combined scan.
+          </p>
 
           <div className="flex justify-end space-x-3 pt-4">
             <Button
