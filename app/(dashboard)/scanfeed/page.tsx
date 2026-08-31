@@ -376,6 +376,11 @@ export default function ScanFeedPage() {
                             <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
                             {log.stationLabel || log.epId?.name || "Unknown"}
                           </div>
+                          {log.venue && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              📍 Venue: {log.venue}
+                            </p>
+                          )}
                           <p className="text-xs text-gray-500 mt-0.5">{log.scannedBy?.name || "—"}</p>
                           <p className="text-xs text-gray-400">{formatIST(log.scannedAt, "MMM d, h:mm a")}</p>
                         </div>

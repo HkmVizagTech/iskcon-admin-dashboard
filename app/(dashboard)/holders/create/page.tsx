@@ -21,6 +21,7 @@ export default function CreateHolderPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
   const [selectedVenue, setSelectedVenue] = useState("");
+  const [selectedVenues, setSelectedVenues] = useState<string[]>([]); // multi-venue issuance
   const [preacher, setPreacher] = useState("");
   const [tier, setTier] = useState("");          // bahumana A/B/C
   const [slotCode, setSlotCode] = useState("");  // seva slot code
@@ -111,7 +112,11 @@ export default function CreateHolderPage() {
           deliveryMethod,
           preacher: preacher,
           preacherId: preacherId || undefined,
-          venueName: selectedVenue || selectedEventData?.venue?.[0]?.name || "",
+          venueName: selectedVenues[0] || selectedVenue || selectedEventData?.venue?.[0]?.name || "",
+          // Restrict the pass to the selected venues. Empty array = valid
+          // everywhere (legacy). The backend resolves these against the event's
+          // actual venue names before storing `allowedVenues` on the QRPass.
+          venues: selectedVenues.length > 0 ? selectedVenues : undefined,
           subCategory: tier.trim().toUpperCase() || undefined,      // bahumana tier
           sevaSlotCode: slotCode.trim().toUpperCase() || undefined,  // seva slot
           instruction: instruction.trim() || undefined,             // custom instruction for community app
@@ -195,6 +200,7 @@ export default function CreateHolderPage() {
                   setSelectedEvent(e.target.value);
                   setSelectedHolderTypeId("");
                   setSelectedVenue("");
+                  setSelectedVenues([]);
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 required
@@ -209,28 +215,50 @@ export default function CreateHolderPage() {
             </CardBody>
           </Card>
 
-          {/* Step 1.5: Select Venue (if multiple) */}
+          {/* Step 1.5: Select Venue(s) — restrict where the pass can scan */}
           {selectedEvent && eventVenues.length > 1 && (
             <Card>
               <CardHeader>
                 <h2 className="font-semibold">
-                  <MapPin className="w-4 h-4 inline mr-1" /> Select Venue
+                  <MapPin className="w-4 h-4 inline mr-1" /> Select Venue(s)
                 </h2>
+                <p className="text-xs text-gray-500">
+                  Choose where this pass is valid. The pass can only be scanned at
+                  the venues you select here. Pick none = valid everywhere.
+                </p>
               </CardHeader>
               <CardBody>
-                <select
-                  value={selectedVenue}
-                  onChange={(e) => setSelectedVenue(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="">Select venue...</option>
-                  {eventVenues.map((v: any, i: number) => (
-                    <option key={i} value={v.name}>
-                      {v.name || `Venue ${i + 1}`}{" "}
-                      {v.address ? `- ${v.address}` : ""}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-2">
+                  {eventVenues.map((v: any, i: number) => {
+                    const cName = v.name || `Venue ${i + 1}`;
+                    const checked = selectedVenues.includes(cName);
+                    return (
+                      <label
+                        key={i}
+                        className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-orange-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setSelectedVenues((prev) =>
+                              checked
+                                ? prev.filter((x) => x !== cName)
+                                : [...prev, cName],
+                            )
+                          }
+                          className="w-4 h-4 text-orange-500 focus:ring-orange-500"
+                        />
+                        <span className="text-sm font-medium text-gray-800">
+                          {cName}
+                        </span>
+                        {v.address && (
+                          <span className="text-xs text-gray-400">- {v.address}</span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
               </CardBody>
             </Card>
           )}
@@ -674,6 +702,7 @@ export default function CreateHolderPage() {
             setSelectedEvent("");
             setSelectedHolderTypeId("");
             setSelectedVenue("");
+            setSelectedVenues([]);
             setPreacher("");
             setPreacherId("");
             setFormData({
