@@ -201,6 +201,8 @@ export default function CreateHolderPage() {
                   setSelectedHolderTypeId("");
                   setSelectedVenue("");
                   setSelectedVenues([]);
+                  setTier("");
+                  setSlotCode("");
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 required
@@ -281,7 +283,14 @@ export default function CreateHolderPage() {
                         <button
                           key={ht._id}
                           type="button"
-                          onClick={() => setSelectedHolderTypeId(ht._id)}
+                          onClick={() => {
+                            setSelectedHolderTypeId(ht._id);
+                            // Clear tier + slot when switching pass type, so a
+                            // tier picked for Sponsor isn't silently submitted
+                            // with a Donor pass after the picker disappears.
+                            setTier("");
+                            setSlotCode("");
+                          }}
                           className={`p-4 rounded-lg border-2 transition-all ${
                             selectedHolderTypeId === ht._id
                               ? "border-orange-500 bg-orange-50 shadow-md"
@@ -408,8 +417,11 @@ export default function CreateHolderPage() {
                     </CardBody>
                   </Card>
 
-                  {/* Step 3.5: Category & Slot — only if holder type has categories or is sponsor/donor */}
-                  {(selectedHolderType?.categories?.length > 0 || ["SP", "DN"].includes(selectedHolderType?.catCode)) && (
+                  {/* Step 3.5: Category & Slot — shown only when the pass type has its
+                      own configured categories, or is Sponsor (the A/B/C bahumana
+                      tier). Donor and every other type have no tier, so the picker
+                      is hidden rather than offering a meaningless A/B/C. */}
+                  {(selectedHolderType?.categories?.length > 0 || selectedHolderType?.catCode === "SP") && (
                   <Card>
                     <CardHeader>
                       <h2 className="font-semibold">
@@ -421,7 +433,7 @@ export default function CreateHolderPage() {
                     </CardHeader>
                     <CardBody className="space-y-4">
                       {/* Category */}
-                      {(selectedHolderType?.categories?.length > 0 || ["SP", "DN"].includes(selectedHolderType?.catCode)) && (
+                      {(selectedHolderType?.categories?.length > 0 || selectedHolderType?.catCode === "SP") && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Category
