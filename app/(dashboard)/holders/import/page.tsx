@@ -2,7 +2,7 @@
 
 import api from "@/lib/api";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
@@ -23,17 +23,22 @@ import {
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  allowedDeliveryMethods,
+  filterHolderTypes,
+  type DeliveryMethod,
+} from "@/lib/permissions";
 
 
 export default function BulkImportPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
   const [selectedPreacherId, setSelectedPreacherId] = useState("");
-  const [deliveryMethod, setDeliveryMethod] = useState<
-    "whatsapp" | "email" | "both" | "mobile" | "mobile_whatsapp" | "none"
-  >("whatsapp");
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("whatsapp");
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -71,6 +76,19 @@ export default function BulkImportPage() {
     },
     enabled: !!selectedEvent,
   });
+
+  // Bulk import reaches the same holder-creation code as single issue, so the
+  // same per-account limits apply. Enforced server-side before the file is even
+  // parsed; filtered here so a restricted issuer isn't offered a dead option.
+  const issuableTypes = filterHolderTypes(holderTypes, user);
+  const deliveryOptions = allowedDeliveryMethods(user);
+
+  useEffect(() => {
+    if (deliveryOptions.length === 0) return;
+    if (!deliveryOptions.some((m) => m.value === deliveryMethod)) {
+      setDeliveryMethod(deliveryOptions[0].value);
+    }
+  }, [deliveryOptions, deliveryMethod]);
 
   // Selected pass type (merged HolderType entity) — carries entry points directly
   const selectedTypeData = useMemo(() => {
@@ -327,13 +345,15 @@ export default function BulkImportPage() {
                   </h2>
                 </CardHeader>
                 <CardBody>
-                  {!holderTypes || holderTypes.length === 0 ? (
+                  {issuableTypes.length === 0 ? (
                     <p className="text-sm text-gray-500">
-                      No holder types found. Create them under the event's Holder Types tab first.
+                      {holderTypes && holderTypes.length > 0
+                        ? "Your account is not allowed to issue any of this event's holder types. Ask an administrator to widen your permissions."
+                        : "No holder types found. Create them under the event's Holder Types tab first."}
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                      {holderTypes.map((ht: any) => (
+                      {issuableTypes.map((ht: any) => (
                         <button
                           key={ht._id}
                           type="button"
@@ -364,21 +384,20 @@ export default function BulkImportPage() {
                   <h2 className="font-semibold">Step 2.5: Delivery Method</h2>
                 </CardHeader>
                 <CardBody>
+                  {/* Shared DELIVERY_METHODS list (was an inline copy here and
+                      six hand-written radios on the create page), filtered to
+                      what this account may use. */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {[
-                      { value: "whatsapp", label: "WhatsApp" },
-                      { value: "email", label: "Email" },
-                      { value: "both", label: "Both" },
-                      { value: "mobile", label: "Mobile App" },
-                      { value: "mobile_whatsapp", label: "Mobile + WhatsApp" },
-                      { value: "none", label: "None" },
-                    ].map((opt) => (
+                    {deliveryOptions.map((opt) => (
                       <label key={opt.value} className="flex items-center">
                         <input
                           type="radio"
+                          name="deliveryMethod"
                           value={opt.value}
                           checked={deliveryMethod === opt.value}
-                          onChange={(e) => setDeliveryMethod(e.target.value as any)}
+                          onChange={(e) =>
+                            setDeliveryMethod(e.target.value as DeliveryMethod)
+                          }
                           className="text-orange-600 focus:ring-orange-500"
                         />
                         <span className="ml-2">{opt.label}</span>

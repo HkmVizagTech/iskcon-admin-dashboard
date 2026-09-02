@@ -7,13 +7,29 @@ export interface User {
     | "super_admin"
     | "event_admin"
     | "campaign_manager"
+    // Limited pass-issuing account — what it may issue comes from
+    // allowedHolderTypeCodes / allowedDeliveryMethods below.
+    | "issuer"
     | "volunteer"
+    | "preacher"
+    | "announcer"
     | "self";
   avatar?: string;
   isActive: boolean;
   canOverride: boolean;
+  canManualEntry?: boolean;
+  canBahumanaView?: boolean;
   allowedEvents: string[];
-  allowedCategories: string[];
+  // Turns allowedEvents into a hard limit rather than a label.
+  restrictToAllowedEvents?: boolean;
+  // Per-account issue restrictions. An EMPTY array means "no restriction".
+  // Allow-listed by holder-type catCode ("INV", "SP", ...) rather than by
+  // ObjectId, since holder types are per-event.
+  allowedHolderTypeCodes?: string[];
+  allowedDeliveryMethods?: string[];
+  canViewAllHolders?: boolean;
+  canViewReports?: boolean;
+  canViewScanFeed?: boolean;
   createdAt: string;
   lastLogin?: string;
 }

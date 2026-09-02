@@ -2,7 +2,7 @@
 
 import api from "@/lib/api";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
@@ -14,10 +14,17 @@ import Input from "@/components/ui/Input";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import Link from "next/link";
 import QRPreview from "@/components/qr/QRPreview";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  allowedDeliveryMethods,
+  filterHolderTypes,
+  type DeliveryMethod,
+} from "@/lib/permissions";
 
 
 export default function CreateHolderPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState("");
   const [selectedHolderTypeId, setSelectedHolderTypeId] = useState("");
   const [selectedVenue, setSelectedVenue] = useState("");
@@ -35,9 +42,7 @@ export default function CreateHolderPage() {
     email: "",
     lifetimeDonation: "",
   });
-  const [deliveryMethod, setDeliveryMethod] = useState<
-    "whatsapp" | "email" | "both" | "none" | "mobile" | "mobile_whatsapp"
-  >("whatsapp");
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("whatsapp");
   const [generatedQR, setGeneratedQR] = useState<any>(null);
   const [showQRPreview, setShowQRPreview] = useState(false);
 
@@ -81,6 +86,23 @@ export default function CreateHolderPage() {
     },
     enabled: !!selectedEvent,
   });
+
+  // Holder types this ACCOUNT may issue. The server rejects a disallowed type
+  // with 403 regardless; filtering here just means a restricted issuer is
+  // never shown a button that cannot work.
+  const issuableTypes = filterHolderTypes(holderTypes, user);
+
+  // Delivery options this account may use, from the one shared list.
+  const deliveryOptions = allowedDeliveryMethods(user);
+
+  // If the current selection isn't permitted (default "whatsapp" on an account
+  // barred from it), fall back to the first option that is.
+  useEffect(() => {
+    if (deliveryOptions.length === 0) return;
+    if (!deliveryOptions.some((m) => m.value === deliveryMethod)) {
+      setDeliveryMethod(deliveryOptions[0].value);
+    }
+  }, [deliveryOptions, deliveryMethod]);
 
   // Fetch seva slots for the selected event
   const { data: sevaSlots } = useQuery({
@@ -277,13 +299,15 @@ export default function CreateHolderPage() {
                   <h2 className="font-semibold">Step 2: Select Holder Type</h2>
                 </CardHeader>
                 <CardBody>
-                  {!holderTypes || holderTypes.length === 0 ? (
+                  {issuableTypes.length === 0 ? (
                     <p className="text-sm text-gray-500">
-                      No holder types found. Create them under the event's Holder Types tab first.
+                      {holderTypes && holderTypes.length > 0
+                        ? "Your account is not allowed to issue any of this event's holder types. Ask an administrator to widen your permissions."
+                        : "No holder types found. Create them under the event's Holder Types tab first."}
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      {holderTypes.map((ht: any) => (
+                      {issuableTypes.map((ht: any) => (
                         <button
                           key={ht._id}
                           type="button"
@@ -617,80 +641,32 @@ export default function CreateHolderPage() {
                       <h2 className="font-semibold">Step 4: Delivery Method</h2>
                     </CardHeader>
                     <CardBody>
+                      {/* Driven by the shared DELIVERY_METHODS list, filtered to
+                          what this account is allowed to use. Previously six
+                          hand-duplicated radio blocks kept in manual sync with
+                          the bulk-import page's own copy of the same list. */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            value="whatsapp"
-                            checked={deliveryMethod === "whatsapp"}
-                            onChange={(e) =>
-                              setDeliveryMethod(e.target.value as any)
-                            }
-                            className="text-orange-600 focus:ring-orange-500"
-                          />
-                          <span className="ml-2">WhatsApp</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            value="email"
-                            checked={deliveryMethod === "email"}
-                            onChange={(e) =>
-                              setDeliveryMethod(e.target.value as any)
-                            }
-                            className="text-orange-600 focus:ring-orange-500"
-                          />
-                          <span className="ml-2">Email</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            value="both"
-                            checked={deliveryMethod === "both"}
-                            onChange={(e) =>
-                              setDeliveryMethod(e.target.value as any)
-                            }
-                            className="text-orange-600 focus:ring-orange-500"
-                          />
-                          <span className="ml-2">Both</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            value="mobile"
-                            checked={deliveryMethod === "mobile"}
-                            onChange={(e) =>
-                              setDeliveryMethod(e.target.value as any)
-                            }
-                            className="text-orange-600 focus:ring-orange-500"
-                          />
-                          <span className="ml-2">Mobile App</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            value="mobile_whatsapp"
-                            checked={deliveryMethod === "mobile_whatsapp"}
-                            onChange={(e) =>
-                              setDeliveryMethod(e.target.value as any)
-                            }
-                            className="text-orange-600 focus:ring-orange-500"
-                          />
-                          <span className="ml-2">Mobile + WhatsApp</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            value="none"
-                            checked={deliveryMethod === "none"}
-                            onChange={(e) =>
-                              setDeliveryMethod(e.target.value as any)
-                            }
-                            className="text-orange-600 focus:ring-orange-500"
-                          />
-                          <span className="ml-2">None</span>
-                        </label>
+                        {deliveryOptions.map((m) => (
+                          <label key={m.value} className="flex items-center">
+                            <input
+                              type="radio"
+                              name="deliveryMethod"
+                              value={m.value}
+                              checked={deliveryMethod === m.value}
+                              onChange={(e) =>
+                                setDeliveryMethod(e.target.value as DeliveryMethod)
+                              }
+                              className="text-orange-600 focus:ring-orange-500"
+                            />
+                            <span className="ml-2">{m.label}</span>
+                          </label>
+                        ))}
                       </div>
+                      {deliveryOptions.length === 1 && (
+                        <p className="mt-2 text-xs text-gray-400">
+                          Your account is limited to this delivery method.
+                        </p>
+                      )}
                       {deliveryMethod === "mobile" && (
                         <p className="mt-2 text-sm text-gray-500">
                           QR will be pushed to the community mobile app only.

@@ -16,23 +16,43 @@ import {
   AlertTriangle,
   ScanLine,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { can } from "@/lib/permissions";
 
-const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Events", href: "/events", icon: Calendar },
+// `requires` names a permission flag that must not be false for the item to
+// show, and `adminOnly` limits an item to the roles that can actually use it.
+// Hiding is cosmetic — every one of these routes is enforced server-side too.
+const menuItems: {
+  name: string;
+  href: string;
+  icon: any;
+  requires?: "canViewReports" | "canViewScanFeed";
+  adminOnly?: boolean;
+}[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, requires: "canViewReports" },
+  { name: "Events", href: "/events", icon: Calendar, adminOnly: true },
   { name: "Holders", href: "/holders", icon: Users },
   { name: "Issue QR Pass", href: "/holders/create", icon: QrCode },
   { name: "Bulk Import", href: "/holders/import", icon: Upload },
-  { name: "Failed Imports", href: "/holders/failed", icon: AlertTriangle }, // ← NEW
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Live Scan", href: "/scanfeed", icon: ScanLine },
-  { name: "Volunteers", href: "/volunteers", icon: Users },
-  { name: "Preachers", href: "/preachers", icon: BookOpen },
+  { name: "Failed Imports", href: "/holders/failed", icon: AlertTriangle },
+  { name: "Reports", href: "/reports", icon: BarChart3, requires: "canViewReports" },
+  { name: "Live Scan", href: "/scanfeed", icon: ScanLine, requires: "canViewScanFeed" },
+  { name: "Volunteers", href: "/volunteers", icon: Users, adminOnly: true },
+  { name: "Preachers", href: "/preachers", icon: BookOpen, adminOnly: true },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
+const ADMIN_ROLES = ["super_admin", "event_admin", "campaign_manager"];
+
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const visibleItems = menuItems.filter((item) => {
+    if (item.requires && !can(user, item.requires)) return false;
+    if (item.adminOnly && !ADMIN_ROLES.includes(user?.role || "")) return false;
+    return true;
+  });
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -63,7 +83,7 @@ export default function Sidebar() {
       >
         <div className="flex flex-col h-full">
           <nav className="flex-1 p-4 space-y-1">
-            {menuItems.map((item) => {
+            {visibleItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname?.startsWith(item.href + "/");
               const Icon = item.icon;

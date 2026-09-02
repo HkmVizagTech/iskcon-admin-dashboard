@@ -10,25 +10,45 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { formatIST } from "@/lib/dateUtils";
 import StatCard from "@/components/ui/StatCard";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { can } from "@/lib/permissions";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
+
+  // This page is entirely event-wide reporting, so an account without report
+  // access would just see three failed requests. Send it to the issue form —
+  // the same place login routes a restricted issuer.
+  const canSeeDashboard = can(user, "canViewReports");
+  const canSeeScans = can(user, "canViewScanFeed");
+
+  useEffect(() => {
+    if (user && !canSeeDashboard) router.replace("/holders/create");
+  }, [user, canSeeDashboard, router]);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => (await api.get("/reports/dashboard")).data,
+    enabled: canSeeDashboard,
   });
 
   const { data: recentEvents, isLoading: eventsLoading } = useQuery({
     queryKey: ["recent-events"],
     queryFn: async () => (await api.get("/events?limit=5")).data.events,
+    enabled: canSeeDashboard,
   });
 
+  // Separate flag: an account may keep report access but lose the scan feed.
   const { data: recentScans } = useQuery({
     queryKey: ["recent-scans"],
     staleTime: 0,
     queryFn: async () => (await api.get("/scan/recent?limit=10")).data.scans,
+    enabled: canSeeDashboard && canSeeScans,
   });
+
+  if (!canSeeDashboard) return null;
 
   return (
     <div className="space-y-6">

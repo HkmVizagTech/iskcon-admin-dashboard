@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
+import { landingRoute, type Permissions } from "@/lib/permissions";
 
 interface User {
   id: string;
@@ -13,12 +14,11 @@ interface User {
   role: string;
   avatar?: string;
   phone?: string;
-  permissions: {
-    canOverride: boolean;
-    canManualEntry: boolean;
-    canBahumanaView: boolean;
-    allowedEvents: string[];
-  };
+  // NOTE: /auth/profile used to return these flags at the TOP level while
+  // /auth/login nested them here, so `user.permissions` was undefined after
+  // every page refresh and permission-gated screens denied legitimate users.
+  // The API now returns this same block from both endpoints.
+  permissions: Permissions;
 }
 
 interface AuthContextType {
@@ -65,18 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", token);
       setUser(user);
       toast.success("Welcome back! Hare Krishna 🙏");
-      // Announcer role: redirect directly to their bahumana view
-      const isBahumanaOnly = user.role === "announcer" || user.permissions?.canBahumanaView;
-      if (isBahumanaOnly) {
-        const eventId = user.permissions?.allowedEvents?.[0];
-        if (eventId) {
-          router.push(`/events/${eventId}/bahumana`);
-        } else {
-          router.push("/dashboard");
-        }
-      } else {
-        router.push("/dashboard");
-      }
+      // Announcers go to their bahumana view; a restricted issuer who cannot
+      // read reports has no dashboard to show, so they land on the issue form.
+      router.push(landingRoute(user));
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Login failed");
       throw error;
