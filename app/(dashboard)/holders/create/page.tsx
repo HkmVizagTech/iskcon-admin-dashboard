@@ -145,7 +145,11 @@ export default function CreateHolderPage() {
     },
     onError: (error: any) => {
       const errData = error.response?.data;
-      if (error.response?.status === 409 && errData?.code === "DUPLICATE_SEVA_SLOT") {
+      // Any 409 that names the existing pass is an override-able duplicate.
+      // Matching on `existing` rather than a specific code keeps this working
+      // across DUPLICATE_PASS (current) and the older DUPLICATE_SEVA_SLOT /
+      // DUPLICATE_PHONE codes.
+      if (error.response?.status === 409 && errData?.existing) {
         setDuplicateWarning(errData);
       } else {
         toast.error(errData?.error || "Failed to generate pass");
@@ -535,20 +539,47 @@ export default function CreateHolderPage() {
                         </div>
                       )}
 
-                      {/* Duplicate warning */}
-                      {duplicateWarning && (
+                    </CardBody>
+                  </Card>
+                  )}
+
+                  {/* Duplicate warning — deliberately OUTSIDE the Step 3.5 card,
+                      which only renders for Sponsor / categorised pass types.
+                      Nested there, a duplicate on a Volunteer or General pass
+                      set this state but rendered nothing, so the submit button
+                      appeared to do nothing at all. */}
+                  {duplicateWarning && (
+                    <Card>
+                      <CardBody>
                         <div className="bg-amber-50 border border-amber-300 rounded-xl p-4">
-                          <p className="text-sm font-semibold text-amber-800 mb-1">⚠️ Seva slot already issued</p>
-                          <p className="text-sm text-amber-700 mb-1">
-                            <strong>{duplicateWarning.existing?.holderName}</strong> already has an active pass on this number for this seva slot.
+                          <p className="text-sm font-semibold text-amber-800 mb-1">
+                            ⚠️ This pass already exists on this number
                           </p>
-                          <p className="text-xs text-amber-600 mb-3">{duplicateWarning.hint}</p>
-                          <label className="block text-sm font-medium text-amber-800 mb-1">Reason for issuing additional pass *</label>
+                          <p className="text-sm text-amber-700 mb-1">
+                            <strong>{duplicateWarning.existing?.holderName}</strong> already holds an active{" "}
+                            <strong>
+                              {duplicateWarning.existing?.holderTypeName || "pass"}
+                              {duplicateWarning.existing?.subCategory
+                                ? ` · category ${duplicateWarning.existing.subCategory}`
+                                : ""}
+                            </strong>{" "}
+                            pass for this event
+                            {duplicateWarning.existing?.qrId ? ` (${duplicateWarning.existing.qrId})` : ""}.
+                          </p>
+                          <p className="text-xs text-amber-700 mb-3">
+                            To give this number an <strong>additional</strong> pass, go back and pick a
+                            different holder type or a different category — that is allowed and needs no
+                            reason. Only a <strong>replacement</strong> of the pass above needs a reason,
+                            and it will revoke {duplicateWarning.existing?.qrId || "the existing QR"}.
+                          </p>
+                          <label className="block text-sm font-medium text-amber-800 mb-1">
+                            Reason for replacing the existing pass *
+                          </label>
                           <input
                             type="text"
                             value={overrideReason}
                             onChange={(e) => setOverrideReason(e.target.value)}
-                            placeholder="e.g. Lost phone, Replacement, Family member"
+                            placeholder="e.g. Lost phone, Replacement"
                             className="w-full px-3 py-2 border border-amber-400 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 mb-2"
                           />
                           {overrideReason.trim() && (
@@ -557,13 +588,12 @@ export default function CreateHolderPage() {
                               onClick={() => createHolderMutation.mutate()}
                               className="w-full py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700"
                             >
-                              Issue Additional Pass Anyway
+                              Revoke {duplicateWarning.existing?.qrId || "existing pass"} & issue replacement
                             </button>
                           )}
                         </div>
-                      )}
-                    </CardBody>
-                  </Card>
+                      </CardBody>
+                    </Card>
                   )}
 
                   {/* Step 3.5: Custom Instructions (optional) */}

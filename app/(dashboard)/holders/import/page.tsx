@@ -147,13 +147,18 @@ export default function BulkImportPage() {
 
       setImportResult(response.data);
 
-      if (response.data.stats.failed === 0) {
-        toast.success(
-          `🎉 All ${response.data.stats.success} passes sent successfully!`,
-        );
+      const { success, failed, skipped = 0 } = response.data.stats;
+      if (failed === 0 && skipped === 0) {
+        toast.success(`🎉 All ${success} passes sent successfully!`);
       } else {
         toast.success(
-          `✅ ${response.data.stats.success} sent, ⚠️ ${response.data.stats.failed} failed`,
+          [
+            `✅ ${success} sent`,
+            skipped > 0 ? `⏭️ ${skipped} already had this pass` : null,
+            failed > 0 ? `⚠️ ${failed} failed` : null,
+          ]
+            .filter(Boolean)
+            .join(", "),
           { duration: 6000 },
         );
       }
@@ -577,7 +582,11 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
           </CardHeader>
           <CardBody>
             <div className="text-center mb-6">
-              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-6">
+              {/* 4 buckets: total = sent + skipped + failed. "Skipped" rows
+                  already held a pass for this holder type AND category — they
+                  used to be counted as successes, which left `total` and `sent`
+                  disagreeing with no explanation. */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto mb-6">
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-2xl font-bold text-gray-900">
                     {importResult.stats.total}
@@ -589,6 +598,12 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                     {importResult.stats.success}
                   </p>
                   <p className="text-xs text-green-600">Sent ✅</p>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-4">
+                  <p className="text-2xl font-bold text-amber-700">
+                    {importResult.stats.skipped ?? 0}
+                  </p>
+                  <p className="text-xs text-amber-600">Already had ⏭️</p>
                 </div>
                 <div className="bg-red-50 rounded-xl p-4">
                   <p className="text-2xl font-bold text-red-700">
@@ -613,6 +628,35 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                         >
                           <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
                           {item.name} — {item.phone} ({item.qrId})
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {importResult.summary.skippedList?.length > 0 && (
+                <div className="mb-4 text-left">
+                  <h4 className="font-medium text-amber-700 mb-2 flex items-center">
+                    <AlertTriangle className="w-4 h-4 mr-2" /> Already had this pass (
+                    {importResult.summary.skippedList.length})
+                  </h4>
+                  <p className="text-xs text-gray-500 mb-2">
+                    No new QR issued — these numbers already hold a pass for this holder type and
+                    category. To give them an additional pass, re-import with a different Category
+                    value or under a different holder type.
+                  </p>
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {importResult.summary.skippedList.map(
+                      (item: any, i: number) => (
+                        <div
+                          key={i}
+                          className="text-sm text-amber-700 flex items-center"
+                        >
+                          <AlertTriangle className="w-3 h-3 text-amber-500 mr-2 flex-shrink-0" />
+                          {item.name || "Unknown"} — {item.phone}
+                          {item.qrId ? ` (${item.qrId})` : ""}
+                          {item.reason ? ` — ${item.reason}` : ""}
                         </div>
                       ),
                     )}
