@@ -196,17 +196,18 @@ export default function BulkImportPage() {
   const handleDownloadGeneralSample = () => {
     const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "Instruction1", "Instruction2", "Instruction3"];
     const examples = [
-      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall", "A",    "Arrive by 8:00 AM", "Bring your ID", ""],
-      ["Priya Sharma",   "9876543211", "MKGD", "Temple",    "B",    "", "", ""],
-      ["Amit Singh",     "9876543212", "GPVP", "Main Hall", "C",    "", "", ""],
-      ["Sita Devi Dasi", "9876543213", "",     "Outside",   "NONE", "", "", ""],
+      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall",              "A",    "Arrive by 8:00 AM", "Bring your ID", ""],
+      ["Priya Sharma",   "9876543211", "MKGD", "Temple",                 "B",    "", "", ""],
+      ["Amit Singh",     "9876543212", "GPVP", "Main Hall",              "C",    "", "", ""],
+      ["Sita Devi Dasi", "9876543213", "",     "Outside",                "NONE", "", "", ""],
+      ["Kiran Reddy",    "9876543214", "MKGD", "Main Hall, Temple Hall", "A",    "", "", ""],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
       ["Name", "Yes", "Full name of the devotee"],
       ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
-      ["Venue", "No", "Seating venue or hall name"],
+      ["Venue", "No", "Which venue(s) the QR is valid at. One venue name, or multiple separated by commas (e.g. \"Main Hall, Temple Hall\") if the pass should scan at more than one venue. Leave blank for valid at every venue."],
       ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana and grouping."],
       ["Instruction1, Instruction2, ...", "No", "Custom instructions shown on the community app. Add as many numbered columns as needed (Instruction1, Instruction2, Instruction3...) — each becomes a bullet point. Leave all blank to show the default seva/category info instead."],
     ];
@@ -232,17 +233,18 @@ export default function BulkImportPage() {
   const handleDownloadSponsorSample = () => {
     const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "SubCategory", "Instruction1", "Instruction2", "Instruction3"];
     const examples = [
-      ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall", "A", "SDGP", "Arrive by 8:00 AM", "Bring your ID", "Formal attire"],
-      ["Hari Dasa",          "9876543211", "GPVP", "Temple",    "B", "PA",   "", "", ""],
-      ["Radha Devi Dasi",    "9876543212", "MKGD", "Main Hall", "A", "PA",   "", "", ""],
-      ["Shadgoswami Prabhu", "9876543210", "GPVP", "Outside",   "A", "PA",   "", "", ""],
+      ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall",              "A", "SDGP", "Arrive by 8:00 AM", "Bring your ID", "Formal attire"],
+      ["Hari Dasa",          "9876543211", "GPVP", "Temple",                 "B", "PA",   "", "", ""],
+      ["Radha Devi Dasi",    "9876543212", "MKGD", "Main Hall",              "A", "PA",   "", "", ""],
+      ["Shadgoswami Prabhu", "9876543210", "GPVP", "Outside",                "A", "PA",   "", "", ""],
+      ["Kiran Reddy",        "9876543214", "MKGD", "Main Hall, Temple Hall", "A", "SDGP", "", "", ""],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
       ["Name", "Yes", "Full name of the devotee"],
       ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
-      ["Venue", "No", "Seating venue or hall name"],
+      ["Venue", "No", "Which venue(s) the QR is valid at. One venue name, or multiple separated by commas (e.g. \"Main Hall, Temple Hall\") if the pass should scan at more than one venue. Leave blank for valid at every venue."],
       ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana gift/kit. Independent of slot."],
       ["SubCategory", "Sponsors", "Seva slot code matching Events → Seva Slots (e.g. SDGP, PA). Same phone + same slot = skip. Same phone + different slot = new QR."],
       ["Instruction1, Instruction2, ...", "No", "Custom instructions shown on the community app. Add as many numbered columns as needed (Instruction1, Instruction2, Instruction3...) — each becomes a bullet point. Leave all blank to show the default seva/category info instead."],
