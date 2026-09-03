@@ -211,13 +211,13 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadGeneralSample = () => {
-    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "Instruction1", "Instruction2", "Instruction3"];
+    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Date", "Category", "Instruction1", "Instruction2", "Instruction3"];
     const examples = [
-      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall",              "A",    "Arrive by 8:00 AM", "Bring your ID", ""],
-      ["Priya Sharma",   "9876543211", "MKGD", "Temple",                 "B",    "", "", ""],
-      ["Amit Singh",     "9876543212", "GPVP", "Main Hall",              "C",    "", "", ""],
-      ["Sita Devi Dasi", "9876543213", "",     "Outside",                "NONE", "", "", ""],
-      ["Kiran Reddy",    "9876543214", "MKGD", "Main Hall, Temple Hall", "A",    "", "", ""],
+      ["Rajesh Kumar",   "9876543210", "MKGD", "Main Hall",              "04-09-2026", "A",    "Arrive by 8:00 AM", "Bring your ID", ""],
+      ["Priya Sharma",   "9876543211", "MKGD", "Temple",                 "05-09-2026", "B",    "", "", ""],
+      ["Amit Singh",     "9876543212", "GPVP", "Main Hall",              "",           "C",    "", "", ""],
+      ["Sita Devi Dasi", "9876543213", "",     "Outside",                "",           "NONE", "", "", ""],
+      ["Kiran Reddy",    "9876543214", "MKGD", "Main Hall, Temple Hall", "04-09-2026", "A",    "", "", ""],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
@@ -225,11 +225,12 @@ export default function BulkImportPage() {
       ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
       ["Venue", "No", "Which venue(s) the QR is valid at. One venue name, or multiple separated by commas (e.g. \"Main Hall, Temple Hall\") if the pass should scan at more than one venue. Leave blank for valid at every venue."],
+      ["Date", "No", "Which specific day (within a multi-day event) this holder's own seva/program is on — shown in the WhatsApp message and stored on the QR pass. Format: DD-MM-YYYY (e.g. 04-09-2026). Leave blank to use the event's overall start date."],
       ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana and grouping."],
       ["Instruction1, Instruction2, ...", "No", "Custom instructions shown on the community app. Add as many numbered columns as needed (Instruction1, Instruction2, Instruction3...) — each becomes a bullet point. Leave all blank to show the default seva/category info instead."],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
     const base = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
     const catStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7B3FA0" } } };
     const instrStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2563EB" } } };
@@ -248,13 +249,13 @@ export default function BulkImportPage() {
   };
 
   const handleDownloadSponsorSample = () => {
-    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Category", "SubCategory", "Instruction1", "Instruction2", "Instruction3"];
+    const headers = ["Name", "Phone Number", "Preacher", "Venue", "Date", "Category", "SubCategory", "Instruction1", "Instruction2", "Instruction3"];
     const examples = [
-      ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall",              "A", "SDGP", "Arrive by 8:00 AM", "Bring your ID", "Formal attire"],
-      ["Hari Dasa",          "9876543211", "GPVP", "Temple",                 "B", "PA",   "", "", ""],
-      ["Radha Devi Dasi",    "9876543212", "MKGD", "Main Hall",              "A", "PA",   "", "", ""],
-      ["Shadgoswami Prabhu", "9876543210", "GPVP", "Outside",                "A", "PA",   "", "", ""],
-      ["Kiran Reddy",        "9876543214", "MKGD", "Main Hall, Temple Hall", "A", "SDGP", "", "", ""],
+      ["Shadgoswami Prabhu", "9876543210", "MKGD", "Main Hall",              "04-09-2026", "A", "SDGP", "Arrive by 8:00 AM", "Bring your ID", "Formal attire"],
+      ["Hari Dasa",          "9876543211", "GPVP", "Temple",                 "05-09-2026", "B", "PA",   "", "", ""],
+      ["Radha Devi Dasi",    "9876543212", "MKGD", "Main Hall",              "",           "A", "PA",   "", "", ""],
+      ["Shadgoswami Prabhu", "9876543210", "GPVP", "Outside",                "",           "A", "PA",   "", "", ""],
+      ["Kiran Reddy",        "9876543214", "MKGD", "Main Hall, Temple Hall", "04-09-2026", "A", "SDGP", "", "", ""],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
@@ -262,6 +263,7 @@ export default function BulkImportPage() {
       ["Phone Number", "Yes", "10-digit mobile. 91 prefix added automatically."],
       ["Preacher", "No", "Preacher short code (e.g. MKGD) or full name."],
       ["Venue", "No", "Which venue(s) the QR is valid at. One venue name, or multiple separated by commas (e.g. \"Main Hall, Temple Hall\") if the pass should scan at more than one venue. Leave blank for valid at every venue."],
+      ["Date", "No", "Which specific day (within a multi-day event) this sponsor's own seva/program is on — shown in the WhatsApp message and stored on the QR pass. Format: DD-MM-YYYY (e.g. 04-09-2026). Leave blank to use the event's overall start date."],
       ["Category", "No", "Category tier — A / B / C or NONE. Drives bahumana gift/kit. Independent of slot."],
       ["SubCategory", "Sponsors", "Seva slot code matching Events → Seva Slots (e.g. SDGP, PA). Same phone + same slot = skip. Same phone + different slot = new QR."],
       ["Instruction1, Instruction2, ...", "No", "Custom instructions shown on the community app. Add as many numbered columns as needed (Instruction1, Instruction2, Instruction3...) — each becomes a bullet point. Leave all blank to show the default seva/category info instead."],
@@ -269,14 +271,14 @@ export default function BulkImportPage() {
       ["Note:", "", "Row 1 and Row 4 have same phone but different SubCategory — both get a QR. Same phone + same SubCategory = skip."],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 15 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
     const base = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
     const spon = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "7B3FA0" } } };
     const instrStyle = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "2563EB" } } };
     headers.forEach((_, i) => {
       const c2 = XLSX.utils.encode_cell({ r: 0, c: i });
       if (!ws[c2]) ws[c2] = { v: headers[i] };
-      ws[c2].s = i >= 4 && i <= 5 ? spon : i >= 6 ? instrStyle : base;
+      ws[c2].s = i >= 5 && i <= 6 ? spon : i >= 7 ? instrStyle : base;
     });
     const wsN = XLSX.utils.aoa_to_sheet(notes);
     wsN["!cols"] = [{ wch: 22 }, { wch: 12 }, { wch: 90 }];

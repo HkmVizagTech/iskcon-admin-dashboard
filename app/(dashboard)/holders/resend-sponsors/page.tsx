@@ -49,19 +49,20 @@ export default function ResendSponsorsBulkPage() {
   });
 
   const handleDownloadSample = () => {
-    const headers = ["Phone Number", "Venue"];
+    const headers = ["Phone Number", "Venue", "Date"];
     const examples = [
-      ["9876543210", "Main Hall"],
-      ["9876543211", "Temple Hall"],
-      ["9876543212", "Main Hall, Temple Hall"],
+      ["9876543210", "Main Hall", "04-09-2026"],
+      ["9876543211", "Temple Hall", "05-09-2026"],
+      ["9876543212", "Main Hall, Temple Hall", ""],
     ];
     const notes = [
       ["Column", "Required?", "Notes"],
       ["Phone Number", "Yes", "10-digit mobile matching an existing Sponsor on the selected event. 91 prefix added automatically."],
       ["Venue", "Yes", "The new venue to send in the WhatsApp message for THIS phone number. Different rows can have different venues. Multiple venues can be comma-separated (e.g. \"Main Hall, Temple Hall\") if this sponsor should see both."],
+      ["Date", "No", "Which specific day (within a multi-day event) this sponsor's seva/program is on — shown in the resent WhatsApp message. Format: DD-MM-YYYY (e.g. 04-09-2026). Leave blank to keep whatever date the pass already had."],
     ];
     const ws = XLSX.utils.aoa_to_sheet([headers, ...examples]);
-    ws["!cols"] = [{ wch: 16 }, { wch: 30 }];
+    ws["!cols"] = [{ wch: 16 }, { wch: 30 }, { wch: 14 }];
     const style = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "E85D24" } } };
     headers.forEach((_, i) => { const c = XLSX.utils.encode_cell({ r: 0, c: i }); if (!ws[c]) ws[c] = { v: headers[i] }; ws[c].s = style; });
     const wsN = XLSX.utils.aoa_to_sheet(notes);
