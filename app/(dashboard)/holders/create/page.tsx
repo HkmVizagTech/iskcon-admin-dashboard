@@ -533,16 +533,16 @@ export default function CreateHolderPage() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Category
-                          <span className="ml-1.5 text-xs text-gray-400 font-normal">select a category for this holder</span>
+                          <span className="ml-1.5 text-xs text-gray-400 font-normal">select a category or type a custom one</span>
                         </label>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 mb-2">
                           {["", ...(selectedHolderType.categories?.length > 0 ? selectedHolderType.categories : ["A", "B", "C"])].map((t: string) => (
                             <button
                               key={t || "none"}
                               type="button"
                               onClick={() => setTier(t)}
                               className={`flex-1 py-2.5 rounded-xl border-2 font-black text-lg transition-colors ${
-                                tier === t
+                                tier.trim() === t
                                   ? t === "A" ? "bg-amber-100 text-amber-800 border-amber-400"
                                   : t === "B" ? "bg-slate-100 text-slate-700 border-slate-400"
                                   : t === "C" ? "bg-orange-100 text-orange-800 border-orange-400"
@@ -555,6 +555,21 @@ export default function CreateHolderPage() {
                             </button>
                           ))}
                         </div>
+                        <input
+                          type="text"
+                          value={tier}
+                          // Uppercase only — trimming on every keystroke made it
+                          // impossible to type a space, so a two-word custom
+                          // category ("VIP GUEST") could never be entered. The
+                          // value is trimmed once on submit instead.
+                          onChange={(e) => setTier(e.target.value.toUpperCase())}
+                          placeholder="Or type a custom category (e.g. L, VIP, etc.)"
+                          maxLength={20}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-bold uppercase tracking-widest text-center"
+                        />
+                        <p className="mt-1 text-xs text-gray-400">
+                          Type any value to override the buttons above. Leave empty for no category.
+                        </p>
                       </div>
                       )}
 
@@ -617,6 +632,9 @@ export default function CreateHolderPage() {
                                 tier === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
                                 "bg-purple-100 text-purple-800 border-purple-300"
                               }`}>{tier}</span>
+                            )}
+                            {tier && !(["A", "B", "C", ""].includes(tier)) && (
+                              <span className="text-xs text-gray-500">custom category</span>
                             )}
                             {slotCode && sevaSlots && (() => {
                               const s = sevaSlots.find((sl: any) => sl.code === slotCode);

@@ -72,6 +72,10 @@ export default function HolderTypesPage() {
   const [form, setForm] = useState<HolderTypeFormData>(EMPTY_FORM);
   const [reassign, setReassign] = useState<{ htId: string; name: string; count: number } | null>(null);
   const [moveToId, setMoveToId] = useState("");
+  // Draft text for the "custom category" box. It needs its own state: the input
+  // is controlled, and without it React pinned the value to "" on every render,
+  // so nothing could ever be typed and no custom category could be added.
+  const [customCat, setCustomCat] = useState("");
 
   // ── Queries ────────────────────────────────────────────────────────────
   const { data: eventData } = useQuery({
@@ -159,6 +163,20 @@ export default function HolderTypesPage() {
     setShowModal(false);
     setEditing(null);
     setForm(EMPTY_FORM);
+    setCustomCat("");
+  };
+
+  // Commit the typed custom category to the form's list. Shared by the Enter
+  // key and the Add button so both behave identically.
+  const addCustomCategory = () => {
+    const val = customCat.trim().toUpperCase();
+    if (!val) return;
+    if (form.categories.includes(val)) {
+      setCustomCat("");
+      return;
+    }
+    setForm((prev) => ({ ...prev, categories: [...prev.categories, val] }));
+    setCustomCat("");
   };
 
   const handleEdit = (ht: any) => {
@@ -174,6 +192,7 @@ export default function HolderTypesPage() {
       overrideAllowedBy: ht.overrideAllowedBy || "event_admin",
       categories: ht.categories || [],
     });
+    setCustomCat("");
     setShowModal(true);
   };
 
@@ -547,21 +566,30 @@ export default function HolderTypesPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                value=""
+                value={customCat}
+                onChange={(e) => setCustomCat(e.target.value.toUpperCase())}
                 placeholder="Custom category name..."
-                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                maxLength={20}
+                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-bold uppercase"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    const val = (e.target as HTMLInputElement).value.trim().toUpperCase();
-                    if (val && !form.categories.includes(val)) {
-                      setForm((prev) => ({ ...prev, categories: [...prev.categories, val] }));
-                      (e.target as HTMLInputElement).value = "";
-                    }
+                    addCustomCategory();
                   }
                 }}
               />
+              <button
+                type="button"
+                onClick={addCustomCategory}
+                disabled={!customCat.trim()}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Add
+              </button>
             </div>
+            <p className="mt-1 text-xs text-gray-400">
+              Press Enter or click Add. Duplicates are ignored.
+            </p>
             {form.categories.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {form.categories.map((cat) => (
