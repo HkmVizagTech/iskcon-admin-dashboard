@@ -3,7 +3,7 @@
 import api from "@/lib/api";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Link from "next/link";
 import { format } from "date-fns";
@@ -17,6 +17,7 @@ import {
   Phone,
   Mail,
   MoreVertical,
+  RefreshCw,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -29,6 +30,8 @@ export default function HoldersPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [filterType, setFilterType] = useState("");
   const [page, setPage] = useState(1);
+  const [resendingAll, setResendingAll] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: events } = useQuery({
     queryKey: ["events-list"],
@@ -100,6 +103,47 @@ export default function HoldersPage() {
       toast.success("QR resent successfully");
     } catch (error) {
       toast.error("Failed to resend QR");
+    }
+  };
+
+  // "Resend All" — resends WhatsApp only for this event's still-pending/failed
+  // active passes; the backend never touches anything already sent/delivered,
+  // so this is safe to click again later without spamming everyone twice.
+  const handleResendAll = async () => {
+    if (!selectedEvent) {
+      toast.error("Please select an event first");
+      return;
+    }
+    if (
+      !confirm(
+        `Resend WhatsApp to every pending/failed pass in "${selectedEventData?.name || "this event"}"? Passes already sent or delivered will NOT be touched.`,
+      )
+    )
+      return;
+
+    setResendingAll(true);
+    try {
+      const response = await api.post(
+        `/events/${selectedEvent}/holders/resend-whatsapp`,
+      );
+      const { started, targetCount, message } = response.data;
+      if (started) {
+        toast.success(message || `Resending to ${targetCount} pass(es)...`);
+        // Sends happen in the background on the server (can take a while for
+        // a large batch) — nudge the list to refetch a few times so statuses
+        // update without the admin having to manually refresh.
+        [4000, 12000, 30000, 60000].forEach((delay) => {
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ["holders"] });
+          }, delay);
+        });
+      } else {
+        toast.success(message || "Nothing to resend — everyone already has their pass.");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to start resend");
+    } finally {
+      setResendingAll(false);
     }
   };
 
@@ -185,6 +229,18 @@ export default function HoldersPage() {
             <Download className="w-5 h-5 mr-2" />
             Export
           </Button>
+
+          {selectedEvent && (
+            <Button
+              variant="outline"
+              onClick={handleResendAll}
+              disabled={resendingAll}
+              title="Resend WhatsApp to every pending/failed pass in this event"
+            >
+              <RefreshCw className={`w-5 h-5 mr-2 ${resendingAll ? "animate-spin" : ""}`} />
+              Resend All
+            </Button>
+          )}
         </div>
       </Card>
 
