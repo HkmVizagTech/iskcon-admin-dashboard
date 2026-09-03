@@ -357,7 +357,7 @@ export default function HolderDetailsPage() {
                     className={`inline-block mt-1 px-1.5 py-0.5 text-[10px] rounded-full ${
                       ep.type === "venue_entry"
                         ? "bg-green-100 text-green-700"
-                        : ep.type === "darshan"
+                        : ep.type === "jhulan" || ep.type === "darshan"
                           ? "bg-blue-100 text-blue-700"
                           : ep.type === "prasadam"
                             ? "bg-yellow-100 text-yellow-700"

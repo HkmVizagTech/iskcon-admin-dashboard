@@ -22,16 +22,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
 import Link from "next/link";
-
-
-const entryPointTypes = [
-  { value: "venue_entry", label: "🚪 Venue Entry" },
-  { value: "darshan", label: "🙏 Darshan" },
-  { value: "prasadam", label: "🍛 Prasadam" },
-  { value: "bahumana", label: "🎁 Bahumana" },
-  { value: "vip_seat", label: "⭐ VIP Seat" },
-  { value: "custom", label: "📍 Custom" },
-];
+import { entryPointTypes } from "@/lib/entryPointTypes";
 
 export default function EntryPointsPage() {
   const params = useParams();

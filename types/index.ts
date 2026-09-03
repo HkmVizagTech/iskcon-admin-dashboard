@@ -73,6 +73,10 @@ export interface EntryPoint {
   description?: string;
   type:
     | "venue_entry"
+    // The darshan gate is now "jhulan". "darshan" stays in the union because
+    // entry points on past events keep it — match with isJhulan(), not with
+    // a bare === "jhulan".
+    | "jhulan"
     | "darshan"
     | "prasadam"
     | "bahumana"

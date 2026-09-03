@@ -81,6 +81,20 @@ export default function BulkImportPage() {
   // same per-account limits apply. Enforced server-side before the file is even
   // parsed; filtered here so a restricted issuer isn't offered a dead option.
   const issuableTypes = filterHolderTypes(holderTypes, user);
+
+  // ── Auto-selection: don't ask an issuer to pick from a list of one.
+  //    Mirrors the single-issue page so the two flows behave the same.
+  const soleEventId = events?.length === 1 ? events[0]._id : "";
+  useEffect(() => {
+    if (soleEventId && !selectedEvent) setSelectedEvent(soleEventId);
+  }, [soleEventId, selectedEvent]);
+
+  // Keyed on the id, not the array, which is rebuilt every render.
+  const soleTypeId = issuableTypes.length === 1 ? issuableTypes[0]._id : "";
+  useEffect(() => {
+    if (soleTypeId && !selectedHolderTypeId) setSelectedHolderTypeId(soleTypeId);
+  }, [soleTypeId, selectedHolderTypeId]);
+
   const deliveryOptions = allowedDeliveryMethods(user);
 
   useEffect(() => {
@@ -165,19 +179,22 @@ export default function BulkImportPage() {
 
       setImportResult(response.data);
 
-      const { success, failed, skipped = 0 } = response.data.stats;
-      if (failed === 0 && skipped === 0) {
+      const { success, failed, skipped = 0, additional = 0 } = response.data.stats;
+      if (failed === 0 && skipped === 0 && additional === 0) {
         toast.success(`🎉 All ${success} passes sent successfully!`);
       } else {
         toast.success(
           [
             `✅ ${success} sent`,
-            skipped > 0 ? `⏭️ ${skipped} already had this pass` : null,
+            // Loud, because a big number here right after an import usually
+            // means the same file was uploaded twice.
+            additional > 0 ? `➕ ${additional} were EXTRA passes` : null,
+            skipped > 0 ? `⏭️ ${skipped} skipped` : null,
             failed > 0 ? `⚠️ ${failed} failed` : null,
           ]
             .filter(Boolean)
             .join(", "),
-          { duration: 6000 },
+          { duration: 8000 },
         );
       }
     } catch (error: any) {
@@ -309,32 +326,48 @@ export default function BulkImportPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left - Form */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Step 1: Select Event */}
+            {/* Step 1: Event — read-only when the account has just one. */}
             <Card>
               <CardHeader>
-                <h2 className="font-semibold">Step 1: Select Event</h2>
+                <h2 className="font-semibold">
+                  {soleEventId ? "Event" : "Step 1: Select Event"}
+                </h2>
               </CardHeader>
               <CardBody>
-                <select
-                  value={selectedEvent}
-                  onChange={(e) => {
-                    setSelectedEvent(e.target.value);
-                    setSelectedHolderTypeId("");
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                  required
-                >
-                  <option value="">Choose an event...</option>
-                  {events?.map((event: any) => (
-                    <option key={event._id} value={event._id}>
-                      {event.name} ({event.eventCode}) —{" "}
-                      {new Date(event.dateStart).toLocaleDateString("en-IN", {
-                        day: "numeric", month: "short", year: "numeric",
-                        timeZone: "Asia/Kolkata"
-                      })}
-                    </option>
-                  ))}
-                </select>
+                {soleEventId ? (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="font-medium text-gray-900">
+                      {events?.[0]?.name}{" "}
+                      <span className="text-gray-400 font-normal">
+                        ({events?.[0]?.eventCode})
+                      </span>
+                    </p>
+                    <span className="text-xs text-gray-400 whitespace-nowrap">
+                      only event for your account
+                    </span>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedEvent}
+                    onChange={(e) => {
+                      setSelectedEvent(e.target.value);
+                      setSelectedHolderTypeId("");
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    required
+                  >
+                    <option value="">Choose an event...</option>
+                    {events?.map((event: any) => (
+                      <option key={event._id} value={event._id}>
+                        {event.name} ({event.eventCode}) —{" "}
+                        {new Date(event.dateStart).toLocaleDateString("en-IN", {
+                          day: "numeric", month: "short", year: "numeric",
+                          timeZone: "Asia/Kolkata"
+                        })}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </CardBody>
             </Card>
 
@@ -409,6 +442,15 @@ export default function BulkImportPage() {
                   <p className="text-xs text-gray-400 mt-3">
                     Applies to every holder in this import. "Mobile App" pushes the QR
                     to the community app instead of / in addition to WhatsApp.
+                  </p>
+                  {/* Duplicate rows are no longer skipped, so an accidental
+                      second upload issues everyone another pass. Say so before
+                      the file goes in, not just in the result. */}
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mt-3">
+                    ⚠️ Every row gets a pass, including numbers that already have one — so a
+                    repeat donor listed twice gets two passes. Importing the same file twice
+                    will therefore double everyone's passes. Check the "Extra passes" count
+                    on the result screen.
                   </p>
                 </CardBody>
               </Card>
@@ -622,9 +664,9 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                 </div>
                 <div className="bg-amber-50 rounded-xl p-4">
                   <p className="text-2xl font-bold text-amber-700">
-                    {importResult.stats.skipped ?? 0}
+                    {importResult.stats.additional ?? 0}
                   </p>
-                  <p className="text-xs text-amber-600">Already had ⏭️</p>
+                  <p className="text-xs text-amber-600">Extra passes ➕</p>
                 </div>
                 <div className="bg-red-50 rounded-xl p-4">
                   <p className="text-2xl font-bold text-red-700">
@@ -656,19 +698,20 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                 </div>
               )}
 
-              {importResult.summary.skippedList?.length > 0 && (
+              {importResult.summary.additionalList?.length > 0 && (
                 <div className="mb-4 text-left">
                   <h4 className="font-medium text-amber-700 mb-2 flex items-center">
-                    <AlertTriangle className="w-4 h-4 mr-2" /> Already had this pass (
-                    {importResult.summary.skippedList.length})
+                    <AlertTriangle className="w-4 h-4 mr-2" /> Extra passes issued (
+                    {importResult.summary.additionalList.length})
                   </h4>
                   <p className="text-xs text-gray-500 mb-2">
-                    No new QR issued — these numbers already hold a pass for this holder type and
-                    category. To give them an additional pass, re-import with a different Category
-                    value or under a different holder type.
+                    These numbers <strong>already held</strong> a pass for this holder type and
+                    category, and now hold another. Correct for repeat donations — but if you did
+                    not expect it, this file was probably imported twice. Revoke the extra passes
+                    from the Holders page.
                   </p>
                   <div className="max-h-40 overflow-y-auto space-y-1">
-                    {importResult.summary.skippedList.map(
+                    {importResult.summary.additionalList.map(
                       (item: any, i: number) => (
                         <div
                           key={i}
@@ -677,7 +720,6 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                           <AlertTriangle className="w-3 h-3 text-amber-500 mr-2 flex-shrink-0" />
                           {item.name || "Unknown"} — {item.phone}
                           {item.qrId ? ` (${item.qrId})` : ""}
-                          {item.reason ? ` — ${item.reason}` : ""}
                         </div>
                       ),
                     )}

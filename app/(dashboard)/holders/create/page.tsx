@@ -74,6 +74,19 @@ export default function CreateHolderPage() {
     ? selectedEventData.venue
     : [];
 
+  // Every venue of the chosen event is ticked by default, so the issuer never
+  // has to think about venues for a pass that should work everywhere.
+  // Keyed on the joined names: stable within an event, so unticking a venue
+  // by hand is not immediately overwritten on the next render.
+  const venueNames: string[] = eventVenues.map(
+    (v: any, i: number) => v.name || `Venue ${i + 1}`,
+  );
+  const venueNamesKey = venueNames.join("|");
+  useEffect(() => {
+    if (!selectedEvent) return;
+    setSelectedVenues(venueNamesKey ? venueNamesKey.split("|") : []);
+  }, [venueNamesKey, selectedEvent]);
+
   // Fetch pass types from API (merged HolderType entity)
   const { data: holderTypes } = useQuery({
     queryKey: ["holder-types", selectedEvent],
@@ -91,6 +104,24 @@ export default function CreateHolderPage() {
   // with 403 regardless; filtering here just means a restricted issuer is
   // never shown a button that cannot work.
   const issuableTypes = filterHolderTypes(holderTypes, user);
+
+  // Only one holder type this account may issue — select it for them.
+  // Keyed on the id rather than the array, which is rebuilt every render.
+  const soleTypeId = issuableTypes.length === 1 ? issuableTypes[0]._id : "";
+  useEffect(() => {
+    if (soleTypeId && !selectedHolderTypeId) setSelectedHolderTypeId(soleTypeId);
+  }, [soleTypeId, selectedHolderTypeId]);
+
+  // ── Auto-selection, so a restricted issuer isn't asked to "choose" from
+  //    a list of one. Each effect is guarded so it acts once and never fights
+  //    a manual change afterwards.
+
+  // Only one event available (typically an account assigned to a single
+  // festival) — select it and skip the picker entirely.
+  const soleEventId = events?.length === 1 ? events[0]._id : "";
+  useEffect(() => {
+    if (soleEventId && !selectedEvent) setSelectedEvent(soleEventId);
+  }, [soleEventId, selectedEvent]);
 
   // Delivery options this account may use, from the one shared list.
   const deliveryOptions = allowedDeliveryMethods(user);
@@ -122,7 +153,8 @@ export default function CreateHolderPage() {
   });
 
   const createHolderMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (vars?: { mode?: "add" | "replace" }) => {
+      const mode = vars?.mode;
       const response = await api.post(
         `/events/${selectedEvent}/holders`,
         {
@@ -142,7 +174,14 @@ export default function CreateHolderPage() {
           subCategory: tier.trim().toUpperCase() || undefined,      // bahumana tier
           sevaSlotCode: slotCode.trim().toUpperCase() || undefined,  // seva slot
           instruction: instruction.trim() || undefined,             // custom instruction for community app
-          overrideReason: overrideReason.trim() || undefined,
+          // Intent comes from the button that was clicked, never from state:
+          //   "add"     → a genuine second pass, both stay valid
+          //   "replace" → revoke the old QR and reissue
+          //   undefined → no intent yet, so the server answers with the prompt
+          issueAdditional: mode === "add" || undefined,
+          overrideReason:
+            overrideReason.trim() ||
+            (mode === "replace" ? "Replacement" : undefined),
         },
       );
       return response.data;
@@ -194,7 +233,7 @@ export default function CreateHolderPage() {
       toast.error("Please fill all required fields");
       return;
     }
-    createHolderMutation.mutate();
+    createHolderMutation.mutate({});
   };
 
   return (
@@ -214,32 +253,51 @@ export default function CreateHolderPage() {
 
       {!showQRPreview ? (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Step 1: Select Event */}
+          {/* Step 1: Event — a picker only when there is a real choice.
+              With one event available it is auto-selected and shown read-only,
+              so the issuer can still SEE which festival they are issuing for
+              without being asked to pick from a list of one. */}
           <Card>
             <CardHeader>
-              <h2 className="font-semibold">Step 1: Select Event</h2>
+              <h2 className="font-semibold">
+                {soleEventId ? "Event" : "Step 1: Select Event"}
+              </h2>
             </CardHeader>
             <CardBody>
-              <select
-                value={selectedEvent}
-                onChange={(e) => {
-                  setSelectedEvent(e.target.value);
-                  setSelectedHolderTypeId("");
-                  setSelectedVenue("");
-                  setSelectedVenues([]);
-                  setTier("");
-                  setSlotCode("");
-                }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                required
-              >
-                <option value="">Choose an event...</option>
-                {events?.map((event: any) => (
-                  <option key={event._id} value={event._id}>
-                    {event.name} ({event.eventCode})
-                  </option>
-                ))}
-              </select>
+              {soleEventId ? (
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="font-medium text-gray-900">
+                    {events?.[0]?.name}{" "}
+                    <span className="text-gray-400 font-normal">
+                      ({events?.[0]?.eventCode})
+                    </span>
+                  </p>
+                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                    only event for your account
+                  </span>
+                </div>
+              ) : (
+                <select
+                  value={selectedEvent}
+                  onChange={(e) => {
+                    setSelectedEvent(e.target.value);
+                    setSelectedHolderTypeId("");
+                    setSelectedVenue("");
+                    setSelectedVenues([]);
+                    setTier("");
+                    setSlotCode("");
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  required
+                >
+                  <option value="">Choose an event...</option>
+                  {events?.map((event: any) => (
+                    <option key={event._id} value={event._id}>
+                      {event.name} ({event.eventCode})
+                    </option>
+                  ))}
+                </select>
+              )}
             </CardBody>
           </Card>
 
@@ -251,8 +309,9 @@ export default function CreateHolderPage() {
                   <MapPin className="w-4 h-4 inline mr-1" /> Select Venue(s)
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Choose where this pass is valid. The pass can only be scanned at
-                  the venues you select here. Pick none = valid everywhere.
+                  All venues are selected by default, so the pass works
+                  everywhere. Untick a venue to stop this pass being scanned
+                  there. Unticking all of them also means valid everywhere.
                 </p>
               </CardHeader>
               <CardBody>
@@ -293,10 +352,19 @@ export default function CreateHolderPage() {
 
           {selectedEvent && (
             <>
-              {/* Step 2: Select Pass Type */}
+              {/* Step 2: Pass type. With exactly one issuable type it is
+                  already selected by the effect above; the tile is still shown
+                  so the issuer can see what they are about to issue. */}
               <Card>
                 <CardHeader>
-                  <h2 className="font-semibold">Step 2: Select Holder Type</h2>
+                  <h2 className="font-semibold">
+                    {soleTypeId ? "Holder Type" : "Step 2: Select Holder Type"}
+                    {soleTypeId && (
+                      <span className="ml-2 text-xs font-normal text-gray-400">
+                        only type your account may issue
+                      </span>
+                    )}
+                  </h2>
                 </CardHeader>
                 <CardBody>
                   {issuableTypes.length === 0 ? (
@@ -590,31 +658,71 @@ export default function CreateHolderPage() {
                             pass for this event
                             {duplicateWarning.existing?.qrId ? ` (${duplicateWarning.existing.qrId})` : ""}.
                           </p>
+                          {duplicateWarning.existing?.passCount > 1 && (
+                            <p className="text-xs text-amber-700 mb-1">
+                              {duplicateWarning.existing.passCount} active passes:{" "}
+                              {(duplicateWarning.existing.activeQrIds || []).join(", ")}
+                            </p>
+                          )}
                           <p className="text-xs text-amber-700 mb-3">
-                            To give this number an <strong>additional</strong> pass, go back and pick a
-                            different holder type or a different category — that is allowed and needs no
-                            reason. Only a <strong>replacement</strong> of the pass above needs a reason,
-                            and it will revoke {duplicateWarning.existing?.qrId || "the existing QR"}.
+                            Nothing has been issued yet. Choose one — this prompt is what stops an
+                            accidental double-submit.
                           </p>
+
                           <label className="block text-sm font-medium text-amber-800 mb-1">
-                            Reason for replacing the existing pass *
+                            Note <span className="font-normal text-amber-600">(optional)</span>
                           </label>
                           <input
                             type="text"
                             value={overrideReason}
                             onChange={(e) => setOverrideReason(e.target.value)}
-                            placeholder="e.g. Lost phone, Replacement"
-                            className="w-full px-3 py-2 border border-amber-400 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 mb-2"
+                            placeholder="e.g. Second donation, Lost phone"
+                            className="w-full px-3 py-2 border border-amber-400 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 mb-3"
                           />
-                          {overrideReason.trim() && (
+
+                          <div
+                            className={`grid grid-cols-1 gap-2 ${
+                              duplicateWarning.canIssueAdditional ? "sm:grid-cols-2" : ""
+                            }`}
+                          >
+                            {/* ADD — they genuinely donated again. Both passes
+                                stay valid, each with its own scan history.
+                                Admin-only: the server decides and reports it as
+                                canIssueAdditional, so a role that would be
+                                refused never sees the button. */}
+                            {duplicateWarning.canIssueAdditional && (
+                              <button
+                                type="button"
+                                onClick={() => createHolderMutation.mutate({ mode: "add" })}
+                                disabled={createHolderMutation.isPending}
+                                className="py-2 px-3 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+                              >
+                                ➕ Issue an additional pass
+                                <span className="block text-[11px] font-normal opacity-90">
+                                  keeps the existing one valid
+                                </span>
+                              </button>
+                            )}
+
+                            {/* REPLACE — lost phone or a correction. */}
                             <button
                               type="button"
-                              onClick={() => createHolderMutation.mutate()}
-                              className="w-full py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700"
+                              onClick={() => createHolderMutation.mutate({ mode: "replace" })}
+                              disabled={createHolderMutation.isPending}
+                              className="py-2 px-3 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50"
                             >
-                              Revoke {duplicateWarning.existing?.qrId || "existing pass"} & issue replacement
+                              ♻️ Replace the existing pass
+                              <span className="block text-[11px] font-normal opacity-90">
+                                revokes {duplicateWarning.existing?.qrId || "the old QR"}
+                              </span>
                             </button>
-                          )}
+                          </div>
+
+                          <p className="text-[11px] text-amber-600 mt-2">
+                            A different holder type or category needs neither — go back and change it.
+                            {!duplicateWarning.canIssueAdditional &&
+                              " Only an administrator can issue a second pass for this same type and category."}
+                          </p>
                         </div>
                       </CardBody>
                     </Card>

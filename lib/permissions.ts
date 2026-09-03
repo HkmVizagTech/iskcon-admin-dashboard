@@ -54,7 +54,7 @@ export function isUnrestricted(user?: AuthUserLike | null): boolean {
 
 /** Holder types this user may issue, filtered from the event's full list.
  *  An empty allow-list means every type is available. */
-export function filterHolderTypes<T extends { catCode?: string }>(
+export function filterHolderTypes<T extends { _id: string; catCode?: string }>(
   types: T[] | undefined,
   user?: AuthUserLike | null,
 ): T[] {
