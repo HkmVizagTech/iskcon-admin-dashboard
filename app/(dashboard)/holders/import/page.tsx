@@ -305,6 +305,12 @@ export default function BulkImportPage() {
             <p className="text-gray-600 mt-1">
               Upload Excel file and automatically send QR codes via WhatsApp
             </p>
+            <Link
+              href="/holders/resend-sponsors"
+              className="text-sm text-orange-600 hover:text-orange-700 hover:underline inline-block mt-1"
+            >
+              Need to resend existing sponsors with a new venue? →
+            </Link>
           </div>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-1">
