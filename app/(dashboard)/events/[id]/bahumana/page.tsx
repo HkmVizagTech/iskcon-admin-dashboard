@@ -64,6 +64,11 @@ export default function BahumanaAnnouncementPage() {
 
   const sessions = data?.sessions || {};
   const grouped: { tier: string; holders: any[] }[] = data?.grouped || [];
+  const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOthers || [];
+  const notYetAttended: any[] = data?.notYetAttended || [];
+  const summary = data?.summary || {};
+  const breakdown = data?.breakdown || { byStation: [], byVenue: [] };
+  const [showNotYet, setShowNotYet] = useState(false);
 
   const SESSION_TABS: { key: Session; emoji: string; label: string }[] = [
     { key: "all",     emoji: "🕉️", label: "All Sessions" },
@@ -141,11 +146,93 @@ export default function BahumanaAnnouncementPage() {
         })}
       </div>
 
+      {/* Summary stats */}
+      {!fullscreen && summary?.totalSponsorsIssued > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Card><CardBody className="text-center py-4">
+            <p className="text-2xl font-bold text-gray-900">{summary.totalSponsorsIssued}</p>
+            <p className="text-xs text-gray-500">Sponsors Issued</p>
+          </CardBody></Card>
+          <Card><CardBody className="text-center py-4">
+            <p className="text-2xl font-bold text-green-700">{summary.totalSponsorsAttended}</p>
+            <p className="text-xs text-gray-500">Attended</p>
+          </CardBody></Card>
+          <Card><CardBody className="text-center py-4">
+            <p className="text-2xl font-bold text-orange-600">{summary.attendanceRate}%</p>
+            <p className="text-xs text-gray-500">Attendance Rate</p>
+          </CardBody></Card>
+          <Card><CardBody className="text-center py-4">
+            <p className="text-2xl font-bold text-red-600">{notYetAttended.length}</p>
+            <p className="text-xs text-gray-500">Not Yet Attended</p>
+          </CardBody></Card>
+        </div>
+      )}
+
+      {/* Per-tier issued vs attended */}
+      {!fullscreen && summary?.tierSummary?.length > 0 && (
+        <Card>
+          <CardBody>
+            <p className="text-sm font-semibold text-gray-700 mb-3">Tier Breakdown — Issued vs Attended</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {summary.tierSummary.map((t: any) => {
+                const style = TIER_STYLES[t.tier] || TIER_STYLES["—"];
+                const chip = TIER_CHIP[t.tier];
+                return (
+                  <div key={t.tier} className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${style.border} ${style.bg}`}>
+                    <div className="flex items-center gap-2">
+                      {chip && <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black ${chip}`}>{t.tier}</span>}
+                      <span className={`text-sm font-medium ${style.text}`}>Tier {t.tier}</span>
+                    </div>
+                    <span className={`text-sm font-bold ${style.text}`}>{t.attended} / {t.issued}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Venue / Station breakdown */}
+      {!fullscreen && (breakdown.byStation.length > 0 || breakdown.byVenue.length > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {breakdown.byStation.length > 0 && (
+            <Card>
+              <CardBody>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Entry by Station</p>
+                <div className="space-y-1.5">
+                  {breakdown.byStation.map((s: any) => (
+                    <div key={s.station} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">{s.station}</span>
+                      <span className="font-semibold text-gray-900">{s.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          )}
+          {breakdown.byVenue.length > 0 && (
+            <Card>
+              <CardBody>
+                <p className="text-sm font-semibold text-gray-700 mb-2">Entry by Venue</p>
+                <div className="space-y-1.5">
+                  {breakdown.byVenue.map((v: any) => (
+                    <div key={v.venue} className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">{v.venue}</span>
+                      <span className="font-semibold text-gray-900">{v.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-16">
           <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : grouped.length === 0 ? (
+      ) : grouped.length === 0 && groupedOthers.length === 0 && notYetAttended.length === 0 ? (
         <Card>
           <CardBody>
             <p className="text-center text-gray-400 py-8">
@@ -191,6 +278,12 @@ export default function BahumanaAnnouncementPage() {
                         {h.venueName && (
                           <p className={`text-xs mt-0.5 opacity-50 ${style.text}`}>📍 {h.venueName}</p>
                         )}
+                        {h.scanInfo?.station && (
+                          <p className={`text-xs mt-0.5 opacity-50 ${style.text}`}>
+                            🚪 Entered at {h.scanInfo.station}
+                            {h.scanInfo.venue ? ` · ${h.scanInfo.venue}` : ""}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -198,6 +291,76 @@ export default function BahumanaAnnouncementPage() {
               </div>
             );
           })}
+
+          {/* Non-Sponsor attendees (Donor, Invitee, etc.) */}
+          {groupedOthers.length > 0 && (
+            <div className="rounded-2xl border-2 border-blue-200 bg-blue-50 overflow-hidden">
+              <div className="px-5 py-3 border-b border-blue-200">
+                <p className="font-bold text-lg text-blue-900">Other Attendees</p>
+                <p className="text-sm text-blue-900 opacity-60">
+                  {groupedOthers.reduce((sum, g) => sum + g.holders.length, 0)} attended (non-sponsor)
+                </p>
+              </div>
+              <div className="divide-y divide-blue-100">
+                {groupedOthers.map(({ category, holders }) => (
+                  <div key={category} className="px-5 py-3">
+                    <p className="text-sm font-semibold text-blue-800 mb-2">{category} ({holders.length})</p>
+                    <div className="space-y-2">
+                      {holders.map((h: any, i: number) => (
+                        <div key={h._id} className="flex items-start gap-3">
+                          <span className="text-lg font-black opacity-30 w-6 text-right shrink-0 text-blue-900">{i + 1}</span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-blue-900">{h.name}</p>
+                            {h.scanInfo?.station && (
+                              <p className="text-xs mt-0.5 opacity-60 text-blue-800">
+                                🚪 {h.scanInfo.station}{h.scanInfo.venue ? ` · ${h.scanInfo.venue}` : ""}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Not Yet Attended */}
+          {!fullscreen && notYetAttended.length > 0 && (
+            <div className="rounded-2xl border-2 border-gray-200 overflow-hidden">
+              <button
+                onClick={() => setShowNotYet(!showNotYet)}
+                className="w-full px-5 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100"
+              >
+                <div className="text-left">
+                  <p className="font-bold text-lg text-gray-700">Not Yet Attended</p>
+                  <p className="text-sm text-gray-500">{notYetAttended.length} sponsor(s) with a pass haven't scanned in yet</p>
+                </div>
+                <span className="text-gray-400 text-sm">{showNotYet ? "Hide ▲" : "Show ▼"}</span>
+              </button>
+              {showNotYet && (
+                <div className="divide-y divide-gray-100">
+                  {notYetAttended.map((h: any, i: number) => (
+                    <div key={h._id} className="px-5 py-2.5 flex items-center gap-4">
+                      <span className="text-sm font-black opacity-30 w-6 text-right shrink-0 text-gray-700">{i + 1}</span>
+                      <div className="flex-1 flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-gray-800">{h.name}</p>
+                          <p className="text-xs text-gray-400">{h.phone}</p>
+                        </div>
+                        {h.subCategory && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${TIER_CHIP[h.subCategory] || "bg-gray-300 text-white"}`}>
+                            Tier {h.subCategory}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
