@@ -44,7 +44,12 @@ export default function GatePage() {
         reason: "No QR / admin override at gate",
       }),
     onSuccess: (res, vars) => {
-      toast.success(`✅ ${vars.holderName} marked as attended`);
+      const sent = res.data?.whatsappSent;
+      toast.success(
+        sent
+          ? `✅ ${vars.holderName} marked as attended — QR resent on WhatsApp 📲`
+          : `✅ ${vars.holderName} marked as attended`,
+      );
       setMarkedIds((prev) => { const next = new Set(prev); next.add(vars.qrId); return next; });
     },
     onError: (e: any) => toast.error(e.response?.data?.error || "Failed to mark attendance"),
