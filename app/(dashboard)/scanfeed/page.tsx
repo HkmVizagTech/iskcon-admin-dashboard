@@ -51,6 +51,12 @@ export default function ScanFeedPage() {
   const [searchFilter, setSearchFilter] = useState("");
   const [resultFilter, setResultFilter] = useState("");
   const [slotFilter, setSlotFilter] = useState("");
+  const [venueFilter, setVenueFilter] = useState("");
+  const [allowedVenueFilter, setAllowedVenueFilter] = useState("");
+  const [catFilter, setCatFilter] = useState("");
+  const [tierFilter, setTierFilter] = useState("");
+  const [epFilter, setEpFilter] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // debounced text before it hits searchFilter
 
   // Fetch seva slots for selected event
   const { data: slotsData } = useQuery({
@@ -63,6 +69,52 @@ export default function ScanFeedPage() {
   });
   const sevaSlots: any[] = slotsData?.slots || [];
 
+  // Distinct scan venues (from actual scan logs on this event)
+  const { data: scanVenuesData } = useQuery({
+    queryKey: ["scan-venues", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return null;
+      return (await api.get(`/reports/events/${selectedEvent}/scan-venues`)).data;
+    },
+    enabled: !!selectedEvent,
+  });
+  const scanVenues: string[] = scanVenuesData?.venues || [];
+
+  // Event's configured venues (for the "pass allowed at" filter)
+  const { data: eventDetail } = useQuery({
+    queryKey: ["event-detail-feed", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return null;
+      return (await api.get(`/events/${selectedEvent}`)).data;
+    },
+    enabled: !!selectedEvent,
+  });
+  const eventVenues: string[] = (eventDetail?.event?.venue || eventDetail?.venue || [])
+    .map((v: any) => (typeof v === "string" ? v : v?.name))
+    .filter(Boolean);
+
+  // Categories (holder types) configured for this event
+  const { data: holderTypesData } = useQuery({
+    queryKey: ["holder-types-feed", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return null;
+      return (await api.get(`/events/${selectedEvent}/holder-types`)).data;
+    },
+    enabled: !!selectedEvent,
+  });
+  const categories: any[] = holderTypesData?.holderTypes || holderTypesData || [];
+
+  // Entry points / stations for this event
+  const { data: entryPointsData } = useQuery({
+    queryKey: ["entry-points-feed", selectedEvent],
+    queryFn: async () => {
+      if (!selectedEvent) return null;
+      return (await api.get(`/events/${selectedEvent}/entry-points`)).data;
+    },
+    enabled: !!selectedEvent,
+  });
+  const entryPoints: any[] = entryPointsData?.entryPoints || entryPointsData || [];
+
   // Fetch events for filter
   const { data: events } = useQuery({
     queryKey: ["events-active"],
@@ -74,7 +126,7 @@ export default function ScanFeedPage() {
 
   // Fetch scan logs
   const { data: scanData, isLoading: scansLoading } = useQuery({
-    queryKey: ["scan-logs", selectedEvent, cursor, resultFilter, slotFilter],
+    queryKey: ["scan-logs", selectedEvent, cursor, resultFilter, slotFilter, venueFilter, allowedVenueFilter, catFilter, tierFilter, epFilter, searchFilter],
     queryFn: async () => {
       if (!selectedEvent) return null;
       // FIX: use cursor-based pagination — old page param returned same first page every time
@@ -83,6 +135,12 @@ export default function ScanFeedPage() {
       if (cursor) params.append("before", cursor);
       if (resultFilter) params.append("result", resultFilter);
       if (slotFilter === "morning" || slotFilter === "evening") params.append("session", slotFilter);
+      if (venueFilter) params.append("venue", venueFilter);
+      if (allowedVenueFilter) params.append("allowedVenue", allowedVenueFilter);
+      if (catFilter) params.append("catId", catFilter);
+      if (tierFilter) params.append("tier", tierFilter);
+      if (epFilter) params.append("epId", epFilter);
+      if (searchFilter.trim()) params.append("search", searchFilter.trim());
       const response = await api.get(
         `/reports/events/${selectedEvent}/scan-log?${params}`,
       );
@@ -258,6 +316,111 @@ export default function ScanFeedPage() {
               </>
             )}
           </div>
+
+          {selectedEvent && (
+            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-gray-100">
+              {/* Holder name/phone search */}
+              <div className="relative w-full sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search name or phone..."
+                  value={searchInput}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearchInput(val);
+                    setCursor(null);
+                    setCursors([]);
+                    setSearchFilter(val);
+                  }}
+                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              {/* Scan Venue — where the scan physically happened */}
+              {scanVenues.length > 0 && (
+                <select
+                  value={venueFilter}
+                  onChange={(e) => { setVenueFilter(e.target.value); setCursor(null); setCursors([]); }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                  title="Where the scan physically happened"
+                >
+                  <option value="">Scan Venue: All</option>
+                  {scanVenues.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Allowed Venue — which venue(s) the pass is restricted to */}
+              {eventVenues.length > 0 && (
+                <select
+                  value={allowedVenueFilter}
+                  onChange={(e) => { setAllowedVenueFilter(e.target.value); setCursor(null); setCursors([]); }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                  title="Which venue(s) the pass is valid at"
+                >
+                  <option value="">Pass Valid At: All</option>
+                  {eventVenues.map((v: string) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Category */}
+              {categories.length > 0 && (
+                <select
+                  value={catFilter}
+                  onChange={(e) => { setCatFilter(e.target.value); setCursor(null); setCursors([]); }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Category: All</option>
+                  {categories.map((c: any) => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Bahumana Tier */}
+              <select
+                value={tierFilter}
+                onChange={(e) => { setTierFilter(e.target.value); setCursor(null); setCursors([]); }}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">Tier: All</option>
+                <option value="A">Tier A</option>
+                <option value="B">Tier B</option>
+                <option value="C">Tier C</option>
+              </select>
+
+              {/* Entry Point / Station */}
+              {entryPoints.length > 0 && (
+                <select
+                  value={epFilter}
+                  onChange={(e) => { setEpFilter(e.target.value); setCursor(null); setCursors([]); }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Station: All</option>
+                  {entryPoints.map((ep: any) => (
+                    <option key={ep._id} value={ep._id}>{ep.stationLabel || ep.name}</option>
+                  ))}
+                </select>
+              )}
+
+              {(venueFilter || allowedVenueFilter || catFilter || tierFilter || epFilter || searchFilter) && (
+                <button
+                  onClick={() => {
+                    setVenueFilter(""); setAllowedVenueFilter(""); setCatFilter("");
+                    setTierFilter(""); setEpFilter(""); setSearchFilter(""); setSearchInput("");
+                    setCursor(null); setCursors([]);
+                  }}
+                  className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
         </CardBody>
       </Card>
 
