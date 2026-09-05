@@ -30,19 +30,20 @@ export default function BahumanaAnnouncementPage() {
   const eventId = params.id as string;
   const [fullscreen, setFullscreen] = useState(false);
   const [session, setSession] = useState<Session>("all");
+  const [venue, setVenue] = useState<string>("all");
   const { user, logout } = useAuth();
   const isAnnouncer = user?.role === "announcer" || user?.permissions?.canBahumanaView === true;
 
   const exportCSV = async () => {
     try {
       const res = await api.get(
-        `/reports/events/${eventId}/bahumana-announcement/export?session=${session}`,
+        `/reports/events/${eventId}/bahumana-announcement/export?session=${session}&venue=${encodeURIComponent(venue)}`,
         { responseType: "blob" }
       );
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const a = document.createElement("a");
       a.href = url;
-      a.download = `bahumana_${session}.csv`;
+      a.download = `bahumana_${session}${venue !== "all" ? `_${venue}` : ""}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success("CSV downloaded");
@@ -52,10 +53,10 @@ export default function BahumanaAnnouncementPage() {
   };
 
   const { data, isLoading, refetch, dataUpdatedAt } = useQuery({
-    queryKey: ["bahumana-announcement", eventId, session],
+    queryKey: ["bahumana-announcement", eventId, session, venue],
     queryFn: async () => {
       const res = await api.get(
-        `/reports/events/${eventId}/bahumana-announcement?session=${session}`
+        `/reports/events/${eventId}/bahumana-announcement?session=${session}&venue=${encodeURIComponent(venue)}`
       );
       return res.data;
     },
@@ -64,10 +65,13 @@ export default function BahumanaAnnouncementPage() {
 
   const sessions = data?.sessions || {};
   const grouped: { tier: string; holders: any[] }[] = data?.grouped || [];
-  const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOthers || [];
+const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOthers || [];
   const notYetAttended: any[] = data?.notYetAttended || [];
   const summary = data?.summary || {};
   const breakdown = data?.breakdown || { byStation: [], byVenue: [] };
+  const venueOptions: { key: string; label: string; count: number }[] = data?.venueOptions || [];
+  // Only worth showing when there's more than just "All Venues" to pick from.
+  const showVenueFilter = venueOptions.length > 1;
   const [showNotYet, setShowNotYet] = useState(false);
 
   const SESSION_TABS: { key: Session; emoji: string; label: string }[] = [
@@ -145,6 +149,29 @@ export default function BahumanaAnnouncementPage() {
           );
         })}
       </div>
+
+{/* Venue filter — only shown when the event has more than one venue
+          with recorded attendance */}
+      {showVenueFilter && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {venueOptions.map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setVenue(key)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex flex-col items-center min-w-[100px] ${
+                venue === key
+                  ? "bg-orange-600 text-white shadow-sm"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
+              }`}
+            >
+              <span>📍 {label}</span>
+              <span className={`text-xs mt-0.5 font-normal ${venue === key ? "text-orange-100" : "text-gray-400"}`}>
+                {count} attended
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Summary stats */}
       {!fullscreen && summary?.totalSponsorsIssued > 0 && (
@@ -232,15 +259,17 @@ export default function BahumanaAnnouncementPage() {
         <div className="flex justify-center py-16">
           <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : grouped.length === 0 && groupedOthers.length === 0 && notYetAttended.length === 0 ? (
+) : grouped.length === 0 && groupedOthers.length === 0 && notYetAttended.length === 0 ? (
         <Card>
           <CardBody>
             <p className="text-center text-gray-400 py-8">
               {session === "morning"
-                ? "No sponsors attended before 2:00 PM yet."
+                ? "No one attended before 2:00 PM yet."
                 : session === "evening"
-                ? "No sponsors attended from 2:00 PM yet."
-                : "No sponsors have attended yet. Scan some QRs first."}
+                ? "No one attended from 2:00 PM yet."
+                : venue !== "all"
+                ? "No one attended this venue yet."
+                : "No one has attended yet. Scan some QRs first."}
             </p>
           </CardBody>
         </Card>
@@ -275,8 +304,13 @@ export default function BahumanaAnnouncementPage() {
                             🕉️ {h.sevaSlotId.name}{h.sevaSlotId.time ? ` · ${h.sevaSlotId.time}` : ""}
                           </p>
                         )}
-                        {h.venueName && (
-                          <p className={`text-xs mt-0.5 opacity-50 ${style.text}`}>📍 {h.venueName}</p>
+                        {(h.scanVenue || h.venueName) && (
+                          <p className={`text-xs mt-0.5 opacity-50 ${style.text}`}>
+                            📍 {h.scanVenue || h.venueName}
+                            {h.scanVenue && h.venueName && h.scanVenue.toLowerCase() !== h.venueName.toLowerCase()
+                              ? ` (registered for ${h.venueName})`
+                              : ""}
+                          </p>
                         )}
                         {h.scanInfo?.station && (
                           <p className={`text-xs mt-0.5 opacity-50 ${style.text}`}>
@@ -292,7 +326,7 @@ export default function BahumanaAnnouncementPage() {
             );
           })}
 
-          {/* Non-Sponsor attendees (Donor, Invitee, etc.) */}
+{/* Non-Sponsor attendees (Donor, Invitee, etc.) */}
           {groupedOthers.length > 0 && (
             <div className="rounded-2xl border-2 border-blue-200 bg-blue-50 overflow-hidden">
               <div className="px-5 py-3 border-b border-blue-200">
@@ -311,6 +345,16 @@ export default function BahumanaAnnouncementPage() {
                           <span className="text-lg font-black opacity-30 w-6 text-right shrink-0 text-blue-900">{i + 1}</span>
                           <div className="flex-1">
                             <p className="font-semibold text-blue-900">{h.name}</p>
+                            {h.sevaSlotId && (
+                              <p className="text-sm mt-0.5 opacity-70 text-blue-900">
+                                🕉️ {h.sevaSlotId.name}{h.sevaSlotId.time ? ` · ${h.sevaSlotId.time}` : ""}
+                              </p>
+                            )}
+                            {(h.scanVenue || h.venueName) && (
+                              <p className="text-xs mt-0.5 opacity-50 text-blue-900">
+                                📍 {h.scanVenue || h.venueName}
+                              </p>
+                            )}
                             {h.scanInfo?.station && (
                               <p className="text-xs mt-0.5 opacity-60 text-blue-800">
                                 🚪 {h.scanInfo.station}{h.scanInfo.venue ? ` · ${h.scanInfo.venue}` : ""}
