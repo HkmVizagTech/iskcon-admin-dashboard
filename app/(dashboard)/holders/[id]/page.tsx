@@ -108,6 +108,8 @@ export default function HolderDetailsPage() {
 
   const holder = data?.holder;
   const qrPass = data?.qrPass;
+  const scans: any[] = data?.scans || [];
+  const venuesVisited: string[] = data?.venuesVisited || [];
   const qrImageUrl = qrPass?.qrId
     ? `${API_ROOT}/qr/${qrPass.qrId}/image`
     : null;
@@ -374,6 +376,96 @@ export default function HolderDetailsPage() {
           </CardBody>
         </Card>
       </div>
+
+      {/* Venues Visited */}
+      {venuesVisited.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-orange-500" />
+              Venues Visited
+            </h2>
+          </CardHeader>
+          <CardBody>
+            <div className="flex flex-wrap gap-3">
+              {venuesVisited.map((venue: string) => (
+                <div
+                  key={venue}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border font-medium text-sm ${
+                    venue.toLowerCase().includes("vaikuntham")
+                      ? "bg-purple-50 border-purple-200 text-purple-800"
+                      : "bg-amber-50 border-amber-200 text-amber-800"
+                  }`}
+                >
+                  <span className="text-lg">
+                    {venue.toLowerCase().includes("vaikuntham") ? "🏛️" : "🏟️"}
+                  </span>
+                  {venue}
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Scan History — enriched with real venue */}
+      {scans.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              Scan History ({scans.length})
+            </h2>
+          </CardHeader>
+          <CardBody padding={false}>
+            <div className="divide-y divide-gray-100">
+              {scans.map((scan: any, index: number) => (
+                <div key={index} className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {scan.result === "granted" ? (
+                      <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-500 shrink-0" />
+                    )}
+                    <div>
+                      <p className="font-medium text-sm text-gray-900">
+                        {scan.station || "Unknown Station"}
+                        {scan.venueMismatch && (
+                          <span className="ml-2 text-xs text-amber-600 font-normal">⚠️ venue mismatch</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        📍 {scan.realVenue}
+                        {scan.scannedBy && (
+                          <span className="ml-2 text-gray-400">by {scan.scannedBy}</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {scan.scannedAtIST
+                          ? new Date(scan.scannedAtIST).toLocaleString("en-IN", {
+                              day: "2-digit", month: "short", year: "numeric",
+                              hour: "2-digit", minute: "2-digit", second: "2-digit",
+                              hour12: true,
+                            }) + " IST"
+                          : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${
+                    scan.result === "granted"
+                      ? "bg-green-100 text-green-700"
+                      : scan.result === "already_used"
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-red-100 text-red-700"
+                  }`}>
+                    {scan.result}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Scan History */}
       {qrPass?.redemptionHistory?.length > 0 && (
