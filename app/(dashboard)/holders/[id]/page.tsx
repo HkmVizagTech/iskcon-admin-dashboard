@@ -61,6 +61,25 @@ export default function HolderDetailsPage() {
       toast.error(error.response?.data?.error || "Failed to resend"),
   });
 
+  const retryCommunitySyncMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post(
+        `/holders/qr/${data?.qrPass?.qrId}/retry-community-sync`,
+      );
+      return response.data;
+    },
+    onSuccess: (res) => {
+      refetch();
+      if (res?.communityAppSync?.success) {
+        toast.success("Community app sync succeeded!");
+      } else {
+        toast.error(res?.communityAppSync?.reason || "Community app sync still failing");
+      }
+    },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to retry sync"),
+  });
+
   const manualEntryMutation = useMutation({
     mutationFn: async () => api.post(`/qr/${qrPass?.qrId}/manual-entry`, {
       stationLabel: "Admin Dashboard",
@@ -330,6 +349,39 @@ export default function HolderDetailsPage() {
               </div>
               {qrPass?.deliveryError && (
                 <p className="text-xs text-red-500 mt-1">Error: {qrPass.deliveryError}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Community App Sync</p>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  qrPass?.communityAppSync?.success   ? "bg-green-100 text-green-700" :
+                  qrPass?.communityAppSync?.skipped   ? "bg-gray-100 text-gray-500" :
+                  qrPass?.communityAppSync?.attempted ? "bg-red-100 text-red-700" :
+                  "bg-yellow-100 text-yellow-700"
+                }`}>
+                  {qrPass?.communityAppSync?.success   ? "✅ Synced" :
+                   qrPass?.communityAppSync?.skipped   ? "⏭️ Skipped" :
+                   qrPass?.communityAppSync?.attempted ? "❌ Failed" :
+                   "⏳ Not Attempted"}
+                </span>
+                {qrPass?.communityAppSync?.attemptedAt && (
+                  <span className="text-xs text-gray-400">
+                    {new Date(qrPass.communityAppSync.attemptedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+                  </span>
+                )}
+                {!qrPass?.communityAppSync?.success && (
+                  <button
+                    onClick={() => retryCommunitySyncMutation.mutate()}
+                    disabled={retryCommunitySyncMutation.isPending}
+                    className="text-xs px-2 py-1 rounded-md border border-orange-300 text-orange-600 hover:bg-orange-50 disabled:opacity-50"
+                  >
+                    {retryCommunitySyncMutation.isPending ? "Retrying..." : "🔄 Retry"}
+                  </button>
+                )}
+              </div>
+              {!qrPass?.communityAppSync?.success && qrPass?.communityAppSync?.reason && (
+                <p className="text-xs text-red-500 mt-1">Reason: {qrPass.communityAppSync.reason}</p>
               )}
             </div>
             <div>
