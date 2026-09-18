@@ -48,6 +48,7 @@ interface HolderTypeFormData {
   issuerRoleRequired: string;
   overrideAllowedBy: string;
   categories: string[];
+  communityAppSevaType: string;
 }
 
 const EMPTY_FORM: HolderTypeFormData = {
@@ -60,6 +61,7 @@ const EMPTY_FORM: HolderTypeFormData = {
   issuerRoleRequired: "event_admin",
   overrideAllowedBy: "event_admin",
   categories: [],
+  communityAppSevaType: "",
 };
 
 export default function HolderTypesPage() {
@@ -191,6 +193,7 @@ export default function HolderTypesPage() {
       issuerRoleRequired: ht.issuerRoleRequired || "event_admin",
       overrideAllowedBy: ht.overrideAllowedBy || "event_admin",
       categories: ht.categories || [],
+      communityAppSevaType: ht.communityAppSevaType || "",
     });
     setCustomCat("");
     setShowModal(true);
@@ -646,6 +649,25 @@ export default function HolderTypesPage() {
               <option value="event_admin">Event Admin</option>
               <option value="none">No Override Allowed</option>
             </select>
+          </div>
+
+          {/* Community App Seva Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Community App "Seva Type" <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={form.communityAppSevaType}
+              onChange={(e) => setForm({ ...form, communityAppSevaType: e.target.value })}
+              placeholder="e.g. Abhisekam, Darshan"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Value sent as "seva_type" when a Sponsor/Donor/Invitee holder of this type is
+              pushed to the community app. First letter is capitalized automatically. Leave
+              blank to use the default (Abhisekam for Sponsor, Darshan for Donor/Invitee).
+            </p>
           </div>
         </div>
       </Modal>
