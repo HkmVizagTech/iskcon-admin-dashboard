@@ -59,6 +59,7 @@ interface ApiSummary {
   noPhone: number;
   nameMismatch: number;
   duplicate: number;
+  revoked: number;
   notInEvent: number;
   conflict: number;
   failed: number;
@@ -73,6 +74,7 @@ const TIER_COLORS: Record<string, string> = {
   not_found: "bg-red-100 text-red-700",
   no_phone: "bg-red-100 text-red-700",
   not_in_event: "bg-red-100 text-red-700",
+  revoked: "bg-gray-100 text-gray-600",
   name_mismatch: "bg-amber-100 text-amber-700",
   duplicate: "bg-amber-100 text-amber-700",
   conflict: "bg-red-100 text-red-700",
@@ -88,6 +90,7 @@ const STATUS_PREFIX: Record<string, string> = {
   not_found: "Not found",
   no_phone: "No phone",
   not_in_event: "Not in event",
+  revoked: "Revoked pass",
   name_mismatch: "Name differs",
   duplicate: "Duplicate",
   conflict: "Conflict",
@@ -173,6 +176,7 @@ function summaryLine(summary: ApiSummary | undefined, applied: boolean): string 
     add("cleared", summary.cleared);
     add("no change", summary.noChangeApplied);
     add("not found", summary.notFound);
+    add("revoked skipped", summary.revoked);
     add("duplicates unresolved", summary.duplicate);
     add("name differs", summary.nameMismatch);
     add("conflicts", summary.conflict);
@@ -182,6 +186,7 @@ function summaryLine(summary: ApiSummary | undefined, applied: boolean): string 
     add("will clear", summary.willClear);
     add("no change", summary.noChange);
     add("not found", summary.notFound);
+    add("revoked skipped", summary.revoked);
     add("duplicates to resolve", summary.duplicate);
     add("name differs", summary.nameMismatch);
   }
@@ -190,7 +195,9 @@ function summaryLine(summary: ApiSummary | undefined, applied: boolean): string 
 
 export default function BulkUpdateCategoryPage() {
   const [selectedEvent, setSelectedEvent] = useState("");
+  const [mode, setMode] = useState<"paste" | "file">("paste");
   const [text, setText] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedRow[] | null>(null);
   const [preview, setPreview] = useState<{ results: RowResult[] } | null>(null);
   const [result, setResult] = useState<{ results: RowResult[] } | null>(null);
@@ -225,15 +232,26 @@ export default function BulkUpdateCategoryPage() {
       }),
   });
 
-  const onTextChange = (value: string) => {
-    setText(value);
-    setParsed(null);
+  const filePreviewMutation = useMutation({
+    mutationFn: async (formData: FormData) =>
+      api.post("/holders/bulk-update-category/file", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+  });
+
+  const resetPreviewState = () => {
     setPreview(null);
     setResult(null);
     setPicks({});
     setForceIds({});
     setShowSummaryLine("");
     setAppliedSummary(null);
+  };
+
+  const onTextChange = (value: string) => {
+    setText(value);
+    setParsed(null);
+    resetPreviewState();
   };
 
   const handlePreview = () => {
@@ -243,21 +261,19 @@ export default function BulkUpdateCategoryPage() {
     }
     const rows = parseRows(text);
     setParsed(rows);
-    setPicks({});
-    setForceIds({});
-    setResult(null);
-    setAppliedSummary(null);
-    setShowSummaryLine("");
+    resetPreviewState();
     const invalid = rows.filter((r) => !r.valid);
     if (invalid.length > 0) {
-      setPreview(null);
-      setShowSummaryLine(`${invalid.length} row(s) unreadable — fix them before previewing`);
+      setShowSummaryLine(
+        `${invalid.length} row(s) unreadable — fix them before previewing`,
+      );
       toast.error(`${invalid.length} row(s) unreadable — fix them before previewing`);
       return;
     }
     if (rows.length === 0) {
-      setPreview(null);
-      setShowSummaryLine("Paste at least one row — each line: Name, Phone, Category");
+      setShowSummaryLine(
+        "Paste at least one row — each line: Name, Phone, Category",
+      );
       toast.error("Paste at least one row");
       return;
     }
@@ -268,7 +284,9 @@ export default function BulkUpdateCategoryPage() {
           setPreview(res.data);
           setShowSummaryLine(summaryLine(res.data.summary, false));
           if (res.data.summary.notFound > 0) {
-            toast.error(`${res.data.summary.notFound} row(s) not found in this event`);
+            toast.error(
+              `${res.data.summary.notFound} row(s) not found in this event`,
+            );
           }
         },
         onError: (e: any) =>
@@ -277,22 +295,49 @@ export default function BulkUpdateCategoryPage() {
     );
   };
 
+  const handleUploadPreview = () => {
+    if (!selectedEvent) {
+      toast.error("Select an event first");
+      return;
+    }
+    if (!file) {
+      toast.error("Choose a CSV/XLSX file first");
+      return;
+    }
+    setParsed(null);
+    resetPreviewState();
+    const formData = new FormData();
+    formData.append("eventId", selectedEvent);
+    formData.append("apply", "false");
+    formData.append("file", file);
+    filePreviewMutation.mutate(formData, {
+      onSuccess: (res) => {
+        setPreview(res.data);
+        setShowSummaryLine(summaryLine(res.data.summary, false));
+        if (res.data.summary.notFound > 0) {
+          toast.error(
+            `${res.data.summary.notFound} row(s) not found in this event`,
+          );
+        }
+      },
+      onError: (e: any) =>
+        toast.error(e.response?.data?.error || "Upload failed"),
+    });
+  };
+
   const handleApply = () => {
-    if (!preview || !parsed) return;
-    const rows = parsed.filter((r) => r.valid);
-    const applyRows = rows.map((r, i) => {
-      const res = preview.results[i];
-      if (!res) return { name: r.name, phone: r.phone, subCategory: r.category };
+    if (!preview) return;
+    const applyRows = preview.results.map((res, i) => {
       if (res.status === "duplicate") {
         const h = picks[i];
         return h
-          ? { holderId: h, subCategory: r.category }
-          : { name: r.name, phone: r.phone, subCategory: r.category };
+          ? { holderId: h, subCategory: res.requestedCategory || "" }
+          : { name: res.name, phone: res.phone, subCategory: res.requestedCategory || "" };
       }
       if (res.status === "name_mismatch" && res.holder?._id && forceIds[i]) {
-        return { holderId: res.holder._id, subCategory: r.category };
+        return { holderId: res.holder._id, subCategory: res.requestedCategory || "" };
       }
-      return { name: r.name, phone: r.phone, subCategory: r.category };
+      return { name: res.name, phone: res.phone, subCategory: res.requestedCategory || "" };
     });
     const unresolved = preview.results.filter(
       (r) => r.status === "duplicate" && !picks[r.rowIndex],
@@ -316,7 +361,10 @@ export default function BulkUpdateCategoryPage() {
   };
 
   const canPreview =
-    !!selectedEvent && text.trim().length > 0 && !previewMutation.isPending;
+    !!selectedEvent &&
+    !previewMutation.isPending &&
+    !filePreviewMutation.isPending &&
+    (mode === "file" ? !!file : text.trim().length > 0);
   const canApply =
     !!preview && !applyMutation.isPending && applyMutation.isIdle;
 
@@ -366,43 +414,115 @@ export default function BulkUpdateCategoryPage() {
         <CardHeader>
           <h2 className="font-semibold flex items-center">
             <FileSpreadsheet className="w-5 h-5 mr-2" />
-            2 · Paste rows
+            2 · Enter rows
           </h2>
         </CardHeader>
-        <CardBody className="space-y-3">
-          <p className="text-sm text-gray-600">
-            One pass per line:{" "}
-            <span className="font-mono text-gray-900">Name, Phone, Category</span>{" "}
-            (name optional). Category is A, B or C —{" "}
-            <span className="font-mono">NONE</span> removes the tier.
-          </p>
-          <textarea
-            value={text}
-            onChange={(e) => onTextChange(e.target.value)}
-            rows={8}
-            placeholder={"Ram Prasad, 9000000001, B\nSita Devi, 9000000002, C\nKrishna Kumar, 9000000003, NONE"}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none font-mono text-sm resize-y"
-          />
-          <div className="flex flex-wrap gap-3">
-            <Button
-              onClick={handlePreview}
-              disabled={!canPreview}
-              loading={previewMutation.isPending}
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Preview
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() =>
-                onTextChange(
-                  "Ram Prasad, 9000000001, B\nSita Devi, 9000000002, C",
-                )
-              }
-            >
-              Load sample
-            </Button>
+        <CardBody className="space-y-4">
+          <div className="flex gap-2">
+            {(
+              [
+                { key: "paste", label: "Paste rows" },
+                { key: "file", label: "Upload sheet" },
+              ] as const
+            ).map((m) => (
+              <button
+                key={m.key}
+                onClick={() => {
+                  setMode(m.key);
+                  resetPreviewState();
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                  mode === m.key
+                    ? "border-orange-600 bg-orange-50 text-orange-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-orange-300"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
           </div>
+
+          {mode === "paste" ? (
+            <>
+              <p className="text-sm text-gray-600">
+                One pass per line:{" "}
+                <span className="font-mono text-gray-900">Name, Phone, Category</span>{" "}
+                (name optional). Category is A, B or C —{" "}
+                <span className="font-mono">NONE</span> removes the tier.
+              </p>
+              <textarea
+                value={text}
+                onChange={(e) => onTextChange(e.target.value)}
+                rows={8}
+                placeholder={"Ram Prasad, 9000000001, B\nSita Devi, 9000000002, C\nKrishna Kumar, 9000000003, NONE"}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none font-mono text-sm resize-y"
+              />
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={handlePreview}
+                  disabled={!canPreview}
+                  loading={previewMutation.isPending}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Preview
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    onTextChange(
+                      "Ram Prasad, 9000000001, B\nSita Devi, 9000000002, C",
+                    )
+                  }
+                >
+                  Load sample
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600">
+                Upload a{" "}
+                <span className="font-mono">CSV</span> or{" "}
+                <span className="font-mono">XLSX</span> with columns{" "}
+                <span className="font-mono text-gray-900">Name</span>{" "}
+                (optional),{" "}
+                <span className="font-mono text-gray-900">Phone</span> and{" "}
+                <span className="font-mono text-gray-900">Category</span> (A/B/C,
+                or <span className="font-mono">NONE</span> to remove) — same
+                format as a bulk-issue sheet.
+              </p>
+              <label className="flex items-center justify-center w-full px-4 py-6 border-2 border-dashed border-gray-300 rounded-xl hover:border-orange-400 hover:bg-orange-50/40 transition-colors cursor-pointer">
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={(e) => {
+                    setFile(e.target.files?.[0] || null);
+                    resetPreviewState();
+                  }}
+                  className="hidden"
+                />
+                <div className="text-center">
+                  <FileSpreadsheet className="w-8 h-8 mx-auto text-gray-400" />
+                  <p className="mt-2 text-sm font-medium text-gray-700">
+                    {file ? file.name : "Click to choose a sheet"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    CSV · XLSX (first sheet is read)
+                  </p>
+                </div>
+              </label>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={handleUploadPreview}
+                  disabled={!canPreview}
+                  loading={filePreviewMutation.isPending}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Upload &amp; Preview
+                </Button>
+              </div>
+            </>
+          )}
         </CardBody>
       </Card>
 

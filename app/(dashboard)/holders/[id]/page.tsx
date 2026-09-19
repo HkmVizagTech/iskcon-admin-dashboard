@@ -271,16 +271,18 @@ export default function HolderDetailsPage() {
                   </span>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  setCategoryDraft(holder?.subCategory || "");
-                  setCategoryOpen(true);
-                }}
-                className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-lg transition-colors shrink-0"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-                Edit
-              </button>
+              {qrPass?.status !== "revoked" && (
+                <button
+                  onClick={() => {
+                    setCategoryDraft(holder?.subCategory || "");
+                    setCategoryOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-lg transition-colors shrink-0"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Edit
+                </button>
+              )}
             </div>
             <Modal
               isOpen={categoryOpen}

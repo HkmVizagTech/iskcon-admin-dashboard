@@ -19,10 +19,12 @@ import {
   MoreVertical,
   RefreshCw,
   Tags,
+  Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 
 
@@ -32,6 +34,8 @@ export default function HoldersPage() {
   const [filterType, setFilterType] = useState("");
   const [page, setPage] = useState(1);
   const [resendingAll, setResendingAll] = useState(false);
+  const [categoryHolder, setCategoryHolder] = useState<any | null>(null);
+  const [categoryDraft, setCategoryDraft] = useState("");
   const queryClient = useQueryClient();
 
   const { data: events } = useQuery({
@@ -155,6 +159,23 @@ export default function HoldersPage() {
       toast.success("QR revoked successfully");
     } catch (error) {
       toast.error("Failed to revoke QR");
+    }
+  };
+
+  const handleCategoryEdit = async () => {
+    if (!categoryHolder) return;
+    try {
+      await api.patch(`/holders/${categoryHolder._id}`, {
+        subCategory: categoryDraft,
+      });
+      toast.success(
+        "Category updated — shows new category on next scan",
+      );
+      setCategoryHolder(null);
+      queryClient.invalidateQueries({ queryKey: ["holders"] });
+      queryClient.invalidateQueries({ queryKey: ["holder", categoryHolder._id] });
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to update category");
     }
   };
 
@@ -361,6 +382,17 @@ export default function HoldersPage() {
                         >
                           View
                         </Link>
+                        {holder.qrPass?.status !== "revoked" && (
+                          <button
+                            onClick={() => {
+                              setCategoryDraft(holder.subCategory || "");
+                              setCategoryHolder(holder);
+                            }}
+                            className="text-orange-600 hover:text-orange-800"
+                          >
+                            Category
+                          </button>
+                        )}
                         {holder.qrPass?.status === "active" && (
                           <>
                             <button
@@ -415,6 +447,57 @@ export default function HoldersPage() {
           )}
         </Card>
       )}
+
+      {/* Single category edit for one holder */}
+      <Modal
+        isOpen={!!categoryHolder}
+        onClose={() => setCategoryHolder(null)}
+        title="Change Category"
+        onConfirm={handleCategoryEdit}
+        size="md"
+        confirmText="Save"
+      >
+        {categoryHolder && (
+          <>
+            <p className="text-sm text-gray-600 mb-3">
+              Pick the new category for{" "}
+              <span className="font-semibold text-gray-900">
+                {categoryHolder.name}
+              </span>{" "}
+              <span className="text-gray-400">({categoryHolder.phone})</span>.
+            </p>
+            <div className="flex gap-2">
+              {["A", "B", "C"].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setCategoryDraft(t)}
+                  className={`flex-1 px-4 py-3 rounded-xl border-2 font-mono font-black text-lg transition-colors ${
+                    categoryDraft === t
+                      ? "border-orange-600 bg-orange-50 text-orange-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-orange-300"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+              <button
+                onClick={() => setCategoryDraft("")}
+                className={`px-3 py-3 rounded-xl border-2 text-sm font-medium transition-colors ${
+                  categoryDraft === ""
+                    ? "border-slate-400 bg-slate-100 text-slate-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-slate-300"
+                }`}
+              >
+                None
+              </button>
+            </div>
+            <p className="mt-4 text-xs text-gray-500 leading-relaxed">
+              Takes effect immediately — the issued pass stays the same and will
+              show the new category on the next scan. No re-issue needed.
+            </p>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
