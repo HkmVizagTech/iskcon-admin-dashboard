@@ -26,6 +26,38 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { QRCodeSVG } from "qrcode.react";
+
+// Local QR renderer — primary source of truth is the signed payload string
+// (`payloadSigned`) which the holder-details API already returns. Rendering
+// the QR directly (via qrcode.react) avoids the flaky remote /qr/:id/image
+// <img> load (blank on screen while the same URL works via download). The
+// remote URL is kept only as a fallback for very old passes without a payload.
+function QRDisplay({
+  payload,
+  fallbackUrl,
+  size,
+}: {
+  payload?: string | null;
+  fallbackUrl?: string | null;
+  size: number;
+}) {
+  if (payload) {
+    return <QRCodeSVG value={payload} size={size} level="M" marginSize={2} />;
+  }
+  if (fallbackUrl) {
+    return (
+      <img
+        src={fallbackUrl}
+        alt="QR Code"
+        className="object-contain"
+        style={{ width: size, height: size }}
+        onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
+      />
+    );
+  }
+  return <p className="text-sm text-gray-400">No QR data</p>;
+}
 
 
 export default function HolderDetailsPage() {
@@ -132,6 +164,7 @@ export default function HolderDetailsPage() {
   const qrImageUrl = qrPass?.qrId
     ? `${API_ROOT}/qr/${qrPass.qrId}/image`
     : null;
+  const qrPayload = qrPass?.payloadSigned || null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -254,12 +287,7 @@ export default function HolderDetailsPage() {
                   onClick={() => setShowQRModal(true)}
                   title="Click to view fullscreen"
                 >
-                  <img
-                    src={qrImageUrl!}
-                    alt="QR Code"
-                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
-                    className="w-40 h-40 object-contain"
-                  />
+                  <QRDisplay payload={qrPayload} fallbackUrl={qrImageUrl} size={160} />
                 </div>
                 <button
                   onClick={() => setShowQRModal(true)}
@@ -576,12 +604,7 @@ export default function HolderDetailsPage() {
         >
           <p className="text-white/50 text-sm">Tap anywhere to close</p>
           <div className="bg-white rounded-3xl p-6 shadow-2xl">
-            <img
-              src={qrImageUrl!}
-              alt="QR Code"
-              onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.3"; }}
-              className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
-            />
+            <QRDisplay payload={qrPayload} fallbackUrl={qrImageUrl} size={320} />
           </div>
           <div className="text-center px-6">
             <p className="text-white font-bold text-xl">{data?.holder?.name}</p>
