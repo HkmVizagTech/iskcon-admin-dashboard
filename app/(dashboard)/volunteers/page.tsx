@@ -472,6 +472,10 @@ export default function VolunteersPage() {
               setFormData({ ...formData, password: e.target.value })
             }
             required={!editingVolunteer}
+            // "new-password" (not "current-password") stops the browser from
+            // autofilling the admin's own saved password here and silently
+            // changing the volunteer's login.
+            autoComplete="new-password"
           />
 
           {/* Assign Events */}
