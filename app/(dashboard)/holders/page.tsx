@@ -18,6 +18,7 @@ import {
   Mail,
   MoreVertical,
   RefreshCw,
+  Tags,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -170,6 +171,12 @@ export default function HoldersPage() {
             <Button variant="outline">
               <Upload className="w-5 h-5 mr-2" />
               Bulk Import
+            </Button>
+          </Link>
+          <Link href="/holders/bulk-update-category">
+            <Button variant="outline">
+              <Tags className="w-5 h-5 mr-2" />
+              Update Category
             </Button>
           </Link>
           <Link href="/holders/create">

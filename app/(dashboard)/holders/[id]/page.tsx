@@ -21,9 +21,11 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Pencil,
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { QRCodeSVG } from "qrcode.react";
@@ -141,6 +143,20 @@ export default function HolderDetailsPage() {
 
   // All hooks MUST be before early returns (React rules)
   const [showQRModal, setShowQRModal] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryDraft, setCategoryDraft] = useState("");
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async (subCategory: string) =>
+      api.patch(`/holders/${holderId}`, { subCategory }),
+    onSuccess: () => {
+      toast.success("Category updated — shows new category on next scan");
+      setCategoryOpen(false);
+      refetch();
+    },
+    onError: (error: any) =>
+      toast.error(error.response?.data?.error || "Failed to update category"),
+  });
   // QR image endpoint is public (no auth needed).
   // QR image base — use NEXT_PUBLIC_API_URL directly (it already ends with /api)
   // Fallback to the Railway backend URL for safety
@@ -239,17 +255,75 @@ export default function HolderDetailsPage() {
                 {holder?.catId?.name || holder?.holderType || "N/A"}
               </span>
             </div>
-            {holder?.subCategory && (
-              <div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
                 <p className="text-sm text-gray-500">Category</p>
-                <span className={`mt-0.5 inline-flex px-3 py-1 rounded-full text-sm font-black font-mono border ${
-                  holder.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
-                  holder.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
-                  holder.subCategory === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
-                  "bg-purple-100 text-purple-800 border-purple-300"
-                }`}>{holder.subCategory}</span>
+                {holder?.subCategory ? (
+                  <span className={`mt-0.5 inline-flex px-3 py-1 rounded-full text-sm font-black font-mono border ${
+                    holder.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+                    holder.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+                    holder.subCategory === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
+                    "bg-purple-100 text-purple-800 border-purple-300"
+                  }`}>{holder.subCategory}</span>
+                ) : (
+                  <span className="mt-0.5 inline-flex px-3 py-1 rounded-full text-sm font-medium border bg-gray-100 text-gray-500 border-gray-200">
+                    None
+                  </span>
+                )}
               </div>
-            )}
+              <button
+                onClick={() => {
+                  setCategoryDraft(holder?.subCategory || "");
+                  setCategoryOpen(true);
+                }}
+                className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-lg transition-colors shrink-0"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit
+              </button>
+            </div>
+            <Modal
+              isOpen={categoryOpen}
+              onClose={() => setCategoryOpen(false)}
+              title="Change Category"
+              onConfirm={() => updateCategoryMutation.mutate(categoryDraft)}
+              loading={updateCategoryMutation.isPending}
+              confirmText="Save"
+            >
+              <p className="text-sm text-gray-600 mb-3">
+                Pick the new category for{" "}
+                <span className="font-semibold text-gray-900">{holder?.name}</span>.
+              </p>
+              <div className="flex gap-2">
+                {["A", "B", "C"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setCategoryDraft(t)}
+                    className={`flex-1 px-4 py-3 rounded-xl border-2 font-mono font-black text-lg transition-colors ${
+                      categoryDraft === t
+                        ? "border-orange-600 bg-orange-50 text-orange-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-orange-300"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCategoryDraft("")}
+                  className={`px-3 py-3 rounded-xl border-2 text-sm font-medium transition-colors ${
+                    categoryDraft === ""
+                      ? "border-slate-400 bg-slate-100 text-slate-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-slate-300"
+                  }`}
+                >
+                  None
+                </button>
+              </div>
+              <p className="mt-4 text-xs text-gray-500 leading-relaxed">
+                Takes effect immediately — the issued pass stays the same and will
+                show the new category on the next scan. No re-issue needed.
+              </p>
+            </Modal>
             {holder?.lifetimeDonation > 0 && (
               <div>
                 <p className="text-sm text-gray-500">Lifetime Donation</p>
