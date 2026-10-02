@@ -52,6 +52,52 @@ export function isUnrestricted(user?: AuthUserLike | null): boolean {
   return user?.role === "super_admin";
 }
 
+// ─── Staff role hierarchy ────────────────────────────────────────────────────
+// Mirrors ROLE_RANK in the backend's src/utils/roles.js: an account may only
+// assign roles, and manage accounts, that rank strictly below its own;
+// super_admin outranks everyone. Again convenience only — the server decides.
+const ROLE_RANK: Record<string, number> = {
+  super_admin: 100,
+  event_admin: 80,
+  campaign_manager: 60,
+  issuer: 40,
+  announcer: 30,
+  preacher: 20,
+  volunteer: 10,
+  self: 0,
+};
+
+const rankOf = (role?: string) => (role && role in ROLE_RANK ? ROLE_RANK[role] : -1);
+
+/** Roles offered in the staff-user dropdowns. `create: false` = not offered
+ *  when creating a new account (only when changing an existing one). */
+export const STAFF_ROLE_OPTIONS: {
+  value: string;
+  label: string;
+  createLabel?: string;
+  create?: boolean;
+}[] = [
+  { value: "announcer", label: "🎁 Announcer", createLabel: "🎁 Announcer (Bahumana View only)" },
+  { value: "issuer", label: "🎫 Issuer", createLabel: "🎫 Issuer (restricted pass issuing)" },
+  { value: "event_admin", label: "Event Admin" },
+  { value: "campaign_manager", label: "Campaign Manager" },
+  { value: "volunteer", label: "Volunteer" },
+  { value: "preacher", label: "Preacher", create: false },
+  { value: "super_admin", label: "Super Admin", create: false },
+];
+
+/** May this user create an account with, or assign, `role`? */
+export function canAssignRole(user: AuthUserLike | null | undefined, role: string): boolean {
+  if (isUnrestricted(user)) return true;
+  return rankOf(role) < rankOf(user?.role);
+}
+
+/** May this user edit or delete an account that currently has `targetRole`? */
+export function canManageUser(user: AuthUserLike | null | undefined, targetRole?: string): boolean {
+  if (isUnrestricted(user)) return true;
+  return rankOf(targetRole) < rankOf(user?.role);
+}
+
 /** Holder types this user may issue, filtered from the event's full list.
  *  An empty allow-list means every type is available. */
 export function filterHolderTypes<T extends { _id: string; catCode?: string }>(

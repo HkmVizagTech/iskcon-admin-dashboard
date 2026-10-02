@@ -12,7 +12,6 @@ import {
   Link as LinkIcon,
   Edit,
   Trash2,
-  QrCode,
   UserPlus,
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
@@ -184,21 +183,6 @@ export default function EntryPointsPage() {
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this entry point?")) {
       deleteMutation.mutate(id);
-    }
-  };
-
-  const generateStationQR = async (entryPointId: string) => {
-    try {
-      const response = await api.post(
-        `/entry-points/${entryPointId}/generate-station-qr`,
-      );
-      const link = document.createElement("a");
-      link.href = response.data.qrImage;
-      link.download = `station-${entryPointId}.png`;
-      link.click();
-      toast.success("Station QR downloaded");
-    } catch (error) {
-      toast.error("Failed to generate station QR");
     }
   };
 

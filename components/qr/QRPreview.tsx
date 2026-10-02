@@ -29,31 +29,47 @@ export default function QRPreview({
     link.click();
   };
 
+  // Built with DOM APIs + textContent (not document.write) so holderName and
+  // other API strings can never be interpreted as markup.
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
-    printWindow?.document.write(`
-      <html>
-        <head>
-          <title>ISKCON Seva Pass - ${qrData.qrId}</title>
-          <style>
-            body { font-family: Arial; text-align: center; padding: 50px; }
-            img { max-width: 400px; }
-            h2 { color: #f97316; }
-            p { margin: 10px 0; }
-          </style>
-        </head>
-        <body>
-          <h2>🕉️ ISKCON Seva Pass</h2>
-          <h3>${holderName}</h3>
-          <img src="${qrData.qrImage}" />
-          <p><strong>Pass ID:</strong> ${qrData.qrId}</p>
-          <p><strong>Valid:</strong> ${new Date(qrData.validFrom).toLocaleString()} - ${new Date(qrData.validUntil).toLocaleString()}</p>
-          <p>Hare Krishna 🙏</p>
-        </body>
-      </html>
-    `);
-    printWindow?.document.close();
-    printWindow?.print();
+    if (!printWindow) return;
+    const doc = printWindow.document;
+    doc.title = `ISKCON Seva Pass - ${qrData.qrId}`;
+
+    const style = doc.createElement("style");
+    style.textContent = `
+      body { font-family: Arial; text-align: center; padding: 50px; }
+      img { max-width: 400px; }
+      h2 { color: #f97316; }
+      p { margin: 10px 0; }
+    `;
+    doc.head.appendChild(style);
+
+    const add = (tag: string, text: string, parent: HTMLElement = doc.body) => {
+      const el = doc.createElement(tag);
+      el.textContent = text;
+      parent.appendChild(el);
+      return el;
+    };
+    const addField = (label: string, value: string) => {
+      const p = add("p", "");
+      add("strong", label, p);
+      p.appendChild(doc.createTextNode(` ${value}`));
+    };
+
+    add("h2", "🕉️ ISKCON Seva Pass");
+    add("h3", holderName);
+    const img = doc.createElement("img");
+    img.onload = img.onerror = () => printWindow.print();
+    img.src = qrData.qrImage;
+    doc.body.appendChild(img);
+    addField("Pass ID:", qrData.qrId);
+    addField(
+      "Valid:",
+      `${new Date(qrData.validFrom).toLocaleString()} - ${new Date(qrData.validUntil).toLocaleString()}`,
+    );
+    add("p", "Hare Krishna 🙏");
   };
 
   return (

@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -116,12 +115,9 @@ export default function LoginPage() {
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-orange-600 hover:text-orange-700"
-              >
-                Forgot password?
-              </Link>
+              <span className="text-sm text-gray-500">
+                Forgot password? Contact your admin
+              </span>
             </div>
 
             <button

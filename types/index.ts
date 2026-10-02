@@ -41,13 +41,18 @@ export interface Event {
   description?: string;
   dateStart: string;
   dateEnd: string;
+  scanStart?: string;
+  scanEnd?: string;
+  thirdPartyEventId?: string;
+  // The backend stores venue as an array (an event can span several venues).
   venue: {
     name: string;
-    address: string;
+    address?: string;
     coordinates?: { lat: number; lng: number };
-  };
+  }[];
   bannerImage?: string;
-  status: "draft" | "active" | "completed" | "cancelled";
+  // Derived by the backend from dateStart/dateEnd (virtual) — read-only, never sent back.
+  status: "upcoming" | "active" | "completed";
   donorThreshold: number;
   settings: {
     freezeNewIssuances: boolean;
@@ -79,6 +84,7 @@ export interface EntryPoint {
     | "jhulan"
     | "darshan"
     | "prasadam"
+    | "prasadam_coupon"
     | "bahumana"
     | "vip_seat"
     | "custom";

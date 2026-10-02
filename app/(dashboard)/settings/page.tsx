@@ -9,7 +9,13 @@ import { User, Lock, Bell, Shield } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import { DELIVERY_METHODS, deliveryMethodLabel } from "@/lib/permissions";
+import {
+  DELIVERY_METHODS,
+  deliveryMethodLabel,
+  STAFF_ROLE_OPTIONS,
+  canAssignRole,
+  canManageUser,
+} from "@/lib/permissions";
 
 
 export default function SettingsPage() {
@@ -195,6 +201,7 @@ export default function SettingsPage() {
 
 function StaffUsersSection() {
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const BLANK_FORM = {
@@ -326,11 +333,9 @@ function StaffUsersSection() {
                 }}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
               >
-                <option value="announcer">🎁 Announcer (Bahumana View only)</option>
-                <option value="issuer">🎫 Issuer (restricted pass issuing)</option>
-                <option value="event_admin">Event Admin</option>
-                <option value="campaign_manager">Campaign Manager</option>
-                <option value="volunteer">Volunteer</option>
+                {STAFF_ROLE_OPTIONS.filter((o) => o.create !== false && canAssignRole(currentUser, o.value)).map((o) => (
+                  <option key={o.value} value={o.value}>{o.createLabel || o.label}</option>
+                ))}
               </select>
               <label className="flex items-center gap-2 sm:col-span-2 cursor-pointer">
                 <input
@@ -473,30 +478,31 @@ function StaffUsersSection() {
                         userId: u._id,
                         data: { role: e.target.value }
                       })}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:ring-1 focus:ring-orange-400"
+                      disabled={!canManageUser(currentUser, u.role)}
+                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:ring-1 focus:ring-orange-400 disabled:opacity-60"
                     >
-                      <option value="announcer">🎁 Announcer</option>
-                      <option value="issuer">🎫 Issuer</option>
-                      <option value="event_admin">Event Admin</option>
-                      <option value="campaign_manager">Campaign Manager</option>
-                      <option value="volunteer">Volunteer</option>
-                      <option value="preacher">Preacher</option>
-                      <option value="super_admin">Super Admin</option>
+                      {STAFF_ROLE_OPTIONS.filter((o) => o.value === u.role || canAssignRole(currentUser, o.value)).map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
                     </select>
                     {/* Editing permissions after creation was previously
                         impossible in this UI — only the role could be changed. */}
-                    <button
-                      onClick={() => setExpandedUserId(expandedUserId === u._id ? null : u._id)}
-                      className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-100"
-                    >
-                      {expandedUserId === u._id ? "Close" : "Permissions"}
-                    </button>
-                    <button
-                      onClick={() => confirm("Delete this user?") && deleteMutation.mutate(u._id)}
-                      className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50"
-                    >
-                      🗑
-                    </button>
+                    {canManageUser(currentUser, u.role) && (
+                      <>
+                        <button
+                          onClick={() => setExpandedUserId(expandedUserId === u._id ? null : u._id)}
+                          className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-100"
+                        >
+                          {expandedUserId === u._id ? "Close" : "Permissions"}
+                        </button>
+                        <button
+                          onClick={() => confirm("Delete this user?") && deleteMutation.mutate(u._id)}
+                          className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50"
+                        >
+                          🗑
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 

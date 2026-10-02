@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import api from "@/lib/api"; // FIX: use authenticated instance
+import api, { API_URL } from "@/lib/api"; // FIX: use authenticated instance
 import Link from "next/link";
 import { format } from "date-fns";
 import { formatIST } from "@/lib/dateUtils";
@@ -158,12 +158,8 @@ export default function HolderDetailsPage() {
       toast.error(error.response?.data?.error || "Failed to update category"),
   });
   // QR image endpoint is public (no auth needed).
-  // QR image base — use NEXT_PUBLIC_API_URL directly (it already ends with /api)
-  // Fallback to the Railway backend URL for safety
-  const API_ROOT = (
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://iskcon-seva-pass-backend-production.up.railway.app/api"
-  ).replace(/\/$/, ""); // strip trailing slash only
+  // QR image base — the shared API base (already ends with /api)
+  const API_ROOT = API_URL.replace(/\/$/, ""); // strip trailing slash only
 
   if (isLoading) {
     return (
