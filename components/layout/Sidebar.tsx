@@ -15,12 +15,14 @@ import {
   ChevronRight,
   AlertTriangle,
   ScanLine,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { can } from "@/lib/permissions";
+import { can, isUnrestricted } from "@/lib/permissions";
 
 // `requires` names a permission flag that must not be false for the item to
-// show, and `adminOnly` limits an item to the roles that can actually use it.
+// show, `adminOnly` limits an item to the roles that can actually use it, and
+// `superAdminOnly` to super_admin.
 // Hiding is cosmetic — every one of these routes is enforced server-side too.
 const menuItems: {
   name: string;
@@ -28,6 +30,7 @@ const menuItems: {
   icon: any;
   requires?: "canViewReports" | "canViewScanFeed";
   adminOnly?: boolean;
+  superAdminOnly?: boolean;
 }[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, requires: "canViewReports" },
   { name: "Events", href: "/events", icon: Calendar, adminOnly: true },
@@ -39,6 +42,7 @@ const menuItems: {
   { name: "Live Scan", href: "/scanfeed", icon: ScanLine, requires: "canViewScanFeed" },
   { name: "Volunteers", href: "/volunteers", icon: Users, adminOnly: true },
   { name: "Preachers", href: "/preachers", icon: BookOpen, adminOnly: true },
+  { name: "Client Apps", href: "/clients", icon: KeyRound, superAdminOnly: true },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -51,6 +55,7 @@ export default function Sidebar() {
   const visibleItems = menuItems.filter((item) => {
     if (item.requires && !can(user, item.requires)) return false;
     if (item.adminOnly && !ADMIN_ROLES.includes(user?.role || "")) return false;
+    if (item.superAdminOnly && !isUnrestricted(user)) return false;
     return true;
   });
   const [collapsed, setCollapsed] = useState(false);
