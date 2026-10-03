@@ -352,6 +352,14 @@ export default function HoldersPage() {
                       <code className="text-xs bg-gray-100 px-2 py-1 rounded">
                         {holder.qrPass?.qrId || "Not generated"}
                       </code>
+                      {holder.passCount > 1 && (
+                        <div className="text-xs text-orange-600 mt-1">
+                          {holder.passCount} passes
+                          {holder.qrPass?.windowed && holder.qrPass?.validFrom && (
+                            <span className="text-gray-500"> · showing {formatIST(holder.qrPass.validFrom, "d MMM")}</span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
@@ -393,7 +401,8 @@ export default function HoldersPage() {
                             Category
                           </button>
                         )}
-                        {holder.qrPass?.status === "active" && (
+                        {/* Several passes: per-pass actions live on the holder page */}
+                        {holder.qrPass?.status === "active" && !(holder.passCount > 1) && (
                           <>
                             <button
                               onClick={() => handleResendQR(holder.qrPass.qrId)}

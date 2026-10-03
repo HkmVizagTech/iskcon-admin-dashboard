@@ -61,6 +61,21 @@ function QRDisplay({
   return <p className="text-sm text-gray-400">No QR data</p>;
 }
 
+const statusClass = (status?: string) =>
+  status === "active"
+    ? "bg-green-100 text-green-700"
+    : status === "revoked"
+      ? "bg-red-100 text-red-700"
+      : status === "expired"
+        ? "bg-yellow-100 text-yellow-700"
+        : "bg-gray-100 text-gray-700";
+
+// Validity window in IST; the end drops the date when it is the same day.
+const windowLabel = (p: any) => {
+  if (!p?.validFrom || !p?.validUntil) return "—";
+  const sameDay = formatIST(p.validFrom, "yyyy-MM-dd") === formatIST(p.validUntil, "yyyy-MM-dd");
+  return `${formatIST(p.validFrom, "d MMM yyyy, h:mm a")} – ${formatIST(p.validUntil, sameDay ? "h:mm a" : "d MMM yyyy, h:mm a")}`;
+};
 
 export default function HolderDetailsPage() {
   const params = useParams();
@@ -80,12 +95,19 @@ export default function HolderDetailsPage() {
     },
   });
 
+  // A holder may own several passes (one per session); the QR card and header
+  // actions work on the selected one, defaulting to the API's current pass.
+  const [selectedQrId, setSelectedQrId] = useState<string | null>(null);
+  const passes: any[] = data?.passes || (data?.qrPass ? [data.qrPass] : []);
+  const qrPass = passes.find((p) => p.qrId === selectedQrId) || data?.qrPass;
+  const multiPass = passes.length > 1;
+
   const resendMutation = useMutation({
     mutationFn: async () => {
       const response = await api.post(
-        `/qr/${data?.qrPass?.qrId}/resend`,
+        `/qr/${qrPass?.qrId}/resend`,
         {
-          deliveryMethod: data?.qrPass?.deliveryMethod || "whatsapp",
+          deliveryMethod: qrPass?.deliveryMethod || "whatsapp",
         },
       );
       return response.data;
@@ -98,7 +120,7 @@ export default function HolderDetailsPage() {
   const retryCommunitySyncMutation = useMutation({
     mutationFn: async () => {
       const response = await api.post(
-        `/holders/qr/${data?.qrPass?.qrId}/retry-community-sync`,
+        `/holders/qr/${qrPass?.qrId}/retry-community-sync`,
       );
       return response.data;
     },
@@ -115,7 +137,7 @@ export default function HolderDetailsPage() {
   });
 
   const manualEntryMutation = useMutation({
-    mutationFn: async () => api.post(`/qr/${qrPass?.qrId}/manual-entry`, {
+    mutationFn: async (qrId: string) => api.post(`/qr/${qrId}/manual-entry`, {
       stationLabel: "Admin Dashboard",
       reason: "Manual entry by admin",
     }),
@@ -127,9 +149,9 @@ export default function HolderDetailsPage() {
   });
 
   const revokeMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (qrId: string) => {
       const response = await api.patch(
-        `/qr/${data?.qrPass?.qrId}/revoke`,
+        `/qr/${qrId}/revoke`,
       );
       return response.data;
     },
@@ -170,7 +192,6 @@ export default function HolderDetailsPage() {
   }
 
   const holder = data?.holder;
-  const qrPass = data?.qrPass;
   const scans: any[] = data?.scans || [];
   const venuesVisited: string[] = data?.venuesVisited || [];
   const qrImageUrl = qrPass?.qrId
@@ -205,7 +226,7 @@ export default function HolderDetailsPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (confirm("Revoke this QR pass?")) revokeMutation.mutate();
+                  if (confirm("Revoke this QR pass?")) revokeMutation.mutate(qrPass.qrId);
                 }}
                 loading={revokeMutation.isPending}
               >
@@ -216,6 +237,98 @@ export default function HolderDetailsPage() {
           )}
         </div>
       </div>
+
+      {/* All passes — only when the holder has more than one (e.g. one per session) */}
+      {multiPass && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold flex items-center">
+              <QrCode className="w-5 h-5 mr-2" />
+              Passes ({passes.length})
+              <span className="ml-2 text-sm font-normal text-gray-500">
+                {passes.filter((p) => p.collected).length} collected
+              </span>
+            </h2>
+          </CardHeader>
+          <CardBody padding={false}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    {["Session", "Window (IST)", "Status", "Collected", "Issued by", ""].map((h) => (
+                      <th key={h} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {passes.map((p) => {
+                    const selected = p.qrId === qrPass?.qrId;
+                    return (
+                      <tr key={p.qrId} className={selected ? "bg-orange-50" : "hover:bg-gray-50"}>
+                        <td className="px-4 py-2 text-sm">
+                          <div className="font-medium text-gray-900">
+                            {p.validFrom ? formatIST(p.validFrom, "EEE d MMM yyyy") : "—"}
+                          </div>
+                          <div className="text-xs text-gray-400 font-mono">{p.qrId}</div>
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600 whitespace-nowrap">{windowLabel(p)}</td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-1 text-xs rounded-full ${statusClass(p.status)}`}>{p.status}</span>
+                        </td>
+                        <td className="px-4 py-2 text-sm">
+                          {p.collected ? (
+                            <span className="inline-flex items-center text-green-700"><CheckCircle className="w-4 h-4 mr-1" />Yes</span>
+                          ) : (
+                            <span className="text-gray-400">No</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-600">{p.issuedByClient?.name || "Dashboard"}</td>
+                        <td className="px-4 py-2 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-3 text-sm">
+                            <button
+                              onClick={() => { setSelectedQrId(p.qrId); setShowQRModal(true); }}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              QR
+                            </button>
+                            {!selected && (
+                              <button onClick={() => setSelectedQrId(p.qrId)} className="text-gray-600 hover:text-gray-900">
+                                Details
+                              </button>
+                            )}
+                            {canManualEntry && p.status === "active" && !p.collected && (
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Mark ${holder?.name} as attended for this session?`)) manualEntryMutation.mutate(p.qrId);
+                                }}
+                                disabled={manualEntryMutation.isPending}
+                                className="text-amber-600 hover:text-amber-800 disabled:opacity-50"
+                              >
+                                Let in
+                              </button>
+                            )}
+                            {p.status === "active" && (
+                              <button
+                                onClick={() => {
+                                  if (confirm("Revoke this QR pass?")) revokeMutation.mutate(p.qrId);
+                                }}
+                                disabled={revokeMutation.isPending}
+                                className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                              >
+                                Revoke
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Holder Info */}
@@ -267,7 +380,7 @@ export default function HolderDetailsPage() {
                   </span>
                 )}
               </div>
-              {qrPass?.status !== "revoked" && (
+              {(passes.length === 0 || passes.some((p) => p.status !== "revoked")) && (
                 <button
                   onClick={() => {
                     setCategoryDraft(holder?.subCategory || "");
@@ -348,6 +461,11 @@ export default function HolderDetailsPage() {
             <h2 className="font-semibold flex items-center">
               <QrCode className="w-5 h-5 mr-2" />
               QR Pass
+              {multiPass && qrPass?.validFrom && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  {formatIST(qrPass.validFrom, "EEE d MMM yyyy")}
+                </span>
+              )}
             </h2>
           </CardHeader>
           <CardBody className="space-y-3">
@@ -585,6 +703,9 @@ export default function HolderDetailsPage() {
                         {scan.venueMismatch && (
                           <span className="ml-2 text-xs text-amber-600 font-normal">⚠️ venue mismatch</span>
                         )}
+                        {multiPass && scan.qrId && (
+                          <span className="ml-2 text-xs text-gray-400 font-mono font-normal">{scan.qrId}</span>
+                        )}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
                         📍 {scan.realVenue}
@@ -626,6 +747,7 @@ export default function HolderDetailsPage() {
             <h2 className="font-semibold flex items-center">
               <Clock className="w-5 h-5 mr-2" />
               Scan History ({qrPass.redemptionHistory.length})
+              {multiPass && <span className="ml-2 text-sm font-normal text-gray-500 font-mono">{qrPass.qrId}</span>}
             </h2>
           </CardHeader>
           <CardBody padding={false}>

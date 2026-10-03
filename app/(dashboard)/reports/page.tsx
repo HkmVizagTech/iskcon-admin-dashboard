@@ -194,12 +194,20 @@ export default function ReportsPage() {
                 <StatCard title="Total Passes Issued" value={summary.totalIssued || 0} icon={<QrCode className="w-6 h-6" />} color="blue" loading={summaryLoading} />
                 <StatCard title="Total Scans" value={summary.totalScanned || 0} icon={<ScanLine className="w-6 h-6" />} color="green" loading={summaryLoading} />
                 <StatCard title="Scan Rate" value={`${summary.totalIssued ? ((summary.totalScanned / summary.totalIssued) * 100).toFixed(1) : 0}%`} icon={<TrendingUp className="w-6 h-6" />} color="orange" loading={summaryLoading} />
-                <StatCard title="No-Shows" value={noShows?.count || 0} icon={<Users className="w-6 h-6" />} color="purple" loading={summaryLoading} />
+                <StatCard title="No-Shows (people)" value={noShows?.holderCount ?? noShows?.count ?? 0} icon={<Users className="w-6 h-6" />} color="purple" loading={summaryLoading} />
               </div>
+
+              {summary.sessionCount > 0 && (
+                <p className="text-sm text-gray-600">
+                  {summary.uniqueHolders} people hold {summary.totalIssued} passes across {summary.sessionCount} sessions;{" "}
+                  {summary.passesCollected} collected
+                  {noShows ? `, ${noShows.count} missed, ${noShows.pendingCount || 0} still open or upcoming` : ""}.
+                </p>
+              )}
 
               {noShows && noShows.noShows?.length > 0 && (
                 <Card>
-                  <CardHeader><h2 className="font-semibold">No-Shows ({noShows.count})</h2></CardHeader>
+                  <CardHeader><h2 className="font-semibold">Missed passes ({noShows.count})</h2></CardHeader>
                   <CardBody padding={false}>
                     <div className="max-h-96 overflow-y-auto">
                       <table className="w-full">
@@ -208,6 +216,9 @@ export default function ReportsPage() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Phone</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">QR ID</th>
+                            {summary.sessionCount > 0 && (
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Session</th>
+                            )}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -216,6 +227,11 @@ export default function ReportsPage() {
                               <td className="px-6 py-3 text-sm">{pass.holderId?.name}</td>
                               <td className="px-6 py-3 text-sm">{pass.holderId?.phone}</td>
                               <td className="px-6 py-3 text-sm font-mono">{pass.qrId}</td>
+                              {summary.sessionCount > 0 && (
+                                <td className="px-6 py-3 text-sm">
+                                  {pass.windowed && pass.validFrom ? formatIST(pass.validFrom, "EEE d MMM yyyy") : "—"}
+                                </td>
+                              )}
                             </tr>
                           ))}
                         </tbody>
@@ -289,7 +305,14 @@ export default function ReportsPage() {
                       ) : (
                         holdersReport?.map((item: any, idx: number) => (
                           <tr key={idx} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.holder?.name || "N/A"}</td>
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                              {item.holder?.name || "N/A"}
+                              {item.passCount > 1 && (
+                                <div className="text-xs font-normal text-gray-500">
+                                  {item.collectedCount}/{item.passCount} passes collected
+                                </div>
+                              )}
+                            </td>
                             <td className="px-4 py-3 text-sm text-gray-600">{item.holder?.phone || "N/A"}</td>
                             <td className="px-4 py-3 text-sm">
                               <span className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded-full">{item.holderType || "N/A"}</span>

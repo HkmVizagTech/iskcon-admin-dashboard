@@ -60,6 +60,18 @@ export default function EventDetailsPage() {
     enabled: !!eventId,
   });
 
+  // Standing events (e.g. prasadam) issue one pass per dated session.
+  const { data: sessions } = useQuery({
+    queryKey: ["event-sessions", eventId],
+    queryFn: async () => {
+      const res = await api.get(`/reports/events/${eventId}/sessions`);
+      return res.data.sessions as any[];
+    },
+    staleTime: 30000,
+    retry: false,
+    enabled: !!eventId,
+  });
+
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["event", eventId] });
     refetch();
@@ -210,6 +222,47 @@ export default function EventDetailsPage() {
               color="orange"
             />
           </div>
+
+          {/* Sessions — windowed passes grouped by session */}
+          {sessions && sessions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <h2 className="font-semibold">Sessions ({sessions.length})</h2>
+              </CardHeader>
+              <CardBody padding={false}>
+                <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        {["Date", "Window (IST)", "Issued", "Collected", "Missed", "Open", "Revoked", "Issued by"].map((h) => (
+                          <th key={h} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {sessions.map((s) => (
+                        <tr key={s.sessionKey} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 text-sm">
+                            <div className="font-medium text-gray-900">{formatIST(s.validFrom, "EEE d MMM yyyy")}</div>
+                            <div className="text-xs text-gray-400 font-mono">{s.sessionKey}</div>
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-600 whitespace-nowrap">
+                            {formatIST(s.validFrom, "h:mm a")} – {formatIST(s.validUntil, "d MMM, h:mm a")}
+                          </td>
+                          <td className="px-4 py-2 text-sm">{s.issued}</td>
+                          <td className="px-4 py-2 text-sm text-green-700">{s.collected}</td>
+                          <td className="px-4 py-2 text-sm text-red-600">{s.missed}</td>
+                          <td className="px-4 py-2 text-sm text-gray-600">{s.pending}</td>
+                          <td className="px-4 py-2 text-sm text-gray-500">{s.revoked}</td>
+                          <td className="px-4 py-2 text-sm text-gray-600">{(s.clients || []).join(", ") || "Dashboard"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardBody>
+            </Card>
+          )}
 
           {/* Details */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

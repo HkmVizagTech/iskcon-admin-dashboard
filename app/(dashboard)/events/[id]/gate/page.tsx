@@ -143,7 +143,8 @@ export default function GatePage() {
         {holders.map((h: any) => {
           const qrId = h.qrPass?.qrId;
           const isMarked = qrId && markedIds.has(qrId);
-          const alreadyAttended = (h.qrPass?.redemptionHistory?.length ?? 0) > 0;
+          // The list returns the pass usable now (one per session on standing events)
+          const alreadyAttended = !!h.qrPass?.collected;
           const cat = h.catId;
           const slot = h.sevaSlotId;
 
