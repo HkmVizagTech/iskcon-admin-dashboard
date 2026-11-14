@@ -15,7 +15,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import PageHeader from "@/components/ui/PageHeader";
 import VccFields, { emptyVccForm, toVccPayload, validateVcc, type VccFormState } from "@/components/events/VccFields";
-import { vccEventDayKeys } from "@/lib/vccDays";
 
 
 const eventSchema = z.object({
@@ -45,15 +44,11 @@ export default function CreateEventPage() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: { donorThreshold: 50000 },
   });
-
-  const watchedStart = watch("dateStart");
-  const watchedEnd = watch("dateEnd");
 
   const onSubmit = async (data: EventFormData) => {
     if (needsVolunteers) {
@@ -76,7 +71,7 @@ export default function CreateEventPage() {
         dateStart: data.dateStart ? istLocalToISO(data.dateStart) : data.dateStart,
         dateEnd: data.dateEnd ? istLocalToISO(data.dateEnd) : data.dateEnd,
         ...(needsVolunteers
-          ? { vcc: { enabled: true, ...toVccPayload(vcc, vccEventDayKeys(data.dateStart, data.dateEnd)) } }
+          ? { vcc: { enabled: true, ...toVccPayload(vcc) } }
           : {}),
       };
 
@@ -283,8 +278,6 @@ export default function CreateEventPage() {
               <VccFields
                 value={vcc}
                 onChange={setVcc}
-                eventStartLocal={watchedStart}
-                eventEndLocal={watchedEnd}
               />
             </CardBody>
           )}

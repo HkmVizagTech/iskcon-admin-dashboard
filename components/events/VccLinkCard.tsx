@@ -9,20 +9,10 @@ import { formatIST } from "@/lib/dateUtils";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import VccFields, { emptyVccForm, toVccPayload, validateVcc, type VccFormState } from "./VccFields";
-import { vccEventDayKeys } from "@/lib/vccDays";
 
 // Shows whether this QR event is linked to VCC (Volunteer Care Cell) and lets
 // an admin link it, retry a failed sync, or stop syncing.
-export default function VccLinkCard({
-  eventId,
-  eventStartLocal,
-  eventEndLocal,
-}: {
-  eventId: string;
-  /** Event start/end as IST datetime-local strings, for the time-slot days. */
-  eventStartLocal?: string;
-  eventEndLocal?: string;
-}) {
+export default function VccLinkCard({ eventId }: { eventId: string }) {
   const queryClient = useQueryClient();
   const [vcc, setVcc] = useState<VccFormState>(emptyVccForm);
   const [showLinkForm, setShowLinkForm] = useState(false);
@@ -110,8 +100,6 @@ export default function VccLinkCard({
               <VccFields
                 value={vcc}
                 onChange={setVcc}
-                eventStartLocal={eventStartLocal}
-                eventEndLocal={eventEndLocal}
               />
             )}
 
@@ -130,7 +118,7 @@ export default function VccLinkCard({
                   onClick={() => {
                     const problem = validateVcc(vcc);
                     if (problem) return toast.error(problem);
-                    sync.mutate(toVccPayload(vcc, vccEventDayKeys(eventStartLocal, eventEndLocal)));
+                    sync.mutate(toVccPayload(vcc));
                   }}
                 >
                   Create in VCC

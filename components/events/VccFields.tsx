@@ -4,16 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import api from "@/lib/api";
 import { istLocalToISO } from "@/lib/dateUtils";
-import { vccEventDayKeys, dayLabel } from "@/lib/vccDays";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
-// Everything VCC's own "Create Event" form asks for, so an event that "needs
-// volunteers" is fully set up in VCC from here. QR owns name/code/dates/venue/
-// banner; the settings below only exist in VCC.
-
-export type TimeSlot = { startTime: string; endTime: string; label: string };
-export type DaySlots = { date: string; slots: TimeSlot[] };
+// VCC settings for an event that "needs volunteers", sent when the event is
+// created in VCC. QR owns name/code/dates/venue/banner.
+//
+// Time slots are deliberately NOT here: VCC admins add them in VCC. QR never
+// sends availabilitySlots, so a sync from QR can't overwrite slots set there.
 
 export const FIELD_TYPES = {
   short_text: "Short text",
@@ -48,7 +46,6 @@ export type VccFormState = {
   registrationEnd: string;
   photoRequired: boolean;
   status: "registration_open" | "draft";
-  availabilitySlots: DaySlots[];
   customFields: CustomField[];
   services: ServiceRow[];
 };
@@ -59,7 +56,6 @@ export const emptyVccForm: VccFormState = {
   registrationEnd: "",
   photoRequired: false,
   status: "registration_open",
-  availabilitySlots: [],
   customFields: [],
   services: [],
 };
@@ -71,11 +67,6 @@ function makeId() {
 /** Problems that would make VCC reject or silently drop something. */
 export function validateVcc(f: VccFormState): string | null {
   if (!f.coordinatorId) return "Select a VCC coordinator";
-  for (const d of f.availabilitySlots) {
-    for (const s of d.slots) {
-      if (!s.startTime || !s.endTime) return `Fill both times for every slot on ${dayLabel(d.date)}`;
-    }
-  }
   for (const q of f.customFields) {
     if (!q.label.trim()) return "Every custom question needs a label";
     if (TYPES_WITH_OPTIONS.includes(q.type) && !q.optionsText.split(",").some((o) => o.trim())) {
@@ -92,21 +83,13 @@ export function validateVcc(f: VccFormState): string | null {
   return null;
 }
 
-export function toVccPayload(f: VccFormState, dayKeys?: string[]) {
-  const keep = dayKeys ? new Set(dayKeys) : null;
+export function toVccPayload(f: VccFormState) {
   return {
     coordinatorId: f.coordinatorId || undefined,
     registrationStart: f.registrationStart ? istLocalToISO(f.registrationStart) : undefined,
     registrationEnd: f.registrationEnd ? istLocalToISO(f.registrationEnd) : undefined,
     photoRequired: f.photoRequired,
     status: f.status,
-    availabilitySlots: f.availabilitySlots
-      .filter((d) => !keep || keep.has(d.date))
-      .map((d) => ({
-        date: d.date,
-        slots: d.slots.map((s) => ({ startTime: s.startTime, endTime: s.endTime, label: s.label.trim() || undefined })),
-      }))
-      .filter((d) => d.slots.length > 0),
     customFields: f.customFields.map((q) => ({
       id: q.id,
       label: q.label.trim(),
@@ -162,20 +145,14 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 export default function VccFields({
   value,
   onChange,
-  eventStartLocal,
-  eventEndLocal,
 }: {
   value: VccFormState;
   onChange: (v: VccFormState) => void;
-  /** Event start/end as IST datetime-local strings — used to list the days for time slots. */
-  eventStartLocal?: string;
-  eventEndLocal?: string;
 }) {
   const { data, isLoading, error } = useVccCoordinators();
   const set = (patch: Partial<VccFormState>) => onChange({ ...value, ...patch });
   const loadError = (error as any)?.response?.data?.error;
   const coordinators = data?.coordinators || [];
-  const dayKeys = vccEventDayKeys(eventStartLocal, eventEndLocal);
 
   if (data && !data.enabled) {
     return (
@@ -185,19 +162,6 @@ export default function VccFields({
       </p>
     );
   }
-
-  // ── time slots ──
-  const daySlots = (date: string) => value.availabilitySlots.find((d) => d.date === date)?.slots || [];
-  const setDaySlots = (date: string, slots: TimeSlot[]) => {
-    const next = value.availabilitySlots.filter((d) => d.date !== date);
-    if (slots.length) next.push({ date, slots });
-    next.sort((a, b) => a.date.localeCompare(b.date));
-    set({ availabilitySlots: next });
-  };
-  const copyToAllDays = (date: string) => {
-    const slots = daySlots(date);
-    set({ availabilitySlots: dayKeys.map((d) => ({ date: d, slots: slots.map((s) => ({ ...s })) })) });
-  };
 
   // ── custom questions ──
   const setField = (i: number, patch: Partial<CustomField>) =>
@@ -273,79 +237,10 @@ export default function VccFields({
         </label>
       </div>
 
-      {/* Time slots */}
-      <Section
-        title="Availability time slots"
-        hint="For each day, the time slots volunteers can choose (up to 4 per day)."
-      >
-        {dayKeys.length === 0 ? (
-          <p className="text-sm text-gray-500">Set the event start and end dates above to add time slots.</p>
-        ) : (
-          <div className="space-y-3">
-            {dayKeys.map((date) => {
-              const slots = daySlots(date);
-              return (
-                <div key={date} className="rounded-lg border border-gray-200 p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-gray-800">{dayLabel(date)}</p>
-                    {dayKeys.length > 1 && slots.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => copyToAllDays(date)}
-                        className="text-xs text-orange-600 hover:underline py-1.5 -my-1.5 whitespace-nowrap"
-                      >
-                        Copy to all days
-                      </button>
-                    )}
-                  </div>
-                  {slots.map((slot, i) => (
-                    <div key={i} className="flex flex-wrap items-center gap-2">
-                      <input
-                        type="time"
-                        value={slot.startTime}
-                        onChange={(e) => setDaySlots(date, slots.map((s, j) => (j === i ? { ...s, startTime: e.target.value } : s)))}
-                        className={`${smallInputCls} flex-1 min-w-0 sm:flex-none sm:w-32`}
-                      />
-                      <span className="text-xs text-gray-500">to</span>
-                      <input
-                        type="time"
-                        value={slot.endTime}
-                        onChange={(e) => setDaySlots(date, slots.map((s, j) => (j === i ? { ...s, endTime: e.target.value } : s)))}
-                        className={`${smallInputCls} flex-1 min-w-0 sm:flex-none sm:w-32`}
-                      />
-                      <input
-                        value={slot.label}
-                        placeholder="Label (optional)"
-                        onChange={(e) => setDaySlots(date, slots.map((s, j) => (j === i ? { ...s, label: e.target.value } : s)))}
-                        className={`${smallInputCls} flex-1 min-w-[140px]`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setDaySlots(date, slots.filter((_, j) => j !== i))}
-                        className="p-2.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        title="Remove slot"
-                        aria-label="Remove slot"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                  {slots.length < 4 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDaySlots(date, [...slots, { startTime: "", endTime: "", label: "" }])}
-                    >
-                      <Plus className="w-4 h-4 mr-1" /> Add slot
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Section>
+      <p className="text-sm text-gray-600 bg-orange-50/60 border border-orange-100 rounded-lg px-3 py-2.5">
+        <span className="font-medium text-gray-800">Time slots</span> are added by the VCC admin in
+        VCC after the event is created.
+      </p>
 
       {/* Custom questions */}
       <Section

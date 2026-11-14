@@ -234,7 +234,7 @@ export default function EditEventPage() {
         </CardBody>
       </Card>
 
-      <VccLinkCard eventId={eventId} eventStartLocal={formData.dateStart} eventEndLocal={formData.dateEnd} />
+      <VccLinkCard eventId={eventId} />
 
       <Card>
         <CardHeader>
