@@ -3,19 +3,32 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Users, RefreshCw, CheckCircle2, AlertTriangle, Link2 } from "lucide-react";
+import { Users, RefreshCw, CheckCircle2, AlertTriangle, Link2, Clock } from "lucide-react";
 import api from "@/lib/api";
 import { formatIST } from "@/lib/dateUtils";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import VccFields, { emptyVccForm, toVccPayload, validateVcc, type VccFormState } from "./VccFields";
+import { vccEventDayKeys } from "@/lib/vccDays";
+import VccSlotEditor, { cleanSlots, fromVccSlots, slotsProblem, type DaySlots } from "./VccSlotEditor";
 
 // Shows whether this QR event is linked to VCC (Volunteer Care Cell) and lets
 // an admin link it, retry a failed sync, or stop syncing.
-export default function VccLinkCard({ eventId }: { eventId: string }) {
+export default function VccLinkCard({
+  eventId,
+  eventStartLocal,
+  eventEndLocal,
+}: {
+  eventId: string;
+  /** Event start/end as IST datetime-local strings, for the time-slot days. */
+  eventStartLocal?: string;
+  eventEndLocal?: string;
+}) {
   const queryClient = useQueryClient();
   const [vcc, setVcc] = useState<VccFormState>(emptyVccForm);
   const [showLinkForm, setShowLinkForm] = useState(false);
+  // Time-slot editing for an event already in VCC. `null` = not editing.
+  const [slots, setSlots] = useState<DaySlots[] | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["event-vcc", eventId],
@@ -26,9 +39,16 @@ export default function VccLinkCard({ eventId }: { eventId: string }) {
   const sync = useMutation({
     mutationFn: async (body: Record<string, unknown>) =>
       (await api.post(`/events/${eventId}/vcc-sync`, body)).data,
-    onSuccess: (res) => {
-      toast.success(res.vccSync?.enabled === false ? "VCC sync turned off" : "Synced to VCC");
+    onSuccess: (res, body) => {
+      toast.success(
+        res.vccSync?.enabled === false
+          ? "VCC sync turned off"
+          : "availabilitySlots" in body
+            ? "Time slots saved in VCC"
+            : "Synced to VCC",
+      );
       setShowLinkForm(false);
+      setSlots(null);
       queryClient.invalidateQueries({ queryKey: ["event-vcc", eventId] });
       queryClient.invalidateQueries({ queryKey: ["event", eventId] });
     },
@@ -100,7 +120,72 @@ export default function VccLinkCard({ eventId }: { eventId: string }) {
               <VccFields
                 value={vcc}
                 onChange={setVcc}
+                eventStartLocal={eventStartLocal}
+                eventEndLocal={eventEndLocal}
               />
+            )}
+
+            {existsInVcc && (
+              <div className="rounded-lg border border-gray-200 p-3 sm:p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-orange-500" /> Volunteer time slots
+                    </p>
+                    {slots === null && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {(() => {
+                          const cur = fromVccSlots(data.vccEvent?.availabilitySlots);
+                          const n = cur.reduce((a, d) => a + d.slots.length, 0);
+                          return n
+                            ? `${n} slot${n === 1 ? "" : "s"} across ${cur.length} day${cur.length === 1 ? "" : "s"}: ` +
+                                cur
+                                  .map((d) => `${d.date.slice(5)} ${d.slots.map((x) => `${x.startTime}–${x.endTime}`).join(", ")}`)
+                                  .join(" · ")
+                            : "No time slots yet.";
+                        })()}
+                      </p>
+                    )}
+                  </div>
+                  {slots === null && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSlots(fromVccSlots(data.vccEvent?.availabilitySlots))}
+                    >
+                      Edit time slots
+                    </Button>
+                  )}
+                </div>
+                {slots !== null && (
+                  <>
+                    <VccSlotEditor
+                      dayKeys={vccEventDayKeys(eventStartLocal, eventEndLocal)}
+                      value={slots}
+                      onChange={setSlots}
+                    />
+                    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end [&>*]:w-full sm:[&>*]:w-auto">
+                      <Button type="button" size="sm" variant="outline" onClick={() => setSlots(null)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        loading={sync.isPending}
+                        onClick={() => {
+                          const problem = slotsProblem(slots);
+                          if (problem) return toast.error(problem);
+                          const keep = new Set(vccEventDayKeys(eventStartLocal, eventEndLocal));
+                          sync.mutate({ availabilitySlots: cleanSlots(slots, keep) });
+                        }}
+                      >
+                        Save time slots
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
 
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 [&>*]:w-full sm:[&>*]:w-auto">
@@ -118,7 +203,7 @@ export default function VccLinkCard({ eventId }: { eventId: string }) {
                   onClick={() => {
                     const problem = validateVcc(vcc);
                     if (problem) return toast.error(problem);
-                    sync.mutate(toVccPayload(vcc));
+                    sync.mutate(toVccPayload(vcc, vccEventDayKeys(eventStartLocal, eventEndLocal)));
                   }}
                 >
                   Create in VCC

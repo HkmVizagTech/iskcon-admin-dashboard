@@ -4,14 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import api from "@/lib/api";
 import { istLocalToISO } from "@/lib/dateUtils";
+import { vccEventDayKeys } from "@/lib/vccDays";
+import VccSlotEditor, { slotsProblem, cleanSlots, type DaySlots } from "./VccSlotEditor";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
-// VCC settings for an event that "needs volunteers", sent when the event is
-// created in VCC. QR owns name/code/dates/venue/banner.
-//
-// Time slots are deliberately NOT here: VCC admins add them in VCC. QR never
-// sends availabilitySlots, so a sync from QR can't overwrite slots set there.
+// Everything VCC's own "Create Event" form asks for, so an event that "needs
+// volunteers" is fully set up in VCC from here. QR owns name/code/dates/venue/
+// banner; the settings below only exist in VCC.
+
+export type { DaySlots };
 
 export const FIELD_TYPES = {
   short_text: "Short text",
@@ -46,6 +48,7 @@ export type VccFormState = {
   registrationEnd: string;
   photoRequired: boolean;
   status: "registration_open" | "draft";
+  availabilitySlots: DaySlots[];
   customFields: CustomField[];
   services: ServiceRow[];
 };
@@ -56,6 +59,7 @@ export const emptyVccForm: VccFormState = {
   registrationEnd: "",
   photoRequired: false,
   status: "registration_open",
+  availabilitySlots: [],
   customFields: [],
   services: [],
 };
@@ -67,6 +71,8 @@ function makeId() {
 /** Problems that would make VCC reject or silently drop something. */
 export function validateVcc(f: VccFormState): string | null {
   if (!f.coordinatorId) return "Select a VCC coordinator";
+  const slotIssue = slotsProblem(f.availabilitySlots);
+  if (slotIssue) return slotIssue;
   for (const q of f.customFields) {
     if (!q.label.trim()) return "Every custom question needs a label";
     if (TYPES_WITH_OPTIONS.includes(q.type) && !q.optionsText.split(",").some((o) => o.trim())) {
@@ -83,13 +89,20 @@ export function validateVcc(f: VccFormState): string | null {
   return null;
 }
 
-export function toVccPayload(f: VccFormState) {
+export function toVccPayload(f: VccFormState, dayKeys?: string[]) {
+  const keep = dayKeys ? new Set(dayKeys) : null;
   return {
     coordinatorId: f.coordinatorId || undefined,
     registrationStart: f.registrationStart ? istLocalToISO(f.registrationStart) : undefined,
     registrationEnd: f.registrationEnd ? istLocalToISO(f.registrationEnd) : undefined,
     photoRequired: f.photoRequired,
     status: f.status,
+    // Only sent when slots were actually added here, so this can never wipe
+    // slots a VCC admin set in VCC.
+    availabilitySlots: (() => {
+      const slots = cleanSlots(f.availabilitySlots, keep);
+      return slots.length ? slots : undefined;
+    })(),
     customFields: f.customFields.map((q) => ({
       id: q.id,
       label: q.label.trim(),
@@ -145,14 +158,22 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 export default function VccFields({
   value,
   onChange,
+  eventStartLocal,
+  eventEndLocal,
 }: {
   value: VccFormState;
   onChange: (v: VccFormState) => void;
+  /** Event start/end as IST datetime-local strings — used to list the days for time slots. */
+  eventStartLocal?: string;
+  eventEndLocal?: string;
 }) {
   const { data, isLoading, error } = useVccCoordinators();
   const set = (patch: Partial<VccFormState>) => onChange({ ...value, ...patch });
   const loadError = (error as any)?.response?.data?.error;
   const coordinators = data?.coordinators || [];
+  // Same list VCC's own event form shows: every coordinator except Super Admin.
+  const vccCoordinators = coordinators.filter((c) => c.role !== "super_admin");
+  const dayKeys = vccEventDayKeys(eventStartLocal, eventEndLocal);
 
   if (data && !data.enabled) {
     return (
@@ -191,13 +212,11 @@ export default function VccFields({
             disabled={isLoading || !!loadError}
           >
             <option value="">{isLoading ? "Loading coordinators…" : "Select coordinator"}</option>
-            {coordinators
-              .filter((c) => c.role !== "service_coordinator")
-              .map((c) => (
+            {vccCoordinators.map((c) => (
                 <option key={c._id} value={c._id}>
                   {c.name}
                   {c.phone ? ` · ${c.phone}` : ""}
-                  {c.role === "super_admin" ? " (admin)" : ""}
+                  {c.role === "event_coordinator" ? " · Event coordinator" : " · Service coordinator"}
                 </option>
               ))}
           </select>
@@ -237,10 +256,17 @@ export default function VccFields({
         </label>
       </div>
 
-      <p className="text-sm text-gray-600 bg-orange-50/60 border border-orange-100 rounded-lg px-3 py-2.5">
-        <span className="font-medium text-gray-800">Time slots</span> are added by the VCC admin in
-        VCC after the event is created.
-      </p>
+      {/* Time slots */}
+      <Section
+        title="Availability time slots"
+        hint="For each event day, the time slots volunteers can choose (up to 4 per day). Optional — they can also be added later from Edit Event or in VCC."
+      >
+        <VccSlotEditor
+          dayKeys={dayKeys}
+          value={value.availabilitySlots}
+          onChange={(availabilitySlots) => set({ availabilitySlots })}
+        />
+      </Section>
 
       {/* Custom questions */}
       <Section
@@ -371,7 +397,7 @@ export default function VccFields({
                 className={`${smallInputCls} bg-white w-full sm:w-auto`}
               >
                 <option value="">Coordinator: same as event</option>
-                {coordinators.map((c) => (
+                {vccCoordinators.map((c) => (
                   <option key={c._id} value={c._id}>
                     {c.name}
                   </option>
