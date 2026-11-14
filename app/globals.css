@@ -8,8 +8,22 @@
     --primary-foreground: 0 0% 100%;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
-    @apply bg-gradient-to-br from-orange-50 via-white to-yellow-50 min-h-screen;
+    @apply bg-gradient-to-br from-orange-50 via-white to-yellow-50 min-h-screen antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 16px form text on phones — iOS zooms the page when focusing anything smaller. */
+  @media (max-width: 639px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 }
 
@@ -30,7 +44,7 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg
+    @apply w-full px-3.5 py-2.5 sm:py-2 border border-gray-300 rounded-lg
            focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none;
   }
 }

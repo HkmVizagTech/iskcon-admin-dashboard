@@ -6,8 +6,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import { ArrowLeft, Search, CheckCircle, UserCheck, Phone } from "lucide-react";
+import { Search, CheckCircle, UserCheck, Phone } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
+import PageHeader from "@/components/ui/PageHeader";
 import toast from "react-hot-toast";
 
 export default function GatePage() {
@@ -67,22 +68,22 @@ export default function GatePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
+    <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link href={`/events/${eventId}`}>
-          <ArrowLeft className="w-5 h-5 text-gray-500 hover:text-gray-700" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <UserCheck className="w-6 h-6 text-orange-500" />
+      <PageHeader
+        backHref={`/events/${eventId}`}
+        title={
+          <span className="flex items-center gap-2">
+            <UserCheck className="w-6 h-6 text-orange-500 flex-shrink-0" />
             Gate — Manual Entry
-          </h1>
-          <p className="text-xs text-gray-400 mt-0.5">
+          </span>
+        }
+        subtitle={
+          <span className="block text-xs sm:text-sm text-gray-400">
             Search by name or phone · mark attendance without QR scan
-          </p>
-        </div>
-      </div>
+          </span>
+        }
+      />
 
       {/* Search box */}
       <div className="relative">
@@ -93,12 +94,13 @@ export default function GatePage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Type name or phone number..."
           autoFocus
-          className="w-full pl-12 pr-4 py-4 text-lg border-2 border-orange-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm"
+          className="w-full pl-12 pr-12 py-4 text-lg border-2 border-orange-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm"
         />
         {query && (
           <button
             onClick={() => { setQuery(""); searchRef.current?.focus(); }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl"
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-2xl"
           >
             ×
           </button>
@@ -107,7 +109,7 @@ export default function GatePage() {
 
       {/* Instructions */}
       {query.trim().length < 2 && (
-        <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100">
+        <div className="bg-amber-50 rounded-2xl p-4 sm:p-5 border border-amber-100">
           <p className="text-sm font-semibold text-amber-800 mb-3">How to use:</p>
           <div className="space-y-2 text-sm text-amber-700">
             <p>1. Type the sponsor's name or phone number above</p>
@@ -162,7 +164,7 @@ export default function GatePage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   {/* Name */}
-                  <p className="font-bold text-gray-900 text-base leading-tight">{h.name}</p>
+                  <p className="font-bold text-gray-900 text-base leading-tight break-words">{h.name}</p>
 
                   {/* Phone */}
                   <div className="flex items-center gap-1 mt-0.5">
@@ -208,7 +210,7 @@ export default function GatePage() {
 
                   {/* QR ID */}
                   {qrId && (
-                    <p className="text-xs text-gray-400 font-mono mt-1">{qrId}</p>
+                    <p className="text-xs text-gray-400 font-mono mt-1 break-all">{qrId}</p>
                   )}
                 </div>
 
@@ -219,7 +221,7 @@ export default function GatePage() {
                       <p className="text-xs text-red-500 font-medium">No QR</p>
                       <Link
                         href={`/holders/${h._id}`}
-                        className="text-xs text-orange-600 hover:underline"
+                        className="inline-block py-1.5 text-xs text-orange-600 hover:underline"
                       >
                         Issue first →
                       </Link>
@@ -237,7 +239,7 @@ export default function GatePage() {
                         markMutation.mutate({ qrId, holderName: h.name });
                       }}
                       disabled={markMutation.isPending}
-                      className={`px-4 py-3 rounded-xl text-sm font-bold transition-colors ${
+                      className={`px-4 py-3 min-w-[84px] rounded-xl text-sm font-bold whitespace-nowrap transition-colors ${
                         alreadyAttended
                           ? "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300"
                           : "bg-orange-600 text-white hover:bg-orange-700 shadow-sm"

@@ -74,31 +74,31 @@ export default function QRPreview({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-        <div className="p-6">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto">
+        <div className="p-4 sm:p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900">
               QR Pass Generated
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="p-2 -mr-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 mb-4">
+          <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 sm:p-6 mb-4">
             <div className="bg-white rounded-lg p-4 flex justify-center">
-              <img src={qrData.qrImage} alt="QR Code" className="w-64 h-64" />
+              <img src={qrData.qrImage} alt="QR Code" className="w-56 h-56 sm:w-64 sm:h-64 max-w-full" />
             </div>
           </div>
 
           <div className="space-y-2 mb-6">
-            <p className="text-center font-medium text-gray-900">
+            <p className="text-center font-medium text-gray-900 break-words">
               {holderName}
             </p>
-            <p className="text-center text-sm font-mono text-gray-600">
+            <p className="text-center text-sm font-mono text-gray-600 break-all">
               {qrData.qrId}
             </p>
             <p className="text-center text-xs text-gray-500">
@@ -107,7 +107,7 @@ export default function QRPreview({
             </p>
           </div>
 
-          <div className="flex space-x-3">
+          <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={handleDownload}

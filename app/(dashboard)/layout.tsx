@@ -47,7 +47,11 @@ export default function DashboardLayout({
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-4 pb-20 lg:pb-8 lg:p-8 lg:ml-64">{children}</main>
+        {/* min-w-0 lets wide tables scroll inside their own box instead of
+            stretching the page past the screen edge on phones. */}
+        <main className="flex-1 min-w-0 px-3 py-4 sm:p-6 lg:p-8 lg:ml-64 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8">
+          {children}
+        </main>
       </div>
       <MobileNav />
     </div>

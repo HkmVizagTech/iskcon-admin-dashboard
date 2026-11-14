@@ -25,17 +25,17 @@ export default function StatCard({
   loading,
 }: StatCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{title}</p>
           {loading ? (
             <div className="w-16 h-8 bg-gray-200 rounded animate-pulse mt-1"></div>
           ) : (
-            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{value}</p>
           )}
         </div>
-        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
+        <div className={`p-2.5 sm:p-3 rounded-lg flex-shrink-0 ${colorClasses[color]}`}>{icon}</div>
       </div>
       {trend !== undefined && !loading && (
         <div className="mt-4 flex items-center text-sm">

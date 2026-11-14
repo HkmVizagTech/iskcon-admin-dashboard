@@ -25,8 +25,50 @@ import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
+import PageHeader from "@/components/ui/PageHeader";
 import toast from "react-hot-toast";
 
+
+// Pass type + A/B/C category chips (shared by the phone cards and the table).
+function CategoryBadges({ holder }: { holder: any }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span
+        className="px-2 py-1 text-xs rounded-full"
+        style={{
+          backgroundColor: holder.catId?.color + "20",
+          color: holder.catId?.color,
+        }}
+      >
+        {holder.catId?.name || holder.holderType}
+      </span>
+      {holder.subCategory && (
+        <span className={`px-1.5 py-0.5 text-[10px] font-black font-mono rounded border ${
+          holder.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
+          holder.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
+          holder.subCategory === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
+          "bg-purple-100 text-purple-800 border-purple-300"
+        }`}>{holder.subCategory}</span>
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ holder }: { holder: any }) {
+  return (
+    <span
+      className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
+        holder.qrPass?.status === "active"
+          ? "bg-green-100 text-green-700"
+          : holder.qrPass?.status === "revoked"
+            ? "bg-red-100 text-red-700"
+            : "bg-gray-100 text-gray-700"
+      }`}
+    >
+      {holder.qrPass?.status || "pending"}
+    </span>
+  );
+}
 
 export default function HoldersPage() {
   const [search, setSearch] = useState("");
@@ -180,38 +222,38 @@ export default function HoldersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Holders</h1>
-          <p className="text-gray-600 mt-1">Manage QR pass holders</p>
-        </div>
-        <div className="flex space-x-3">
-          <Link href="/holders/import">
-            <Button variant="outline">
-              <Upload className="w-5 h-5 mr-2" />
-              Bulk Import
-            </Button>
-          </Link>
-          <Link href="/holders/bulk-update-category">
-            <Button variant="outline">
-              <Tags className="w-5 h-5 mr-2" />
-              Update Category
-            </Button>
-          </Link>
-          <Link href="/holders/create">
-            <Button>
-              <Plus className="w-5 h-5 mr-2" />
-              Issue QR Pass
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Holders"
+        subtitle="Manage QR pass holders"
+        actions={
+          <>
+            <Link href="/holders/import">
+              <Button variant="outline" className="w-full">
+                <Upload className="w-5 h-5 mr-2" />
+                Bulk Import
+              </Button>
+            </Link>
+            <Link href="/holders/bulk-update-category">
+              <Button variant="outline" className="w-full">
+                <Tags className="w-5 h-5 mr-2" />
+                Update Category
+              </Button>
+            </Link>
+            <Link href="/holders/create" className="basis-full sm:basis-auto">
+              <Button className="w-full">
+                <Plus className="w-5 h-5 mr-2" />
+                Issue QR Pass
+              </Button>
+            </Link>
+          </>
+        }
+      />
 
       {/* Event Selection */}
       <Card>
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
           <select
             value={selectedEvent}
             onChange={(e) => {
@@ -219,7 +261,7 @@ export default function HoldersPage() {
               setFilterType("");
               setPage(1);
             }}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            className="w-full lg:w-auto lg:flex-1 min-w-0 px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           >
             <option value="">Select an event...</option>
             {events?.map((event: any) => (
@@ -233,7 +275,7 @@ export default function HoldersPage() {
             <select
               value={filterType}
               onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full lg:w-auto px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             >
               <option value="">All Types</option>
               {holderTypes.map((ht: any) => (
@@ -244,7 +286,7 @@ export default function HoldersPage() {
             </select>
           )}
 
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <Input
               placeholder="Search by name, phone, or email..."
               value={search}
@@ -253,22 +295,24 @@ export default function HoldersPage() {
             />
           </div>
 
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="w-5 h-5 mr-2" />
-            Export
-          </Button>
-
-          {selectedEvent && (
-            <Button
-              variant="outline"
-              onClick={handleResendAll}
-              disabled={resendingAll}
-              title="Resend WhatsApp to every pending/failed pass in this event"
-            >
-              <RefreshCw className={`w-5 h-5 mr-2 ${resendingAll ? "animate-spin" : ""}`} />
-              Resend All
+          <div className="flex gap-2 lg:gap-4 [&>*]:flex-1 lg:[&>*]:flex-none">
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="w-5 h-5 mr-2" />
+              Export
             </Button>
-          )}
+
+            {selectedEvent && (
+              <Button
+                variant="outline"
+                onClick={handleResendAll}
+                disabled={resendingAll}
+                title="Resend WhatsApp to every pending/failed pass in this event"
+              >
+                <RefreshCw className={`w-5 h-5 mr-2 ${resendingAll ? "animate-spin" : ""}`} />
+                Resend All
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
 
@@ -285,26 +329,113 @@ export default function HoldersPage() {
         </div>
       ) : (
         <Card padding={false}>
-          <div className="overflow-x-auto">
+          {/* Phones: one card per holder */}
+          <ul className="md:hidden divide-y divide-gray-100">
+            {holdersData?.holders?.map((holder: any) => (
+              <li key={holder._id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <Link href={`/holders/${holder._id}`} className="min-w-0 flex-1">
+                    <div className="font-semibold text-gray-900 truncate">
+                      {holder.name}
+                    </div>
+                    <div className="text-sm text-gray-500 flex items-center mt-0.5">
+                      <Phone className="w-3 h-3 mr-1 flex-shrink-0" />
+                      {holder.phone}
+                    </div>
+                    {holder.email && (
+                      <div className="text-sm text-gray-500 flex items-center min-w-0">
+                        <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">{holder.email}</span>
+                      </div>
+                    )}
+                  </Link>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <StatusBadge holder={holder} />
+                    {holder.qrPass?.redemptionCount > 0 && (
+                      <div className="text-xs text-gray-500">
+                        Scanned: {holder.qrPass.redemptionCount}x
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-gray-500">
+                  <CategoryBadges holder={holder} />
+                  <code className="bg-gray-100 px-2 py-1 rounded break-all">
+                    {holder.qrPass?.qrId || "Not generated"}
+                  </code>
+                  <span>{formatIST(holder.issuedAt, "MMM d, yyyy")}</span>
+                </div>
+                {holder.passCount > 1 && (
+                  <div className="text-xs text-orange-600 mt-1">
+                    {holder.passCount} passes
+                    {holder.qrPass?.windowed && holder.qrPass?.validFrom && (
+                      <span className="text-gray-500"> · showing {formatIST(holder.qrPass.validFrom, "d MMM")}</span>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-3 flex flex-wrap gap-2 [&>*]:flex-1 [&>*]:min-h-[40px] [&>*]:inline-flex [&>*]:items-center [&>*]:justify-center [&>*]:rounded-lg [&>*]:border [&>*]:px-3 [&>*]:text-sm [&>*]:font-medium">
+                  <Link
+                    href={`/holders/${holder._id}`}
+                    className="border-blue-200 text-blue-700 bg-blue-50 active:bg-blue-100"
+                  >
+                    View
+                  </Link>
+                  {holder.qrPass?.status !== "revoked" && (
+                    <button
+                      onClick={() => {
+                        setCategoryDraft(holder.subCategory || "");
+                        setCategoryHolder(holder);
+                      }}
+                      className="border-orange-200 text-orange-700 bg-orange-50 active:bg-orange-100"
+                    >
+                      Category
+                    </button>
+                  )}
+                  {/* Several passes: per-pass actions live on the holder page */}
+                  {holder.qrPass?.status === "active" && !(holder.passCount > 1) && (
+                    <>
+                      <button
+                        onClick={() => handleResendQR(holder.qrPass.qrId)}
+                        className="border-green-200 text-green-700 bg-green-50 active:bg-green-100"
+                      >
+                        Resend
+                      </button>
+                      <button
+                        onClick={() => handleRevokeQR(holder.qrPass.qrId)}
+                        className="border-red-200 text-red-700 bg-red-50 active:bg-red-100"
+                      >
+                        Revoke
+                      </button>
+                    </>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {/* Desktop / tablet: table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Holder
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type / Category
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     QR ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Issued
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -312,7 +443,7 @@ export default function HoldersPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {holdersData?.holders?.map((holder: any) => (
                   <tr key={holder._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">
                         {holder.name}
                       </div>
@@ -327,28 +458,10 @@ export default function HoldersPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="px-2 py-1 text-xs rounded-full"
-                          style={{
-                            backgroundColor: holder.catId?.color + "20",
-                            color: holder.catId?.color,
-                          }}
-                        >
-                          {holder.catId?.name || holder.holderType}
-                        </span>
-                        {holder.subCategory && (
-                          <span className={`px-1.5 py-0.5 text-[10px] font-black font-mono rounded border ${
-                            holder.subCategory === "A" ? "bg-amber-100 text-amber-800 border-amber-300" :
-                            holder.subCategory === "B" ? "bg-slate-100 text-slate-700 border-slate-300" :
-                            holder.subCategory === "C" ? "bg-orange-100 text-orange-800 border-orange-300" :
-                            "bg-purple-100 text-purple-800 border-purple-300"
-                          }`}>{holder.subCategory}</span>
-                        )}
-                      </div>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <CategoryBadges holder={holder} />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <code className="text-xs bg-gray-100 px-2 py-1 rounded">
                         {holder.qrPass?.qrId || "Not generated"}
                       </code>
@@ -361,29 +474,19 @@ export default function HoldersPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          holder.qrPass?.status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : holder.qrPass?.status === "revoked"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {holder.qrPass?.status || "pending"}
-                      </span>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <StatusBadge holder={holder} />
                       {holder.qrPass?.redemptionCount > 0 && (
                         <div className="text-xs text-gray-500 mt-1">
                           Scanned: {holder.qrPass.redemptionCount}x
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatIST(holder.issuedAt, "MMM d, yyyy")}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end space-x-2">
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
                         <Link
                           href={`/holders/${holder._id}`}
                           className="text-blue-600 hover:text-blue-800"
@@ -428,13 +531,13 @@ export default function HoldersPage() {
 
           {/* Pagination */}
           {holdersData?.pagination && holdersData.pagination.pages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-500">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-sm text-gray-500 text-center sm:text-left">
                 Showing {(page - 1) * 20 + 1} to{" "}
                 {Math.min(page * 20, holdersData.pagination.total)} of{" "}
                 {holdersData.pagination.total} holders
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-2 w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
                 <Button
                   variant="outline"
                   size="sm"

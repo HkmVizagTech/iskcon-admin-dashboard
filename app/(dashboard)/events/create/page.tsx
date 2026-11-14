@@ -9,11 +9,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import api from "@/lib/api"; // FIX: use authenticated instance
 import toast from "react-hot-toast";
-import { Calendar, MapPin, DollarSign, ArrowLeft, Plus, X } from "lucide-react";
+import { Calendar, MapPin, DollarSign, Plus, X, Users } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
+import VccFields, { emptyVccForm, toVccPayload, validateVcc, type VccFormState } from "@/components/events/VccFields";
+import { vccEventDayKeys } from "@/lib/vccDays";
 
 
 const eventSchema = z.object({
@@ -23,6 +25,7 @@ const eventSchema = z.object({
   dateStart: z.string().min(1, "Start date is required"),
   dateEnd: z.string().min(1, "End date is required"),
   donorThreshold: z.number().min(0).default(0).optional(),
+  bannerImage: z.string().url("Enter a full image URL (https://…)").optional().or(z.literal("")),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -31,6 +34,8 @@ export default function CreateEventPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [venues, setVenues] = useState([{ name: "", address: "" }]);
+  const [needsVolunteers, setNeedsVolunteers] = useState(false);
+  const [vcc, setVcc] = useState<VccFormState>(emptyVccForm);
 
   const addVenue = () => setVenues([...venues, { name: "", address: "" }]);
   const removeVenue = (index: number) => {
@@ -40,28 +45,49 @@ export default function CreateEventPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: { donorThreshold: 50000 },
   });
 
+  const watchedStart = watch("dateStart");
+  const watchedEnd = watch("dateEnd");
+
   const onSubmit = async (data: EventFormData) => {
+    if (needsVolunteers) {
+      const problem = validateVcc(vcc);
+      if (problem) {
+        toast.error(`Volunteers (VCC): ${problem}`);
+        return;
+      }
+    }
     setIsSubmitting(true);
     try {
       // ✅ Preserve the local time as-is with timezone offset
       const payload = {
         ...data,
+        bannerImage: data.bannerImage || undefined,
         venue: venues.map((v) => ({ name: v.name, address: v.address })),
         // FIX: append IST offset so server stores the exact time user intended.
         // datetime-local gives "YYYY-MM-DDTHH:mm" with no timezone — sending
         // that bare string to a UTC server shifts the date by +5:30 on every save.
         dateStart: data.dateStart ? istLocalToISO(data.dateStart) : data.dateStart,
         dateEnd: data.dateEnd ? istLocalToISO(data.dateEnd) : data.dateEnd,
+        ...(needsVolunteers
+          ? { vcc: { enabled: true, ...toVccPayload(vcc, vccEventDayKeys(data.dateStart, data.dateEnd)) } }
+          : {}),
       };
 
       const response = await api.post(`/events`, payload);
       toast.success("Event created successfully!");
+      const vccSync = response.data.vccSync;
+      if (vccSync?.status === "synced") {
+        toast.success("Also created in VCC for volunteers");
+      } else if (vccSync?.status === "failed") {
+        toast.error(`Created in QR, but VCC failed: ${vccSync.error}. Retry from Edit Event.`, { duration: 10000 });
+      }
       router.push(`/events/${response.data.event._id}`);
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to create event");
@@ -71,18 +97,10 @@ export default function CreateEventPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center space-x-4">
-        <Link href="/events" className="text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-6 h-6" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Create New Event</h1>
-          <p className="text-gray-600 mt-1">Set up a new festival or program</p>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+      <PageHeader backHref="/events" title="Create New Event" subtitle="Set up a new festival or program" />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -115,9 +133,15 @@ export default function CreateEventPage() {
                 {...register("description")}
                 rows={3}
                 placeholder="Brief description..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                className="w-full px-4 py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
+            <Input
+              label="Banner Image URL (optional)"
+              {...register("bannerImage")}
+              error={errors.bannerImage?.message}
+              placeholder="https://…/banner.jpg"
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="Start Date & Time"
@@ -140,7 +164,7 @@ export default function CreateEventPage() {
         {/* Venue Information - MULTI VENUE */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">
                 <MapPin className="w-5 h-5 inline mr-2" />
                 Venue Details
@@ -157,12 +181,13 @@ export default function CreateEventPage() {
           </CardHeader>
           <CardBody className="space-y-4">
             {venues.map((venue, index) => (
-              <div key={index} className="border rounded-lg p-4 relative">
+              <div key={index} className="border rounded-lg p-3 sm:p-4 relative">
                 {venues.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeVenue(index)}
-                    className="absolute top-2 right-2 text-red-500 hover:bg-red-50 p-1 rounded"
+                    aria-label="Remove venue"
+                    className="absolute top-1.5 right-1.5 text-red-500 hover:bg-red-50 p-2 rounded-lg"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -199,7 +224,7 @@ export default function CreateEventPage() {
                       }}
                       rows={2}
                       placeholder="Street, City, State, PIN"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                      className="w-full px-4 py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
@@ -231,11 +256,45 @@ export default function CreateEventPage() {
           </CardBody>
         </Card>
 
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+        {/* Volunteers — VCC */}
+        <Card>
+          <CardHeader>
+            <label className="flex items-start sm:items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={needsVolunteers}
+                onChange={(e) => setNeedsVolunteers(e.target.checked)}
+                className="w-5 h-5 mt-0.5 sm:mt-0 flex-shrink-0 accent-orange-500"
+              />
+              <span>
+                <span className="text-lg font-semibold">
+                  <Users className="w-5 h-5 inline mr-2" />
+                  Needs volunteers (create in VCC)
+                </span>
+                <span className="block text-sm text-gray-500 font-normal">
+                  Creates the same event in Volunteer Care Cell with this event code. Name, dates and
+                  venue stay in sync when you edit here.
+                </span>
+              </span>
+            </label>
+          </CardHeader>
+          {needsVolunteers && (
+            <CardBody>
+              <VccFields
+                value={vcc}
+                onChange={setVcc}
+                eventStartLocal={watchedStart}
+                eventEndLocal={watchedEnd}
+              />
+            </CardBody>
+          )}
+        </Card>
+
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
+          <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button type="submit" loading={isSubmitting}>
+          <Button type="submit" loading={isSubmitting} className="w-full sm:w-auto">
             Create Event
           </Button>
         </div>

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { Plus, Search, Edit, Trash2, Key, Shield } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 
@@ -262,28 +263,48 @@ export default function VolunteersPage() {
       formData.assignedEvents.includes(ep.eventId?._id || ep.eventId),
   );
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Volunteers</h1>
-          <p className="text-gray-600 mt-1">Manage scanning volunteers</p>
-        </div>
-        <Button
-          onClick={() => {
-            setShowModal(true);
-            setEditingVolunteer(null);
-            resetForm();
-          }}
+  const renderVenueChips = (volunteer: any) =>
+    volunteer.assignedVenues?.map((vIndex: number) => {
+      // Look up venue from this volunteer's own assigned events
+      const volunteerVenues = (volunteer.assignedEvents || [])
+        .flatMap((ev: any) =>
+          (Array.isArray(ev.venue) ? ev.venue : []).map((v: any, i: number) => ({
+            ...v, eventCode: ev.eventCode, venueIndex: i,
+          }))
+        );
+      const eventVenue = volunteerVenues.find((v: any) => v.venueIndex === vIndex);
+      return eventVenue ? (
+        <span
+          key={vIndex}
+          className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"
         >
-          <Plus className="w-5 h-5 mr-2" />
-          Add Volunteer
-        </Button>
-      </div>
+          {eventVenue.eventCode}: {eventVenue.name}
+        </span>
+      ) : null;
+    });
+
+  return (
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <PageHeader
+        title="Volunteers"
+        subtitle="Manage scanning volunteers"
+        actions={
+          <Button
+            onClick={() => {
+              setShowModal(true);
+              setEditingVolunteer(null);
+              resetForm();
+            }}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Volunteer
+          </Button>
+        }
+      />
 
       {/* Search */}
-      <Card>
+      <Card padding={false}>
         <CardBody>
           <Input
             placeholder="Search volunteers..."
@@ -296,7 +317,68 @@ export default function VolunteersPage() {
 
       {/* Volunteers List */}
       <Card padding={false}>
-        <div className="overflow-x-auto">
+        {/* Phones: one card per volunteer */}
+        <ul className="md:hidden divide-y divide-gray-100">
+          {volunteersData?.map((volunteer: any) => (
+            <li key={volunteer._id} className="p-4 space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 break-words">{volunteer.name}</p>
+                  <p className="text-sm text-gray-500 break-all">
+                    {volunteer.email || volunteer.phone || "N/A"}
+                  </p>
+                </div>
+                <span
+                  className={`flex-shrink-0 px-2 py-1 text-xs rounded-full ${
+                    volunteer.isActive
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {volunteer.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+              {(volunteer.assignedEvents?.length > 0 ||
+                volunteer.assignedEntryPoints?.length > 0 ||
+                volunteer.assignedVenues?.length > 0) && (
+                <div className="flex flex-wrap gap-1">
+                  {volunteer.assignedEvents?.map((event: any) => (
+                    <span
+                      key={event._id}
+                      className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full"
+                    >
+                      {event.eventCode}
+                    </span>
+                  ))}
+                  {volunteer.assignedEntryPoints?.map((ep: any) => (
+                    <span
+                      key={ep._id}
+                      className="px-2 py-1 text-xs bg-orange-100 text-orange-700 rounded-full"
+                    >
+                      {ep.stationLabel || ep.name}
+                    </span>
+                  ))}
+                  {renderVenueChips(volunteer)}
+                </div>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => handleEdit(volunteer)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-lg border border-gray-200 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                >
+                  <Edit className="w-4 h-4" /> Edit
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate(volunteer._id)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-lg border border-gray-200 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" /> Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -351,24 +433,7 @@ export default function VolunteersPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {volunteer.assignedVenues?.map((vIndex: number) => {
-                        // Look up venue from this volunteer's own assigned events
-                        const volunteerVenues = (volunteer.assignedEvents || [])
-                          .flatMap((ev: any) =>
-                            (Array.isArray(ev.venue) ? ev.venue : []).map((v: any, i: number) => ({
-                              ...v, eventCode: ev.eventCode, venueIndex: i,
-                            }))
-                          );
-                        const eventVenue = volunteerVenues.find((v: any) => v.venueIndex === vIndex);
-                        return eventVenue ? (
-                          <span
-                            key={vIndex}
-                            className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full"
-                          >
-                            {eventVenue.eventCode}: {eventVenue.name}
-                          </span>
-                        ) : null;
-                      })}
+                      {renderVenueChips(volunteer)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -431,7 +496,7 @@ export default function VolunteersPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Form fields remain the same */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Name *"
               value={formData.name}
@@ -483,11 +548,11 @@ export default function VolunteersPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Assign Events
             </label>
-            <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 sm:max-h-32 overflow-y-auto">
               {events?.map((event: any) => (
                 <label
                   key={event._id}
-                  className="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
+                  className="flex items-center p-2.5 sm:p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
                 >
                   <input
                     type="checkbox"
@@ -508,11 +573,11 @@ export default function VolunteersPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Assign Entry Points (Scanning Stations)
             </label>
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 sm:max-h-48 overflow-y-auto">
               {filteredEntryPoints?.map((ep: any) => (
                 <label
                   key={ep._id}
-                  className="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
+                  className="flex items-center p-2.5 sm:p-2 border rounded-lg cursor-pointer hover:bg-gray-50"
                 >
                   <input
                     type="checkbox"
@@ -536,7 +601,7 @@ export default function VolunteersPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Assign Venues
               </label>
-              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 sm:max-h-32 overflow-y-auto border border-gray-200 rounded-lg p-2 sm:p-3">
                 {selectedEventsVenues.map((venue: any) => {
                   const venueKey = venue.venueIndex.toString();
                   return (

@@ -4,11 +4,9 @@ import { useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api, { API_URL } from "@/lib/api"; // FIX: use authenticated instance
-import Link from "next/link";
 import { format } from "date-fns";
 import { formatIST } from "@/lib/dateUtils";
 import {
-  ArrowLeft,
   User,
   Phone,
   Mail,
@@ -25,6 +23,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -200,20 +199,14 @@ export default function HolderDetailsPage() {
   const qrPayload = qrPass?.payloadSigned || null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/holders" className="text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{holder?.name}</h1>
-            <p className="text-gray-600 mt-1">Holder Details</p>
-          </div>
-        </div>
-        <div className="flex space-x-3">
-          {qrPass?.status === "active" && (
+      <PageHeader
+        title={holder?.name}
+        subtitle="Holder Details"
+        backHref="/holders"
+        actions={
+          qrPass?.status === "active" ? (
             <>
               <Button
                 variant="outline"
@@ -229,20 +222,21 @@ export default function HolderDetailsPage() {
                   if (confirm("Revoke this QR pass?")) revokeMutation.mutate(qrPass.qrId);
                 }}
                 loading={revokeMutation.isPending}
+                className="text-red-700 border-red-200 hover:bg-red-50"
               >
                 <Ban className="w-4 h-4 mr-2" />
                 Revoke QR
               </Button>
             </>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* All passes — only when the holder has more than one (e.g. one per session) */}
       {multiPass && (
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
-            <h2 className="font-semibold flex items-center">
+            <h2 className="font-semibold flex flex-wrap items-center">
               <QrCode className="w-5 h-5 mr-2" />
               Passes ({passes.length})
               <span className="ml-2 text-sm font-normal text-gray-500">
@@ -251,7 +245,74 @@ export default function HolderDetailsPage() {
             </h2>
           </CardHeader>
           <CardBody padding={false}>
-            <div className="overflow-x-auto">
+            {/* Phones: one card per pass */}
+            <ul className="md:hidden divide-y divide-gray-100">
+              {passes.map((p) => {
+                const selected = p.qrId === qrPass?.qrId;
+                return (
+                  <li key={p.qrId} className={`p-4 ${selected ? "bg-orange-50" : ""}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-medium text-gray-900">
+                          {p.validFrom ? formatIST(p.validFrom, "EEE d MMM yyyy") : "—"}
+                        </div>
+                        <div className="text-sm text-gray-600">{windowLabel(p)}</div>
+                        <div className="text-xs text-gray-400 font-mono break-all">{p.qrId}</div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs rounded-full flex-shrink-0 ${statusClass(p.status)}`}>{p.status}</span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-gray-500">
+                      <span>
+                        Collected:{" "}
+                        {p.collected ? (
+                          <span className="inline-flex items-center text-green-700"><CheckCircle className="w-3.5 h-3.5 mr-0.5" />Yes</span>
+                        ) : (
+                          <span className="text-gray-400">No</span>
+                        )}
+                      </span>
+                      <span>Issued by {p.issuedByClient?.name || "Dashboard"}</span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2 [&>*]:flex-1 [&>*]:min-h-[40px] [&>*]:rounded-lg [&>*]:border [&>*]:px-3 [&>*]:text-sm [&>*]:font-medium">
+                      <button
+                        onClick={() => { setSelectedQrId(p.qrId); setShowQRModal(true); }}
+                        className="border-blue-200 bg-blue-50 text-blue-700"
+                      >
+                        QR
+                      </button>
+                      {!selected && (
+                        <button onClick={() => setSelectedQrId(p.qrId)} className="border-gray-300 bg-white text-gray-700">
+                          Details
+                        </button>
+                      )}
+                      {canManualEntry && p.status === "active" && !p.collected && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Mark ${holder?.name} as attended for this session?`)) manualEntryMutation.mutate(p.qrId);
+                          }}
+                          disabled={manualEntryMutation.isPending}
+                          className="border-amber-200 bg-amber-50 text-amber-700 disabled:opacity-50"
+                        >
+                          Let in
+                        </button>
+                      )}
+                      {p.status === "active" && (
+                        <button
+                          onClick={() => {
+                            if (confirm("Revoke this QR pass?")) revokeMutation.mutate(p.qrId);
+                          }}
+                          disabled={revokeMutation.isPending}
+                          className="border-red-200 bg-red-50 text-red-700 disabled:opacity-50"
+                        >
+                          Revoke
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -332,7 +393,7 @@ export default function HolderDetailsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Holder Info */}
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
             <h2 className="font-semibold flex items-center">
               <User className="w-5 h-5 mr-2" />
@@ -342,7 +403,7 @@ export default function HolderDetailsPage() {
           <CardBody className="space-y-3">
             <div>
               <p className="text-sm text-gray-500">Name</p>
-              <p className="font-medium text-gray-900">{holder?.name}</p>
+              <p className="font-medium text-gray-900 break-words">{holder?.name}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Phone</p>
@@ -353,8 +414,8 @@ export default function HolderDetailsPage() {
             {holder?.email && (
               <div>
                 <p className="text-sm text-gray-500">Email</p>
-                <p className="font-medium text-gray-900 flex items-center">
-                  <Mail className="w-4 h-4 mr-1" /> {holder?.email}
+                <p className="font-medium text-gray-900 flex items-center min-w-0">
+                  <Mail className="w-4 h-4 mr-1 flex-shrink-0" /> <span className="break-all">{holder?.email}</span>
                 </p>
               </div>
             )}
@@ -386,7 +447,7 @@ export default function HolderDetailsPage() {
                     setCategoryDraft(holder?.subCategory || "");
                     setCategoryOpen(true);
                   }}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-2 py-1 rounded-lg transition-colors shrink-0"
+                  className="inline-flex items-center gap-1 text-sm sm:text-xs font-medium text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-3 py-2 sm:px-2 sm:py-1 rounded-lg transition-colors shrink-0"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                   Edit
@@ -456,9 +517,9 @@ export default function HolderDetailsPage() {
         </Card>
 
         {/* QR Pass Info */}
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
-            <h2 className="font-semibold flex items-center">
+            <h2 className="font-semibold flex flex-wrap items-center">
               <QrCode className="w-5 h-5 mr-2" />
               QR Pass
               {multiPass && qrPass?.validFrom && (
@@ -488,7 +549,7 @@ export default function HolderDetailsPage() {
                 <a
                   href={qrImageUrl}
                   download={`${qrPass.qrId}.png`}
-                  className="w-full py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium text-center transition-colors"
+                  className="w-full py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium text-center transition-colors"
                 >
                   ⬇️ Download QR
                 </a>
@@ -496,7 +557,7 @@ export default function HolderDetailsPage() {
             )}
             <div>
               <p className="text-sm text-gray-500">QR ID</p>
-              <p className="font-mono text-sm text-gray-900">
+              <p className="font-mono text-sm text-gray-900 break-all">
                 {qrPass?.qrId || "Not generated"}
               </p>
             </div>
@@ -545,7 +606,7 @@ export default function HolderDetailsPage() {
             </div>
             <div>
               <p className="text-sm text-gray-500">WhatsApp Status</p>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex flex-wrap items-center gap-2 mt-0.5">
                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                   qrPass?.deliveryStatus === "delivered" ? "bg-green-100 text-green-700" :
                   qrPass?.deliveryStatus === "sent"      ? "bg-blue-100 text-blue-700" :
@@ -566,7 +627,7 @@ export default function HolderDetailsPage() {
                 )}
               </div>
               {qrPass?.deliveryError && (
-                <p className="text-xs text-red-500 mt-1">Error: {qrPass.deliveryError}</p>
+                <p className="text-xs text-red-500 mt-1 break-words">Error: {qrPass.deliveryError}</p>
               )}
             </div>
             <div>
@@ -592,14 +653,14 @@ export default function HolderDetailsPage() {
                   <button
                     onClick={() => retryCommunitySyncMutation.mutate()}
                     disabled={retryCommunitySyncMutation.isPending}
-                    className="text-xs px-2 py-1 rounded-md border border-orange-300 text-orange-600 hover:bg-orange-50 disabled:opacity-50"
+                    className="text-xs px-3 py-1.5 rounded-md border border-orange-300 text-orange-600 hover:bg-orange-50 disabled:opacity-50"
                   >
                     {retryCommunitySyncMutation.isPending ? "Retrying..." : "🔄 Retry"}
                   </button>
                 )}
               </div>
               {!qrPass?.communityAppSync?.success && qrPass?.communityAppSync?.reason && (
-                <p className="text-xs text-red-500 mt-1">Reason: {qrPass.communityAppSync.reason}</p>
+                <p className="text-xs text-red-500 mt-1 break-words">Reason: {qrPass.communityAppSync.reason}</p>
               )}
             </div>
             <div>
@@ -612,7 +673,7 @@ export default function HolderDetailsPage() {
         </Card>
 
         {/* Entry Points */}
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
             <h2 className="font-semibold flex items-center">
               <MapPin className="w-5 h-5 mr-2" />
@@ -649,7 +710,7 @@ export default function HolderDetailsPage() {
 
       {/* Venues Visited */}
       {venuesVisited.length > 0 && (
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
             <h2 className="font-semibold flex items-center gap-2">
               <MapPin className="w-5 h-5 text-orange-500" />
@@ -680,7 +741,7 @@ export default function HolderDetailsPage() {
 
       {/* Scan History — enriched with real venue */}
       {scans.length > 0 && (
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
             <h2 className="font-semibold flex items-center gap-2">
               <Clock className="w-5 h-5" />
@@ -690,15 +751,15 @@ export default function HolderDetailsPage() {
           <CardBody padding={false}>
             <div className="divide-y divide-gray-100">
               {scans.map((scan: any, index: number) => (
-                <div key={index} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div key={index} className="p-4 flex items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-start sm:items-center gap-3 min-w-0">
                     {scan.result === "granted" ? (
                       <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
                     ) : (
                       <XCircle className="w-5 h-5 text-red-500 shrink-0" />
                     )}
-                    <div>
-                      <p className="font-medium text-sm text-gray-900">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm text-gray-900 break-words">
                         {scan.station || "Unknown Station"}
                         {scan.venueMismatch && (
                           <span className="ml-2 text-xs text-amber-600 font-normal">⚠️ venue mismatch</span>
@@ -724,7 +785,7 @@ export default function HolderDetailsPage() {
                       </p>
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 text-xs rounded-full font-medium ${
+                  <span className={`px-2.5 py-1 text-xs rounded-full font-medium flex-shrink-0 ${
                     scan.result === "granted"
                       ? "bg-green-100 text-green-700"
                       : scan.result === "already_used"
@@ -742,9 +803,9 @@ export default function HolderDetailsPage() {
 
       {/* Scan History */}
       {qrPass?.redemptionHistory?.length > 0 && (
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
-            <h2 className="font-semibold flex items-center">
+            <h2 className="font-semibold flex flex-wrap items-center">
               <Clock className="w-5 h-5 mr-2" />
               Scan History ({qrPass.redemptionHistory.length})
               {multiPass && <span className="ml-2 text-sm font-normal text-gray-500 font-mono">{qrPass.qrId}</span>}
@@ -755,9 +816,9 @@ export default function HolderDetailsPage() {
               {qrPass.redemptionHistory.map((scan: any, index: number) => (
                 <div
                   key={index}
-                  className="p-4 flex items-center justify-between"
+                  className="p-4 flex items-center justify-between gap-3"
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     {scan.result === "granted" ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
@@ -797,12 +858,12 @@ export default function HolderDetailsPage() {
           onClick={() => setShowQRModal(false)}
         >
           <p className="text-white/50 text-sm">Tap anywhere to close</p>
-          <div className="bg-white rounded-3xl p-6 shadow-2xl">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-2xl">
             <QRDisplay payload={qrPayload} fallbackUrl={qrImageUrl} size={320} />
           </div>
           <div className="text-center px-6">
-            <p className="text-white font-bold text-xl">{data?.holder?.name}</p>
-            <p className="text-white/60 text-sm font-mono mt-1">{qrPass?.qrId}</p>
+            <p className="text-white font-bold text-xl break-words">{data?.holder?.name}</p>
+            <p className="text-white/60 text-sm font-mono mt-1 break-all">{qrPass?.qrId}</p>
           </div>
           <p className="text-white/40 text-xs">Point the QR scanner at this screen</p>
         </div>

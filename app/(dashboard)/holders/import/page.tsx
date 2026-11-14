@@ -10,7 +10,6 @@ import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 
 import {
-  ArrowLeft,
   Upload,
   FileSpreadsheet,
   Download,
@@ -22,6 +21,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -293,49 +293,45 @@ export default function BulkImportPage() {
   const handleDownloadSample = handleDownloadGeneralSample;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center space-x-4">
-          <Link href="/holders" className="text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Bulk Import & Send QR Passes
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Upload Excel file and automatically send QR codes via WhatsApp
-            </p>
+      <PageHeader
+        title="Bulk Import & Send QR Passes"
+        backHref="/holders"
+        subtitle={
+          <>
+            <p>Upload Excel file and automatically send QR codes via WhatsApp</p>
             <Link
               href="/holders/resend-sponsors"
               className="text-sm text-orange-600 hover:text-orange-700 hover:underline inline-block mt-1"
             >
               Need to resend existing sponsors with a new venue? →
             </Link>
+          </>
+        }
+        actions={
+          <div className="flex flex-col items-stretch sm:items-end gap-1">
+            <Button
+              variant="outline"
+              onClick={selectedTypeData?.catCode === "SP" ? handleDownloadSponsorSample : handleDownloadGeneralSample}
+              className={selectedTypeData?.catCode === "SP" ? "border-purple-300 text-purple-700 hover:bg-purple-50" : ""}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {selectedTypeData?.catCode === "SP" ? "Sponsor Sample" : "General Sample"}
+            </Button>
+            {!selectedHolderTypeId && (
+              <span className="text-xs text-gray-400">Select a holder type to get the right sample</span>
+            )}
           </div>
-        </div>
-        <div className="flex flex-col items-start sm:items-end gap-1">
-          <Button
-            variant="outline"
-            onClick={selectedTypeData?.catCode === "SP" ? handleDownloadSponsorSample : handleDownloadGeneralSample}
-            className={selectedTypeData?.catCode === "SP" ? "border-purple-300 text-purple-700 hover:bg-purple-50" : ""}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {selectedTypeData?.catCode === "SP" ? "Sponsor Sample" : "General Sample"}
-          </Button>
-          {!selectedHolderTypeId && (
-            <span className="text-xs text-gray-400">Select a holder type to get the right sample</span>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {!importResult ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left - Form */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Step 1: Event — read-only when the account has just one. */}
-            <Card>
+            <Card className="p-0 sm:p-6">
               <CardHeader>
                 <h2 className="font-semibold">
                   {soleEventId ? "Event" : "Step 1: Select Event"}
@@ -343,8 +339,8 @@ export default function BulkImportPage() {
               </CardHeader>
               <CardBody>
                 {soleEventId ? (
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="font-medium text-gray-900">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-3">
+                    <p className="font-medium text-gray-900 break-words">
                       {events?.[0]?.name}{" "}
                       <span className="text-gray-400 font-normal">
                         ({events?.[0]?.eventCode})
@@ -361,7 +357,7 @@ export default function BulkImportPage() {
                       setSelectedEvent(e.target.value);
                       setSelectedHolderTypeId("");
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                     required
                   >
                     <option value="">Choose an event...</option>
@@ -381,7 +377,7 @@ export default function BulkImportPage() {
 
             {/* Step 2: Select Pass Type */}
             {selectedEvent && (
-              <Card>
+              <Card className="p-0 sm:p-6">
                 <CardHeader>
                   <h2 className="font-semibold">
                     Step 2: Select Holder Type
@@ -422,7 +418,7 @@ export default function BulkImportPage() {
 
             {/* Step 2.5: Delivery Method */}
             {selectedHolderTypeId && (
-              <Card>
+              <Card className="p-0 sm:p-6">
                 <CardHeader>
                   <h2 className="font-semibold">Step 2.5: Delivery Method</h2>
                 </CardHeader>
@@ -430,9 +426,14 @@ export default function BulkImportPage() {
                   {/* Shared DELIVERY_METHODS list (was an inline copy here and
                       six hand-written radios on the create page), filtered to
                       what this account may use. */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                     {deliveryOptions.map((opt) => (
-                      <label key={opt.value} className="flex items-center">
+                      <label
+                        key={opt.value}
+                        className={`flex items-center cursor-pointer p-3 sm:p-0 rounded-lg border sm:border-0 ${
+                          deliveryMethod === opt.value ? "border-orange-400 bg-orange-50 sm:bg-transparent" : "border-gray-200"
+                        }`}
+                      >
                         <input
                           type="radio"
                           name="deliveryMethod"
@@ -441,7 +442,7 @@ export default function BulkImportPage() {
                           onChange={(e) =>
                             setDeliveryMethod(e.target.value as DeliveryMethod)
                           }
-                          className="text-orange-600 focus:ring-orange-500"
+                          className="w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0 text-orange-600 focus:ring-orange-500"
                         />
                         <span className="ml-2">{opt.label}</span>
                       </label>
@@ -466,9 +467,9 @@ export default function BulkImportPage() {
 
             {/* Step 3: Upload File */}
             {selectedHolderTypeId && (
-              <Card>
+              <Card className="p-0 sm:p-6">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <h2 className="font-semibold">
                       Step 3: Upload Excel/CSV File
                     </h2>
@@ -485,9 +486,9 @@ export default function BulkImportPage() {
                   <div
                     onDrop={handleDrop}
                     onDragOver={(e) => e.preventDefault()}
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-400 transition-colors"
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-5 sm:p-8 text-center hover:border-orange-400 transition-colors"
                   >
-                    <FileSpreadsheet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <FileSpreadsheet className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
                     <p className="text-gray-600 mb-2">
                       Drag and drop your file here, or click to browse
                     </p>
@@ -512,9 +513,9 @@ export default function BulkImportPage() {
                       <Upload className="w-4 h-4 mr-2" /> Choose File
                     </Button>
                     {file && (
-                      <div className="mt-4 p-3 bg-green-50 rounded-lg inline-flex items-center text-green-700">
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{file.name}</span>
+                      <div className="mt-4 p-3 bg-green-50 rounded-lg inline-flex items-center text-green-700 max-w-full">
+                        <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="text-sm break-all">{file.name}</span>
                       </div>
                     )}
                   </div>
@@ -552,7 +553,7 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
               <Button
                 onClick={handleImport}
                 disabled={isProcessing}
-                className="w-full"
+                className="w-full whitespace-normal"
                 size="lg"
               >
                 {isProcessing ? (
@@ -572,9 +573,9 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
           </div>
 
           {/* Right - Preview */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {selectedHolderType && (
-              <Card>
+              <Card className="p-0 sm:p-6">
                 <CardHeader>
                   <h2 className="font-semibold flex items-center">
                     <span className="text-2xl mr-2">
@@ -610,7 +611,7 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
               </Card>
             )}
             {selectedTypeData && (
-              <Card>
+              <Card className="p-0 sm:p-6">
                 <CardHeader>
                   <h2 className="font-semibold flex items-center">
                     <Smartphone className="w-4 h-4 mr-2" /> WhatsApp Preview
@@ -643,7 +644,7 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
         </div>
       ) : (
         /* Results */
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
             <h2 className="font-semibold text-center">
               {importResult.stats.failed === 0
@@ -657,7 +658,7 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                   already held a pass for this holder type AND category — they
                   used to be counted as successes, which left `total` and `sent`
                   disagreeing with no explanation. */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-2xl mx-auto mb-6">
                 <div className="bg-gray-50 rounded-xl p-4">
                   <p className="text-2xl font-bold text-gray-900">
                     {importResult.stats.total}
@@ -695,9 +696,9 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                       (item: any, i: number) => (
                         <div
                           key={i}
-                          className="text-sm text-gray-600 flex items-center"
+                          className="text-sm text-gray-600 flex items-start break-words"
                         >
-                          <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
+                          <CheckCircle className="w-3 h-3 text-green-500 mr-2 mt-1 flex-shrink-0" />
                           {item.name} — {item.phone} ({item.qrId})
                         </div>
                       ),
@@ -723,9 +724,9 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                       (item: any, i: number) => (
                         <div
                           key={i}
-                          className="text-sm text-amber-700 flex items-center"
+                          className="text-sm text-amber-700 flex items-start break-words"
                         >
-                          <AlertTriangle className="w-3 h-3 text-amber-500 mr-2 flex-shrink-0" />
+                          <AlertTriangle className="w-3 h-3 text-amber-500 mr-2 mt-1 flex-shrink-0" />
                           {item.name || "Unknown"} — {item.phone}
                           {item.qrId ? ` (${item.qrId})` : ""}
                         </div>
@@ -746,9 +747,9 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                       (item: any, i: number) => (
                         <div
                           key={i}
-                          className="text-sm text-red-600 flex items-center"
+                          className="text-sm text-red-600 flex items-start break-words"
                         >
-                          <XCircle className="w-3 h-3 text-red-500 mr-2 flex-shrink-0" />
+                          <XCircle className="w-3 h-3 text-red-500 mr-2 mt-1 flex-shrink-0" />
                           {item.name || "Unknown"} — {item.phone} ({item.error})
                         </div>
                       ),
@@ -757,7 +758,7 @@ Amit Singh,9876543212,GPVP,Outside,NONE`}
                 </div>
               )}
             </div>
-            <div className="flex justify-center space-x-4">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-center gap-3 sm:gap-4">
               <Button variant="outline" onClick={handleReset}>
                 Import Another File
               </Button>

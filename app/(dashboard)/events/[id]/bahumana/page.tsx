@@ -83,41 +83,41 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
   return (
     <div className={fullscreen ? "fixed inset-0 z-[200] bg-white overflow-auto" : "space-y-4"}>
       {/* Header */}
-      <div className={`flex items-center justify-between ${fullscreen ? "sticky top-0 bg-white border-b px-6 py-3 z-10" : ""}`}>
-        <div className="flex items-center gap-3">
+      <div className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 ${fullscreen ? "sticky top-0 bg-white border-b px-4 sm:px-6 py-3 z-10" : ""}`}>
+        <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0">
           {!fullscreen && !isAnnouncer && (
-            <Link href={`/events/${eventId}`}>
+            <Link href={`/events/${eventId}`} aria-label="Back" className="p-1.5 -ml-1.5 rounded-lg hover:bg-gray-100 flex-shrink-0">
               <ArrowLeft className="w-5 h-5 text-gray-500 hover:text-gray-700" />
             </Link>
           )}
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">🎁 Bahumana Announcement</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 leading-tight">🎁 Bahumana Announcement</h1>
             <p className="text-xs text-gray-400 mt-0.5">
               {data?.sponsorsAttended || 0} sponsors attended · auto-refreshes every 30s
               {dataUpdatedAt ? ` · updated ${new Date(dataUpdatedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}` : ""}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => refetch()} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Refresh">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          <button onClick={() => refetch()} aria-label="Refresh" className="p-2.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Refresh">
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
           <button
             onClick={exportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700"
+            className="flex items-center gap-1.5 px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-lg bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700"
             title="Download CSV"
           >
             <Download className="w-3.5 h-3.5" />
             CSV
           </button>
-          <button onClick={() => window.print()} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Print">
+          <button onClick={() => window.print()} aria-label="Print" className="p-2.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-500" title="Print">
             <Printer className="w-4 h-4" />
           </button>
-          <button onClick={() => setFullscreen(!fullscreen)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500" title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
+          <button onClick={() => setFullscreen(!fullscreen)} aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"} className="p-2.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-500" title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
             <Maximize2 className="w-4 h-4" />
           </button>
           {isAnnouncer && (
-            <button onClick={logout} className="ml-2 px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button onClick={logout} className="ml-auto sm:ml-2 px-3 py-2.5 sm:py-1.5 text-xs font-medium text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">
               Log out
             </button>
           )}
@@ -125,7 +125,7 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
       </div>
 
       {/* Morning / Evening session tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SESSION_TABS.map(({ key, emoji, label }) => {
           const count = sessions[key]?.count;
           const sub = key === "morning" ? "Before 2:00 PM" : key === "evening" ? "From 2:00 PM" : null;
@@ -133,7 +133,7 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
             <button
               key={key}
               onClick={() => setSession(key)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex flex-col items-center min-w-[110px] ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex flex-col items-center flex-shrink-0 min-w-[110px] ${
                 session === key
                   ? "bg-orange-600 text-white shadow-sm"
                   : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
@@ -153,12 +153,12 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
 {/* Venue filter — only shown when the event has more than one venue
           with recorded attendance */}
       {showVenueFilter && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {venueOptions.map(({ key, label, count }) => (
             <button
               key={key}
               onClick={() => setVenue(key)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex flex-col items-center min-w-[100px] ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors flex flex-col items-center flex-shrink-0 min-w-[100px] ${
                 venue === key
                   ? "bg-orange-600 text-white shadow-sm"
                   : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
@@ -175,20 +175,20 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
 
       {/* Summary stats */}
       {!fullscreen && summary?.totalSponsorsIssued > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Card><CardBody className="text-center py-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+          <Card><CardBody className="text-center py-3 sm:py-4">
             <p className="text-2xl font-bold text-gray-900">{summary.totalSponsorsIssued}</p>
             <p className="text-xs text-gray-500">Sponsors Issued</p>
           </CardBody></Card>
-          <Card><CardBody className="text-center py-4">
+          <Card><CardBody className="text-center py-3 sm:py-4">
             <p className="text-2xl font-bold text-green-700">{summary.totalSponsorsAttended}</p>
             <p className="text-xs text-gray-500">Attended</p>
           </CardBody></Card>
-          <Card><CardBody className="text-center py-4">
+          <Card><CardBody className="text-center py-3 sm:py-4">
             <p className="text-2xl font-bold text-orange-600">{summary.attendanceRate}%</p>
             <p className="text-xs text-gray-500">Attendance Rate</p>
           </CardBody></Card>
-          <Card><CardBody className="text-center py-4">
+          <Card><CardBody className="text-center py-3 sm:py-4">
             <p className="text-2xl font-bold text-red-600">{notYetAttended.length}</p>
             <p className="text-xs text-gray-500">Not Yet Attended</p>
           </CardBody></Card>
@@ -228,8 +228,8 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
                 <p className="text-sm font-semibold text-gray-700 mb-2">Entry by Station</p>
                 <div className="space-y-1.5">
                   {breakdown.byStation.map((s: any) => (
-                    <div key={s.station} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{s.station}</span>
+                    <div key={s.station} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-gray-600 min-w-0 break-words">{s.station}</span>
                       <span className="font-semibold text-gray-900">{s.count}</span>
                     </div>
                   ))}
@@ -243,8 +243,8 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
                 <p className="text-sm font-semibold text-gray-700 mb-2">Entry by Venue</p>
                 <div className="space-y-1.5">
                   {breakdown.byVenue.map((v: any) => (
-                    <div key={v.venue} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{v.venue}</span>
+                    <div key={v.venue} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-gray-600 min-w-0 break-words">{v.venue}</span>
                       <span className="font-semibold text-gray-900">{v.count}</span>
                     </div>
                   ))}
@@ -274,13 +274,13 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
           </CardBody>
         </Card>
       ) : (
-        <div className={fullscreen ? "px-6 pb-10 space-y-8 mt-6" : "space-y-6"}>
+        <div className={fullscreen ? "px-3 sm:px-6 pb-10 space-y-6 sm:space-y-8 mt-4 sm:mt-6" : "space-y-4 sm:space-y-6"}>
           {grouped.map(({ tier, holders }) => {
             const style = TIER_STYLES[tier] || TIER_STYLES["—"];
             const chip = TIER_CHIP[tier];
             return (
               <div key={tier} className={`rounded-2xl border-2 ${style.border} ${style.bg} overflow-hidden`}>
-                <div className={`px-5 py-3 flex items-center gap-3 border-b ${style.border}`}>
+                <div className={`px-4 sm:px-5 py-3 flex items-center gap-3 border-b ${style.border}`}>
                   {chip && (
                     <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl ${chip}`}>
                       {tier}
@@ -293,11 +293,11 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
                 </div>
                 <div className="divide-y divide-gray-100">
                   {holders.map((h: any, i: number) => (
-                    <div key={h._id} className="px-5 py-3 flex items-start gap-4">
+                    <div key={h._id} className="px-4 sm:px-5 py-3 flex items-start gap-3 sm:gap-4">
                       <span className={`text-2xl font-black opacity-30 w-8 text-right shrink-0 ${style.text}`}>
                         {i + 1}
                       </span>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0 break-words">
                         <p className={`text-lg font-bold leading-tight ${style.text}`}>{h.name}</p>
                         {h.sevaSlotId && (
                           <p className={`text-sm mt-0.5 opacity-70 ${style.text}`}>
@@ -329,7 +329,7 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
 {/* Non-Sponsor attendees (Donor, Invitee, etc.) */}
           {groupedOthers.length > 0 && (
             <div className="rounded-2xl border-2 border-blue-200 bg-blue-50 overflow-hidden">
-              <div className="px-5 py-3 border-b border-blue-200">
+              <div className="px-4 sm:px-5 py-3 border-b border-blue-200">
                 <p className="font-bold text-lg text-blue-900">Other Attendees</p>
                 <p className="text-sm text-blue-900 opacity-60">
                   {groupedOthers.reduce((sum, g) => sum + g.holders.length, 0)} attended (non-sponsor)
@@ -337,13 +337,13 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
               </div>
               <div className="divide-y divide-blue-100">
                 {groupedOthers.map(({ category, holders }) => (
-                  <div key={category} className="px-5 py-3">
+                  <div key={category} className="px-4 sm:px-5 py-3">
                     <p className="text-sm font-semibold text-blue-800 mb-2">{category} ({holders.length})</p>
                     <div className="space-y-2">
                       {holders.map((h: any, i: number) => (
                         <div key={h._id} className="flex items-start gap-3">
                           <span className="text-lg font-black opacity-30 w-6 text-right shrink-0 text-blue-900">{i + 1}</span>
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0 break-words">
                             <p className="font-semibold text-blue-900">{h.name}</p>
                             {h.sevaSlotId && (
                               <p className="text-sm mt-0.5 opacity-70 text-blue-900">
@@ -375,26 +375,26 @@ const groupedOthers: { category: string; holders: any[] }[] = data?.groupedOther
             <div className="rounded-2xl border-2 border-gray-200 overflow-hidden">
               <button
                 onClick={() => setShowNotYet(!showNotYet)}
-                className="w-full px-5 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100"
+                className="w-full px-4 sm:px-5 py-3 flex items-center justify-between gap-3 bg-gray-50 hover:bg-gray-100"
               >
                 <div className="text-left">
                   <p className="font-bold text-lg text-gray-700">Not Yet Attended</p>
                   <p className="text-sm text-gray-500">{notYetAttended.length} sponsor(s) with a pass haven't scanned in yet</p>
                 </div>
-                <span className="text-gray-400 text-sm">{showNotYet ? "Hide ▲" : "Show ▼"}</span>
+                <span className="text-gray-400 text-sm whitespace-nowrap flex-shrink-0">{showNotYet ? "Hide ▲" : "Show ▼"}</span>
               </button>
               {showNotYet && (
                 <div className="divide-y divide-gray-100">
                   {notYetAttended.map((h: any, i: number) => (
-                    <div key={h._id} className="px-5 py-2.5 flex items-center gap-4">
+                    <div key={h._id} className="px-4 sm:px-5 py-2.5 flex items-center gap-3 sm:gap-4">
                       <span className="text-sm font-black opacity-30 w-6 text-right shrink-0 text-gray-700">{i + 1}</span>
-                      <div className="flex-1 flex items-center justify-between">
-                        <div>
+                      <div className="flex-1 min-w-0 flex items-center justify-between gap-3">
+                        <div className="min-w-0 break-words">
                           <p className="font-medium text-gray-800">{h.name}</p>
                           <p className="text-xs text-gray-400">{h.phone}</p>
                         </div>
                         {h.subCategory && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${TIER_CHIP[h.subCategory] || "bg-gray-300 text-white"}`}>
+                          <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-bold ${TIER_CHIP[h.subCategory] || "bg-gray-300 text-white"}`}>
                             Tier {h.subCategory}
                           </span>
                         )}

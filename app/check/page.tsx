@@ -71,14 +71,20 @@ export default function CheckPassPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 px-4 pt-8 pb-10 sm:py-12">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-200">
+            <span className="text-white text-3xl" aria-hidden="true">🕉️</span>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-orange-600">
+            ISKCON Seva Pass
+          </p>
+          <h1 className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900">
             Check Your Pass
           </h1>
-          <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+          <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed px-2">
             Enter the mobile number you gave when you donated, to see if your
             pass is ready.
           </p>
@@ -88,7 +94,7 @@ export default function CheckPassPage() {
         {!result && (
           <form
             onSubmit={handleSubmit}
-            className="bg-white rounded-2xl shadow-sm border border-orange-100 p-6"
+            className="bg-white rounded-2xl shadow-lg shadow-orange-100/60 border border-orange-100 p-5 sm:p-6"
           >
             <label
               htmlFor="phone"
@@ -96,8 +102,8 @@ export default function CheckPassPage() {
             >
               Mobile number
             </label>
-            <div className="flex items-stretch rounded-xl border-2 border-gray-200 focus-within:border-orange-400 overflow-hidden">
-              <span className="px-3 flex items-center bg-gray-50 text-gray-500 font-medium border-r border-gray-200">
+            <div className="flex items-stretch rounded-xl border-2 border-gray-200 focus-within:border-orange-400 focus-within:ring-4 focus-within:ring-orange-100 overflow-hidden transition-shadow">
+              <span className="px-3.5 flex items-center bg-orange-50 text-gray-600 text-lg font-medium border-r border-gray-200">
                 +91
               </span>
               <input
@@ -110,7 +116,7 @@ export default function CheckPassPage() {
                   setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
                 }
                 placeholder="98765 43210"
-                className="flex-1 px-4 py-3 text-lg tracking-wide outline-none"
+                className="flex-1 min-w-0 px-4 py-3.5 text-xl tracking-wider outline-none bg-white"
               />
             </div>
 
@@ -121,7 +127,7 @@ export default function CheckPassPage() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="mt-5 w-full py-3.5 rounded-xl bg-orange-500 text-white font-semibold text-base flex items-center justify-center gap-2 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+              className="mt-5 w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold text-lg shadow-md flex items-center justify-center gap-2 disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-none transition-colors"
             >
               {loading ? (
                 <>
@@ -140,14 +146,16 @@ export default function CheckPassPage() {
 
         {/* Result — on the list */}
         {result?.found && result.holder && (
-          <div className="bg-white rounded-2xl shadow-sm border-2 border-green-200 p-6 text-center">
-            <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto" />
+          <div className="bg-white rounded-2xl shadow-lg shadow-green-100/60 border-2 border-green-200 p-5 sm:p-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-14 h-14 text-green-500" />
+            </div>
             <p className="mt-4 text-sm text-gray-500">You are on the list</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">
+            <p className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900 break-words">
               {result.holder.name}
             </p>
 
-            <div className="mt-4 space-y-1 text-sm text-gray-600">
+            <div className="mt-4 space-y-1 text-base text-gray-600 break-words">
               {result.holder.passType && (
                 <p className="font-medium text-gray-800">
                   {result.holder.passType}
@@ -158,14 +166,14 @@ export default function CheckPassPage() {
             </div>
 
             <div className="mt-6 rounded-xl bg-orange-50 border border-orange-200 p-4">
-              <p className="text-sm text-orange-900 font-medium">
+              <p className="text-base text-orange-900 font-medium leading-snug">
                 Please show this screen at the helpdesk to collect your pass.
               </p>
             </div>
 
             <button
               onClick={reset}
-              className="mt-5 text-sm text-gray-500 underline"
+              className="mt-4 py-2 px-3 text-sm text-gray-500 underline"
             >
               Check another number
             </button>
@@ -174,9 +182,11 @@ export default function CheckPassPage() {
 
         {/* Result — not found, or nothing running */}
         {result && !result.found && (
-          <div className="bg-white rounded-2xl shadow-sm border-2 border-amber-200 p-6 text-center">
-            <HelpCircle className="w-14 h-14 text-amber-500 mx-auto" />
-            <p className="mt-4 text-base font-semibold text-gray-900">
+          <div className="bg-white rounded-2xl shadow-lg shadow-amber-100/60 border-2 border-amber-200 p-5 sm:p-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mx-auto">
+              <HelpCircle className="w-14 h-14 text-amber-500" />
+            </div>
+            <p className="mt-4 text-lg font-semibold text-gray-900">
               {result.noActiveEvent
                 ? "No festival is running right now"
                 : "We could not find this number"}
@@ -189,7 +199,7 @@ export default function CheckPassPage() {
 
             <button
               onClick={reset}
-              className="mt-6 w-full py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium"
+              className="mt-6 w-full py-3.5 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:bg-gray-50"
             >
               Try another number
             </button>

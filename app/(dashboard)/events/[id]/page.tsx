@@ -8,7 +8,6 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { formatIST } from "@/lib/dateUtils";
 import {
-  ArrowLeft,
   Calendar,
   MapPin,
   Users,
@@ -22,6 +21,11 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import StatCard from "@/components/ui/StatCard";
 import toast from "react-hot-toast";
+import VccStatsCard from "@/components/events/VccStatsCard";
+import PageHeader from "@/components/ui/PageHeader";
+
+const tabBase =
+  "py-3 sm:py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0 inline-flex items-center";
 
 
 export default function EventDetailsPage() {
@@ -105,56 +109,51 @@ export default function EventDetailsPage() {
   const event = eventData?.event;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/events" className="text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div>
-            <div className="flex items-center space-x-3">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {event?.name}
-              </h1>
-              {/* Status badge */}
-              <span
-                className={`px-2 py-1 text-xs rounded-full ${
-                  event?.status === "active"
-                    ? "bg-green-100 text-green-700"
-                    : event?.status === "upcoming"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {event?.status}
-              </span>
-            </div>
-            <p className="text-gray-600 mt-1 font-mono">{event?.eventCode}</p>
-          </div>
-        </div>
-
-        {/* Edit & Delete Buttons */}
-        <div className="flex items-center space-x-3">
-          <Link href={`/events/${eventId}/edit`}>
-            <Button variant="outline">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
+      <PageHeader
+        backHref="/events"
+        title={
+          <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="break-words">{event?.name}</span>
+            {/* Status badge */}
+            <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                event?.status === "active"
+                  ? "bg-green-100 text-green-700"
+                  : event?.status === "upcoming"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-700"
+              }`}
+            >
+              {event?.status}
+            </span>
+          </span>
+        }
+        subtitle={<span className="font-mono">{event?.eventCode}</span>}
+        actions={
+          <>
+            {/* Edit & Delete Buttons */}
+            <Link href={`/events/${eventId}/edit`}>
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            </Link>
+            <Button variant="outline" onClick={handleDelete}>
+              <Trash2 className="w-4 h-4 mr-2 text-red-600" />
+              <span className="text-red-600">Delete</span>
             </Button>
-          </Link>
-          <Button variant="outline" onClick={handleDelete}>
-            <Trash2 className="w-4 h-4 mr-2 text-red-600" />
-            <span className="text-red-600">Delete</span>
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto">
+      <div className="border-b border-gray-200 -mx-3 px-3 sm:mx-0 sm:px-0">
+        <nav className="flex gap-5 sm:gap-8 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <button
             onClick={() => setActiveTab("overview")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+            className={`${tabBase} ${
               activeTab === "overview"
                 ? "border-orange-500 text-orange-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -164,33 +163,33 @@ export default function EventDetailsPage() {
           </button>
           <button
             onClick={() => router.push(`/events/${eventId}/entry-points`)}
-            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
+            className={`${tabBase} border-transparent text-gray-500 hover:text-gray-700`}
           >
             <DoorOpen className="w-4 h-4 inline mr-1" />
             Entry Points
           </button>
           <button
             onClick={() => router.push(`/events/${eventId}/holder-types`)}
-            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
+            className={`${tabBase} border-transparent text-gray-500 hover:text-gray-700`}
           >
             <Tags className="w-4 h-4 inline mr-1" />
             Holder Types
           </button>
           <button
             onClick={() => router.push(`/events/${eventId}/seva-slots`)}
-            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
+            className={`${tabBase} border-transparent text-gray-500 hover:text-gray-700`}
           >
             🕉️ Seva Slots
           </button>
           <Link
             href={`/events/${eventId}/bahumana`}
-            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap"
+            className={`${tabBase} border-transparent text-gray-500 hover:text-gray-700`}
           >
             🎁 Bahumana View
           </Link>
           <Link
             href={`/events/${eventId}/gate`}
-            className="py-4 px-1 border-b-2 font-medium text-sm transition-colors border-transparent text-amber-600 hover:text-amber-700 font-semibold whitespace-nowrap"
+            className={`${tabBase} border-transparent text-amber-600 hover:text-amber-700 font-semibold`}
           >
             🖐 Gate Entry
           </Link>
@@ -200,7 +199,7 @@ export default function EventDetailsPage() {
       {activeTab === "overview" && (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
             <StatCard
               title="Total Passes"
               value={summaryData?.totalIssued ?? 0}
@@ -223,6 +222,9 @@ export default function EventDetailsPage() {
             />
           </div>
 
+          {/* Volunteers from VCC (only shown for events linked to VCC) */}
+          <VccStatsCard eventId={eventId} />
+
           {/* Sessions — windowed passes grouped by session */}
           {sessions && sessions.length > 0 && (
             <Card>
@@ -230,7 +232,40 @@ export default function EventDetailsPage() {
                 <h2 className="font-semibold">Sessions ({sessions.length})</h2>
               </CardHeader>
               <CardBody padding={false}>
-                <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                {/* Phones: one card per session */}
+                <div className="md:hidden divide-y divide-gray-100 max-h-[28rem] overflow-y-auto">
+                  {sessions.map((s) => (
+                    <div key={s.sessionKey} className="px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-medium text-gray-900 text-sm">{formatIST(s.validFrom, "EEE d MMM yyyy")}</div>
+                          <div className="text-xs text-gray-500">
+                            {formatIST(s.validFrom, "h:mm a")} – {formatIST(s.validUntil, "d MMM, h:mm a")}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400 font-mono truncate max-w-[40%]">{s.sessionKey}</div>
+                      </div>
+                      <div className="mt-2 grid grid-cols-5 gap-1 text-center">
+                        {[
+                          ["Issued", s.issued, "text-gray-900"],
+                          ["Collected", s.collected, "text-green-700"],
+                          ["Missed", s.missed, "text-red-600"],
+                          ["Open", s.pending, "text-gray-600"],
+                          ["Revoked", s.revoked, "text-gray-500"],
+                        ].map(([label, val, cls]) => (
+                          <div key={label as string} className="bg-gray-50 rounded-md py-1.5">
+                            <div className={`text-sm font-semibold ${cls}`}>{val}</div>
+                            <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-1.5 text-xs text-gray-500 truncate">
+                        Issued by {(s.clients || []).join(", ") || "Dashboard"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto max-h-96 overflow-y-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
@@ -265,7 +300,7 @@ export default function EventDetailsPage() {
           )}
 
           {/* Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card>
               <CardHeader>
                 <h2 className="font-semibold">Event Details</h2>
@@ -277,11 +312,11 @@ export default function EventDetailsPage() {
                     {event?.description || "No description"}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Start Date</p>
                     <p className="text-gray-900 flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
+                      <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
                       {event?.dateStart &&
                         formatIST(event.dateStart, "PPP p")}
                     </p>
@@ -289,7 +324,7 @@ export default function EventDetailsPage() {
                   <div>
                     <p className="text-sm text-gray-500">End Date</p>
                     <p className="text-gray-900 flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
+                      <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
                       {event?.dateEnd &&
                         formatIST(event.dateEnd, "PPP p")}
                     </p>
@@ -312,13 +347,13 @@ export default function EventDetailsPage() {
                 {Array.isArray(event?.venue) && event.venue.length > 0 ? (
                   event.venue.map((v: any, i: number) => (
                     <div key={i} className="border rounded-lg p-3">
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-2 text-orange-500" />
-                        <span className="font-medium">
+                      <div className="flex items-start">
+                        <MapPin className="w-4 h-4 mr-2 mt-1 text-orange-500 flex-shrink-0" />
+                        <span className="font-medium min-w-0 break-words">
                           {v.name || `Venue ${i + 1}`}
                         </span>
                         {i === 0 && (
-                          <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
+                          <span className="ml-2 mt-0.5 flex-shrink-0 px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full">
                             Primary
                           </span>
                         )}
@@ -348,16 +383,16 @@ export default function EventDetailsPage() {
                   {eventData.recentActivity.map((pass: any) => (
                     <div
                       key={pass._id}
-                      className="p-4 flex items-center justify-between"
+                      className="px-4 py-3 sm:p-4 flex items-center justify-between gap-3"
                     >
-                      <div>
-                        <p className="font-medium text-gray-900">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
                           {pass.holderId?.name}
                         </p>
-                        <p className="text-sm text-gray-500">{pass.qrId}</p>
+                        <p className="text-sm text-gray-500 truncate font-mono">{pass.qrId}</p>
                       </div>
                       <span
-                        className={`px-2 py-1 text-xs rounded-full ${
+                        className={`flex-shrink-0 px-2 py-1 text-xs rounded-full ${
                           pass.status === "active"
                             ? "bg-green-100 text-green-700"
                             : "bg-gray-100 text-gray-700"

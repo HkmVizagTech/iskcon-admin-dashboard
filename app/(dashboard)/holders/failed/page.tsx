@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
-import Link from "next/link";
 import { format } from "date-fns";
 import { formatIST } from "@/lib/dateUtils";
 import {
-  ArrowLeft,
   AlertTriangle,
   XCircle,
   Phone,
@@ -20,6 +18,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
 import toast from "react-hot-toast";
 
 
@@ -72,29 +71,21 @@ export default function FailedImportsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/holders" className="text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Failed Imports</h1>
-            <p className="text-gray-600 mt-1">
-              View and manage failed WhatsApp deliveries
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Failed Imports"
+        subtitle="View and manage failed WhatsApp deliveries"
+        backHref="/holders"
+      />
 
       {/* Event Selection */}
-      <Card>
+      <Card className="p-0 sm:p-6">
         <CardBody>
           <select
             value={selectedEvent}
             onChange={(e) => setSelectedEvent(e.target.value)}
-            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            className="w-full md:w-64 px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           >
             <option value="">Select an event...</option>
             {events?.map((event: any) => (
@@ -118,8 +109,8 @@ export default function FailedImportsPage() {
         </div>
       ) : failedImports?.length === 0 ? (
         <Card>
-          <div className="text-center py-12">
-            <AlertTriangle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+          <div className="text-center py-8 sm:py-12">
+            <AlertTriangle className="w-12 h-12 sm:w-16 sm:h-16 text-green-400 mx-auto mb-4" />
             <p className="text-gray-500">
               No failed imports! Everything sent successfully 🎉
             </p>
@@ -138,11 +129,11 @@ export default function FailedImportsPage() {
                   )
                 }
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <AlertTriangle className="w-6 h-6 text-red-500" />
-                    <div>
-                      <p className="font-medium text-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 break-all">
                         Batch: {batch.batchId}
                       </p>
                       <p className="text-sm text-gray-500">
@@ -151,7 +142,7 @@ export default function FailedImportsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-2 sm:gap-3 pl-9 sm:pl-0">
                     <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full">
                       {batch.failedCount} failed
                     </span>
@@ -159,9 +150,9 @@ export default function FailedImportsPage() {
                       {batch.successCount} sent
                     </span>
                     {expandedBatch === batch._id ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                      <ChevronUp className="w-5 h-5 text-gray-400 ml-auto sm:ml-0" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="w-5 h-5 text-gray-400 ml-auto sm:ml-0" />
                     )}
                   </div>
                 </div>
@@ -180,11 +171,11 @@ export default function FailedImportsPage() {
               {/* Expanded Records */}
               {expandedBatch === batch._id && (
                 <div className="border-t border-gray-100">
-                  <div className="p-4 bg-gray-50 flex justify-between">
+                  <div className="p-4 bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <p className="text-sm text-gray-500">
                       {batch.records.length} failed records
                     </p>
-                    <div className="flex space-x-2">
+                    <div className="flex gap-2 [&>*]:flex-1 sm:[&>*]:flex-none">
                       <Button
                         variant="outline"
                         size="sm"
@@ -205,15 +196,15 @@ export default function FailedImportsPage() {
                         key={index}
                         className="p-4 hover:bg-red-50 transition-colors"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <User className="w-4 h-4 text-gray-400" />
-                              <span className="font-medium text-gray-900">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span className="font-medium text-gray-900 break-words">
                                 {record.name || "Unknown"}
                               </span>
                             </div>
-                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                               {record.phone && (
                                 <span className="flex items-center">
                                   <Phone className="w-3 h-3 mr-1" />
@@ -221,15 +212,15 @@ export default function FailedImportsPage() {
                                 </span>
                               )}
                               {record.email && (
-                                <span className="flex items-center">
-                                  <Mail className="w-3 h-3 mr-1" />
+                                <span className="flex items-center min-w-0 break-all">
+                                  <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
                                   {record.email}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full whitespace-nowrap">
+                          <div className="flex items-center justify-between sm:justify-start gap-3">
+                            <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full break-words sm:whitespace-nowrap">
                               {record.error}
                             </span>
                             <button
@@ -240,7 +231,7 @@ export default function FailedImportsPage() {
                                   toast.success("Phone copied!");
                                 }
                               }}
-                              className="text-blue-600 hover:text-blue-800 text-sm"
+                              className="text-blue-600 hover:text-blue-800 text-sm whitespace-nowrap px-2 py-2 -my-2 sm:p-0 sm:m-0"
                             >
                               Copy Phone
                             </button>

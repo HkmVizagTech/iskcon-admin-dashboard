@@ -40,20 +40,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:p-4">
       <div className="max-w-md w-full">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-white text-4xl">🕉️</span>
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+            <span className="text-white text-3xl sm:text-4xl">🕉️</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">ISKCON Seva Pass</h1>
-          <p className="text-gray-600 mt-2">Admin Dashboard</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ISKCON Seva Pass</h1>
+          <p className="text-gray-600 mt-1 sm:mt-2">Admin Dashboard</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Sign In</h2>
+        <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 sm:mb-6">Sign In</h2>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
@@ -107,8 +107,8 @@ export default function LoginPage() {
               )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <label className="flex items-center whitespace-nowrap py-1">
                 <input
                   type="checkbox"
                   className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"

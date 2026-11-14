@@ -7,12 +7,12 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
 import toast from "react-hot-toast";
-import { ArrowLeft, User, Phone, Mail, QrCode, MapPin } from "lucide-react";
+import { User, Phone, Mail, QrCode, MapPin } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
 import Input from "@/components/ui/Input";
 import RichTextEditor from "@/components/ui/RichTextEditor";
-import Link from "next/link";
 import QRPreview from "@/components/qr/QRPreview";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -239,25 +239,19 @@ export default function CreateHolderPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Link href="/holders" className="text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-6 h-6" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Issue QR Pass</h1>
-          <p className="text-gray-600 mt-1">
-            Generate and send QR code to holder
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Issue QR Pass"
+        subtitle="Generate and send QR code to holder"
+        backHref="/holders"
+      />
 
       {!showQRPreview ? (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Step 1: Event — a picker only when there is a real choice.
               With one event available it is auto-selected and shown read-only,
               so the issuer can still SEE which festival they are issuing for
               without being asked to pick from a list of one. */}
-          <Card>
+          <Card className="p-0 sm:p-6">
             <CardHeader>
               <h2 className="font-semibold">
                 {soleEventId ? "Event" : "Step 1: Select Event"}
@@ -265,8 +259,8 @@ export default function CreateHolderPage() {
             </CardHeader>
             <CardBody>
               {soleEventId ? (
-                <div className="flex items-baseline justify-between gap-3">
-                  <p className="font-medium text-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-3">
+                  <p className="font-medium text-gray-900 break-words">
                     {events?.[0]?.name}{" "}
                     <span className="text-gray-400 font-normal">
                       ({events?.[0]?.eventCode})
@@ -287,7 +281,7 @@ export default function CreateHolderPage() {
                     setTier("");
                     setSlotCode("");
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   required
                 >
                   <option value="">Choose an event...</option>
@@ -303,7 +297,7 @@ export default function CreateHolderPage() {
 
           {/* Step 1.5: Select Venue(s) — restrict where the pass can scan */}
           {selectedEvent && eventVenues.length > 1 && (
-            <Card>
+            <Card className="p-0 sm:p-6">
               <CardHeader>
                 <h2 className="font-semibold">
                   <MapPin className="w-4 h-4 inline mr-1" /> Select Venue(s)
@@ -334,14 +328,16 @@ export default function CreateHolderPage() {
                                 : [...prev, cName],
                             )
                           }
-                          className="w-4 h-4 text-orange-500 focus:ring-orange-500"
+                          className="w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0 text-orange-500 focus:ring-orange-500"
                         />
-                        <span className="text-sm font-medium text-gray-800">
-                          {cName}
+                        <span className="min-w-0 flex flex-col sm:flex-row sm:items-center sm:gap-1">
+                          <span className="text-sm font-medium text-gray-800">
+                            {cName}
+                          </span>
+                          {v.address && (
+                            <span className="text-xs text-gray-400"><span className="hidden sm:inline">- </span>{v.address}</span>
+                          )}
                         </span>
-                        {v.address && (
-                          <span className="text-xs text-gray-400">- {v.address}</span>
-                        )}
                       </label>
                     );
                   })}
@@ -355,7 +351,7 @@ export default function CreateHolderPage() {
               {/* Step 2: Pass type. With exactly one issuable type it is
                   already selected by the effect above; the tile is still shown
                   so the issuer can see what they are about to issue. */}
-              <Card>
+              <Card className="p-0 sm:p-6">
                 <CardHeader>
                   <h2 className="font-semibold">
                     {soleTypeId ? "Holder Type" : "Step 2: Select Holder Type"}
@@ -387,13 +383,13 @@ export default function CreateHolderPage() {
                             setTier("");
                             setSlotCode("");
                           }}
-                          className={`p-4 rounded-lg border-2 transition-all ${
+                          className={`p-3 sm:p-4 rounded-lg border-2 transition-all ${
                             selectedHolderTypeId === ht._id
                               ? "border-orange-500 bg-orange-50 shadow-md"
                               : "border-gray-200 hover:border-orange-300"
                           }`}
                         >
-                          <div className="text-2xl mb-2">{ht.icon || "👤"}</div>
+                          <div className="text-2xl mb-1 sm:mb-2">{ht.icon || "👤"}</div>
                           <div className="font-medium text-sm">{ht.name}</div>
                           <div className="text-xs text-gray-500">{ht.catCode}</div>
                         </button>
@@ -406,7 +402,7 @@ export default function CreateHolderPage() {
               {/* Step 3: Holder Details */}
               {selectedHolderTypeId && (
                 <>
-                  <Card>
+                  <Card className="p-0 sm:p-6">
                     <CardHeader>
                       <h2 className="font-semibold">Step 3: Holder Details</h2>
                     </CardHeader>
@@ -455,7 +451,7 @@ export default function CreateHolderPage() {
                               setPreacher(p?.name || "");
                               // setPreacherId already set via e.target.value above
                             }}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                           >
                             <option value="">Select preacher...</option>
                             {preachers.map((p: any) => (
@@ -483,7 +479,7 @@ export default function CreateHolderPage() {
                               value={preacher}
                               onChange={(e) => setPreacher(e.target.value)}
                               placeholder="Enter preacher name"
-                              className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                              className="mt-2 w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                             />
                           )}
                         </div>
@@ -518,7 +514,7 @@ export default function CreateHolderPage() {
                       tier). Donor and every other type have no tier, so the picker
                       is hidden rather than offering a meaningless A/B/C. */}
                   {(selectedHolderType?.categories?.length > 0 || selectedHolderType?.catCode === "SP") && (
-                  <Card>
+                  <Card className="p-0 sm:p-6">
                     <CardHeader>
                       <h2 className="font-semibold">
                         Step 3.5: Category{selectedHolderType?.catCode === "SP" ? " & Slot" : ""}
@@ -565,7 +561,7 @@ export default function CreateHolderPage() {
                           onChange={(e) => setTier(e.target.value.toUpperCase())}
                           placeholder="Or type a custom category (e.g. L, VIP, etc.)"
                           maxLength={20}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-bold uppercase tracking-widest text-center"
+                          className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-bold uppercase tracking-widest text-center"
                         />
                         <p className="mt-1 text-xs text-gray-400">
                           Type any value to override the buttons above. Leave empty for no category.
@@ -583,7 +579,7 @@ export default function CreateHolderPage() {
                           <select
                             value={slotCode}
                             onChange={(e) => setSlotCode(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                            className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                           >
                             <option value="">— No slot —</option>
                             {sevaSlots.map((s: any) => (
@@ -600,7 +596,7 @@ export default function CreateHolderPage() {
                               onChange={(e) => setSlotCode(e.target.value.toUpperCase())}
                               placeholder="e.g. SDGP, PA"
                               maxLength={12}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-mono font-bold uppercase tracking-widest"
+                              className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 font-mono font-bold uppercase tracking-widest"
                             />
                             <a href={`/events/${selectedEvent}/seva-slots`} target="_blank" rel="noreferrer"
                               className="text-xs text-orange-600 hover:underline mt-1 inline-block">
@@ -695,7 +691,7 @@ export default function CreateHolderPage() {
                             value={overrideReason}
                             onChange={(e) => setOverrideReason(e.target.value)}
                             placeholder="e.g. Second donation, Lost phone"
-                            className="w-full px-3 py-2 border border-amber-400 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 mb-3"
+                            className="w-full px-3 py-2.5 sm:py-2 border border-amber-400 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-amber-500 mb-3"
                           />
 
                           <div
@@ -747,7 +743,7 @@ export default function CreateHolderPage() {
                   )}
 
                   {/* Step 3.5: Custom Instructions (optional) */}
-                  <Card>
+                  <Card className="p-0 sm:p-6">
                     <CardHeader>
                       <h2 className="font-semibold">Instructions for Devotee</h2>
                     </CardHeader>
@@ -762,7 +758,7 @@ export default function CreateHolderPage() {
                   </Card>
 
                   {/* Step 4: Delivery Method */}
-                  <Card>
+                  <Card className="p-0 sm:p-6">
                     <CardHeader>
                       <h2 className="font-semibold">Step 4: Delivery Method</h2>
                     </CardHeader>
@@ -771,9 +767,14 @@ export default function CreateHolderPage() {
                           what this account is allowed to use. Previously six
                           hand-duplicated radio blocks kept in manual sync with
                           the bulk-import page's own copy of the same list. */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                         {deliveryOptions.map((m) => (
-                          <label key={m.value} className="flex items-center">
+                          <label
+                            key={m.value}
+                            className={`flex items-center cursor-pointer p-3 sm:p-0 rounded-lg border sm:border-0 ${
+                              deliveryMethod === m.value ? "border-orange-400 bg-orange-50 sm:bg-transparent" : "border-gray-200"
+                            }`}
+                          >
                             <input
                               type="radio"
                               name="deliveryMethod"
@@ -782,7 +783,7 @@ export default function CreateHolderPage() {
                               onChange={(e) =>
                                 setDeliveryMethod(e.target.value as DeliveryMethod)
                               }
-                              className="text-orange-600 focus:ring-orange-500"
+                              className="w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0 text-orange-600 focus:ring-orange-500"
                             />
                             <span className="ml-2">{m.label}</span>
                           </label>
@@ -812,17 +813,20 @@ export default function CreateHolderPage() {
                   </Card>
 
                   {/* Submit */}
-                  <div className="flex justify-end space-x-4">
+                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => router.back()}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
                     <Button
                       type="submit"
                       loading={createHolderMutation.isPending}
+                      size="lg"
+                      className="w-full sm:w-auto sm:px-4 sm:py-2 sm:text-sm"
                     >
                       <QrCode className="w-5 h-5 mr-2" />
                       Generate & Send QR

@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { ArrowLeft, Plus, Edit, Trash2, ShieldCheck } from "lucide-react";
+import { Plus, Edit, Trash2, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import toast from "react-hot-toast";
-import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 
 const ICON_OPTIONS = [
   { emoji: "💰", label: "Sponsor" },
@@ -250,28 +250,19 @@ export default function HolderTypesPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            href={`/events/${eventId}`}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Holder Types</h1>
-            <p className="text-gray-600 mt-1">
-              {eventData?.event?.name} — Define holder types, categories, entry access and issuing rules
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setShowModal(true)}>
-          <Plus className="w-5 h-5 mr-2" />
-          Add Holder Type
-        </Button>
-      </div>
+      <PageHeader
+        backHref={`/events/${eventId}`}
+        title="Holder Types"
+        subtitle={<>{eventData?.event?.name} — Define holder types, categories, entry access and issuing rules</>}
+        actions={
+          <Button onClick={() => setShowModal(true)}>
+            <Plus className="w-5 h-5 mr-2" />
+            Add Holder Type
+          </Button>
+        }
+      />
 
       {/* Holder Types grid */}
       {isLoading ? (
@@ -292,17 +283,17 @@ export default function HolderTypesPage() {
           {sortedTypes.map((ht: any) => (
             <Card key={ht._id} padding={false}>
               <div className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                      className="w-12 h-12 flex-shrink-0 rounded-xl flex items-center justify-center text-2xl"
                       style={{ backgroundColor: (ht.color || "#FF6B6B") + "15" }}
                     >
                       {ht.icon || "🏷️"}
                     </div>
-                    <div>
-                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                        <h3 className="font-semibold text-gray-900">{ht.name}</h3>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-x-2 flex-wrap gap-y-1">
+                        <h3 className="font-semibold text-gray-900 break-words">{ht.name}</h3>
                         <span className="font-mono text-sm text-gray-500">{ht.catCode}</span>
                         {ht.isDefault && (
                           <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-500 rounded-full">
@@ -316,14 +307,15 @@ export default function HolderTypesPage() {
                         )}
                       </div>
                       {ht.description && (
-                        <p className="text-sm text-gray-500 mt-0.5">{ht.description}</p>
+                        <p className="text-sm text-gray-500 mt-0.5 break-words">{ht.description}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1 flex-shrink-0 -mr-1 -mt-1 sm:m-0">
                     <button
                       onClick={() => handleEdit(ht)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      aria-label="Edit holder type"
+                      className="p-2.5 sm:p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       title="Edit holder type"
                     >
                       <Edit className="w-4 h-4" />
@@ -331,7 +323,8 @@ export default function HolderTypesPage() {
                     {!ht.isDefault && (
                       <button
                         onClick={() => handleDelete(ht)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        aria-label="Delete holder type"
+                        className="p-2.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg"
                         title="Delete holder type"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -365,7 +358,7 @@ export default function HolderTypesPage() {
                 {ht.categories?.length > 0 && (
                   <div className="mb-3">
                     <details className="group">
-                      <summary className="cursor-pointer list-none flex items-center gap-1.5 text-xs font-medium text-gray-400 uppercase tracking-wide hover:text-gray-600 transition-colors">
+                      <summary className="cursor-pointer list-none inline-flex items-center gap-1.5 py-1 text-xs font-medium text-gray-400 uppercase tracking-wide hover:text-gray-600 transition-colors">
                         <span>Categories</span>
                         <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-full text-[10px] font-mono font-bold">
                           {ht.categories.length}
@@ -392,8 +385,8 @@ export default function HolderTypesPage() {
                 )}
 
                 {/* Issuing rules */}
-                <div className="flex items-center space-x-2 text-xs text-gray-500 border-t border-gray-100 pt-3">
-                  <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
+                <div className="flex items-start gap-2 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                  <ShieldCheck className="w-3.5 h-3.5 mt-px flex-shrink-0 text-green-500" />
                   <span>
                     Issue: {ht.issuerRoleRequired === "super_admin"
                       ? "Super Admin"
@@ -425,7 +418,7 @@ export default function HolderTypesPage() {
         loading={createMutation.isPending || updateMutation.isPending}
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Name *"
               value={form.name}
@@ -457,7 +450,7 @@ export default function HolderTypesPage() {
                 type="color"
                 value={form.color}
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className="w-full h-10 rounded-lg border border-gray-300 cursor-pointer"
+                className="w-full h-11 sm:h-10 rounded-lg border border-gray-300 cursor-pointer"
               />
             </div>
             <div>
@@ -467,7 +460,7 @@ export default function HolderTypesPage() {
                 value={form.icon || ""}
                 onChange={(e) => setForm({ ...form, icon: e.target.value })}
                 placeholder="🎟️"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg bg-white"
               />
             </div>
           </div>
@@ -475,7 +468,7 @@ export default function HolderTypesPage() {
           {/* Icon quick-pick */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Quick Icons</label>
-            <div className="grid grid-cols-8 gap-1.5">
+            <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
               {ICON_OPTIONS.map((icon) => (
                 <button
                   key={icon.emoji}
@@ -500,7 +493,7 @@ export default function HolderTypesPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Entry Points
               </label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                 {entryPoints.map((ep: any) => (
                   <label
                     key={ep._id}
@@ -514,9 +507,9 @@ export default function HolderTypesPage() {
                       type="checkbox"
                       checked={form.entryPointIds.includes(ep._id)}
                       onChange={() => toggleEntryPoint(ep._id)}
-                      className="rounded border-gray-300 text-blue-600 mr-2"
+                      className="w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0 rounded border-gray-300 text-blue-600 mr-2"
                     />
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium text-sm">{ep.name}</p>
                       <p className="text-xs text-gray-500">{ep.stationLabel}</p>
                     </div>
@@ -528,7 +521,7 @@ export default function HolderTypesPage() {
 
           {/* Categories */}
           <details className="border border-gray-200 rounded-lg p-3 group">
-            <summary className="cursor-pointer list-none flex items-center justify-between">
+            <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
               <label className="block text-sm font-medium text-gray-700">
                 Sub-Categories
                 <span className="ml-1.5 text-xs text-gray-400 font-normal">
@@ -573,7 +566,7 @@ export default function HolderTypesPage() {
                 onChange={(e) => setCustomCat(e.target.value.toUpperCase())}
                 placeholder="Custom category name..."
                 maxLength={20}
-                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-bold uppercase"
+                className="flex-1 min-w-0 px-3 py-2 sm:py-1.5 border border-gray-300 rounded-lg text-base sm:text-sm font-bold uppercase"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -585,7 +578,7 @@ export default function HolderTypesPage() {
                 type="button"
                 onClick={addCustomCategory}
                 disabled={!customCat.trim()}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-4 sm:px-3 py-2 sm:py-1.5 rounded-lg text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Add
               </button>
@@ -609,7 +602,8 @@ export default function HolderTypesPage() {
                     <button
                       type="button"
                       onClick={() => setForm((prev) => ({ ...prev, categories: prev.categories.filter((c) => c !== cat) }))}
-                      className="hover:text-red-600"
+                      className="hover:text-red-600 px-1 -mr-1"
+                      aria-label={`Remove ${cat}`}
                     >
                       x
                     </button>
@@ -627,7 +621,7 @@ export default function HolderTypesPage() {
             <select
               value={form.issuerRoleRequired}
               onChange={(e) => setForm({ ...form, issuerRoleRequired: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg bg-white"
             >
               <option value="super_admin">Super Admin Only</option>
               <option value="event_admin">Event Admin</option>
@@ -643,7 +637,7 @@ export default function HolderTypesPage() {
             <select
               value={form.overrideAllowedBy}
               onChange={(e) => setForm({ ...form, overrideAllowedBy: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg bg-white"
             >
               <option value="super_admin">Super Admin Only</option>
               <option value="event_admin">Event Admin</option>
@@ -661,7 +655,7 @@ export default function HolderTypesPage() {
               value={form.communityAppSevaType}
               onChange={(e) => setForm({ ...form, communityAppSevaType: e.target.value })}
               placeholder="e.g. Abhisekam, Darshan"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg bg-white"
             />
             <p className="text-xs text-gray-500 mt-1">
               Value sent as "seva_type" when a Sponsor/Donor/Invitee holder of this type is
@@ -698,7 +692,7 @@ export default function HolderTypesPage() {
             <select
               value={moveToId}
               onChange={(e) => setMoveToId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             >
               <option value="">Choose a holder type...</option>
               {(holderTypes || [])

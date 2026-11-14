@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "@/lib/api"; // FIX: use authenticated instance
 import {
-  ArrowLeft,
   Plus,
   DoorOpen,
   Users,
@@ -20,7 +19,7 @@ import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
-import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 import { entryPointTypes } from "@/lib/entryPointTypes";
 
 export default function EntryPointsPage() {
@@ -187,56 +186,47 @@ export default function EntryPointsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            href={`/events/${eventId}`}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Entry Points</h1>
-            <p className="text-gray-600 mt-1">
-              {eventData?.event?.name} - Configure scanning stations
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="w-5 h-5 mr-2" />
-          Add Entry Point
-        </Button>
-      </div>
+      <PageHeader
+        backHref={`/events/${eventId}`}
+        title="Entry Points"
+        subtitle={<>{eventData?.event?.name} - Configure scanning stations</>}
+        actions={
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus className="w-5 h-5 mr-2" />
+            Add Entry Point
+          </Button>
+        }
+      />
 
       {/* Entry Points Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {entryPoints?.map((ep: any) => (
           <Card key={ep._id} padding={false}>
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <DoorOpen className="w-6 h-6 text-orange-600" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{ep.name}</h3>
-                    <p className="text-sm text-gray-500">{ep.stationLabel}</p>
+            <div className="p-4 sm:p-6">
+              <div className="flex items-start justify-between gap-3 mb-3 sm:mb-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <DoorOpen className="w-6 h-6 text-orange-600 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-gray-900 break-words">{ep.name}</h3>
+                    <p className="text-sm text-gray-500 break-words">{ep.stationLabel}</p>
                   </div>
                 </div>
                 <span
-                  className={`px-2 py-1 text-xs rounded-full ${ep.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}
+                  className={`flex-shrink-0 px-2 py-1 text-xs rounded-full ${ep.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}
                 >
                   {ep.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-sm break-words">
                 {ep.location && (
                   <p className="text-gray-600">📍 {ep.location}</p>
                 )}
                 {ep.linkedEpId && (
-                  <p className="text-orange-600 flex items-center">
-                    <LinkIcon className="w-4 h-4 mr-2" />
+                  <p className="text-orange-600 flex items-start">
+                    <LinkIcon className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     Requires:{" "}
                     {
                       entryPoints?.find((e: any) => e._id === ep.linkedEpId)
@@ -245,8 +235,8 @@ export default function EntryPointsPage() {
                   </p>
                 )}
                 {ep.redemptionGroupId && (
-                  <p className="text-purple-600 flex items-center">
-                    <LinkIcon className="w-4 h-4 mr-2" />
+                  <p className="text-purple-600 flex items-start">
+                    <LinkIcon className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     Combined one scan with:{" "}
                     {entryPoints
                       ?.filter(
@@ -259,8 +249,8 @@ export default function EntryPointsPage() {
                   </p>
                 )}
                 {ep.type === "bahumana" && (
-                  <p className="text-purple-600 flex items-center">
-                    <LinkIcon className="w-4 h-4 mr-2" />
+                  <p className="text-purple-600 flex items-start">
+                    <LinkIcon className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     Combined one scan with all Bahumana entries (any one venue)
                   </p>
                 )}
@@ -276,19 +266,23 @@ export default function EntryPointsPage() {
               </div>
             </div>
 
-            <div className="border-t border-gray-100 p-4 bg-gray-50 flex justify-between">
-              <div className="flex space-x-2">
+            <div className="border-t border-gray-100 px-2 py-1.5 sm:px-4 sm:py-2 bg-gray-50 rounded-b-xl flex justify-between">
+              <div className="flex gap-1">
                 <button
                   onClick={() => handleEdit(ep)}
-                  className="text-blue-600 hover:text-blue-700"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  aria-label="Edit entry point"
                 >
                   <Edit className="w-4 h-4" />
+                  <span className="sm:hidden">Edit</span>
                 </button>
                 <button
                   onClick={() => handleDelete(ep._id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                  aria-label="Delete entry point"
                 >
                   <Trash2 className="w-4 h-4" />
+                  <span className="sm:hidden">Delete</span>
                 </button>
               </div>
             </div>
@@ -342,7 +336,7 @@ export default function EntryPointsPage() {
 
           {/* Multi Entry Toggle */}
           <div>
-            <label className="flex items-center">
+            <label className="flex items-center py-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.multiEntryAllowed}
@@ -352,7 +346,7 @@ export default function EntryPointsPage() {
                     multiEntryAllowed: e.target.checked,
                   })
                 }
-                className="rounded border-gray-300 text-orange-600"
+                className="w-5 h-5 sm:w-4 sm:h-4 rounded border-gray-300 text-orange-600 accent-orange-500"
               />
               <span className="ml-2 text-sm">Allow multiple entries</span>
             </label>
@@ -360,7 +354,7 @@ export default function EntryPointsPage() {
 
           {/* Family/Group Count Toggle - NEW */}
           <div>
-            <label className="flex items-center">
+            <label className="flex items-center py-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.allowGroupCount}
@@ -370,11 +364,11 @@ export default function EntryPointsPage() {
                     allowGroupCount: e.target.checked,
                   })
                 }
-                className="rounded border-gray-300 text-orange-600"
+                className="w-5 h-5 sm:w-4 sm:h-4 rounded border-gray-300 text-orange-600 accent-orange-500"
               />
               <span className="ml-2 text-sm">Allow Family/Group Count</span>
             </label>
-            <p className="text-xs text-gray-400 mt-1 ml-6">
+            <p className="text-xs text-gray-400 mt-1 ml-7 sm:ml-6">
               When enabled, volunteer can enter number of people for this entry
               point
             </p>
@@ -419,10 +413,11 @@ export default function EntryPointsPage() {
             volunteer stations) into a single combined scan.
           </p>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => {
                 setShowAddModal(false);
                 setEditingEntryPoint(null);
@@ -431,7 +426,7 @@ export default function EntryPointsPage() {
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="w-full sm:w-auto">
               {editingEntryPoint ? "Update" : "Add"} Entry Point
             </Button>
           </div>

@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
 
 import {
-  ArrowLeft,
   Upload,
   FileSpreadsheet,
   Download,
@@ -21,7 +20,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
 
 export default function ResendSponsorsBulkPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -107,20 +106,14 @@ export default function ResendSponsorsBulkPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href="/holders/import" className="text-gray-500 hover:text-gray-700">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Resend Sponsors — New Venue (Bulk)</h1>
-          <p className="text-sm text-gray-500">
-            Resend the existing QR code over WhatsApp to sponsors, each with their own updated venue.
-          </p>
-        </div>
-      </div>
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
+      <PageHeader
+        title="Resend Sponsors — New Venue (Bulk)"
+        subtitle="Resend the existing QR code over WhatsApp to sponsors, each with their own updated venue."
+        backHref="/holders/import"
+      />
 
-      <Card>
+      <Card className="p-0 sm:p-6">
         <CardHeader>
           <h2 className="font-semibold">Step 1: Select Event</h2>
         </CardHeader>
@@ -128,7 +121,7 @@ export default function ResendSponsorsBulkPage() {
           <select
             value={selectedEvent}
             onChange={(e) => { setSelectedEvent(e.target.value); setResult(null); }}
-            className="w-full md:w-96 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            className="w-full md:w-96 px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
           >
             <option value="">Select an event...</option>
             {events?.map((ev: any) => (
@@ -139,9 +132,9 @@ export default function ResendSponsorsBulkPage() {
       </Card>
 
       {selectedEvent && (
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="font-semibold">Step 2: Upload Phone Number + Venue Sheet</h2>
               <Button variant="outline" size="sm" onClick={handleDownloadSample}>
                 <Download className="w-4 h-4 mr-1" /> Sample
@@ -159,7 +152,7 @@ export default function ResendSponsorsBulkPage() {
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-orange-400"
+              className="border-2 border-dashed border-gray-300 rounded-xl p-5 sm:p-8 text-center cursor-pointer hover:border-orange-400"
             >
               <input
                 ref={fileInputRef}
@@ -170,8 +163,8 @@ export default function ResendSponsorsBulkPage() {
               />
               {file ? (
                 <div className="flex items-center justify-center gap-2 text-gray-700">
-                  <FileSpreadsheet className="w-5 h-5 text-green-600" />
-                  <span className="font-medium">{file.name}</span>
+                  <FileSpreadsheet className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <span className="font-medium break-all">{file.name}</span>
                 </div>
               ) : (
                 <div className="text-gray-400">
@@ -184,7 +177,7 @@ export default function ResendSponsorsBulkPage() {
             <Button
               onClick={handleSubmit}
               disabled={!file || isProcessing}
-              className="w-full"
+              className="w-full whitespace-normal"
             >
               {isProcessing ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Resending...</>
@@ -197,12 +190,12 @@ export default function ResendSponsorsBulkPage() {
       )}
 
       {result && (
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
             <h2 className="font-semibold">Result</h2>
           </CardHeader>
           <CardBody className="space-y-4">
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-2xl font-bold text-gray-900">{result.total}</p>
                 <p className="text-xs text-gray-500">Total Rows</p>
@@ -227,9 +220,9 @@ export default function ResendSponsorsBulkPage() {
                 </p>
                 <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
                   {result.notFoundList.map((item: any, i: number) => (
-                    <div key={i} className="px-3 py-2 text-sm flex justify-between">
+                    <div key={i} className="px-3 py-2 text-sm flex justify-between gap-3">
                       <span className="text-gray-700">{item.phone}</span>
-                      <span className="text-gray-400">{item.venue}</span>
+                      <span className="text-gray-400 text-right break-words min-w-0">{item.venue}</span>
                     </div>
                   ))}
                 </div>
@@ -244,7 +237,7 @@ export default function ResendSponsorsBulkPage() {
                 </p>
                 <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
                   {result.failedList.map((item: any, i: number) => (
-                    <div key={i} className="px-3 py-2 text-sm">
+                    <div key={i} className="px-3 py-2 text-sm break-words">
                       <span className="text-gray-700">{item.name || item.phone}</span>
                       <span className="text-red-500 text-xs ml-2">{item.error}</span>
                     </div>

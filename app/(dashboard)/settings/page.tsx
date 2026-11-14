@@ -9,6 +9,7 @@ import { User, Lock, Bell, Shield } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import PageHeader from "@/components/ui/PageHeader";
 import {
   DELIVERY_METHODS,
   deliveryMethodLabel,
@@ -68,14 +69,11 @@ export default function SettingsPage() {
   });
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your account settings</p>
-      </div>
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
+      <PageHeader title="Settings" subtitle="Manage your account settings" />
 
       {/* Profile Settings */}
-      <Card>
+      <Card padding={false}>
         <CardHeader>
           <h2 className="font-semibold flex items-center">
             <User className="w-5 h-5 mr-2" />
@@ -100,6 +98,7 @@ export default function SettingsPage() {
           />
           <div className="flex justify-end">
             <Button
+              className="w-full sm:w-auto"
               onClick={() => updateProfileMutation.mutate()}
               loading={updateProfileMutation.isPending}
             >
@@ -110,7 +109,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Change Password */}
-      <Card>
+      <Card padding={false}>
         <CardHeader>
           <h2 className="font-semibold flex items-center">
             <Lock className="w-5 h-5 mr-2" />
@@ -150,6 +149,7 @@ export default function SettingsPage() {
           />
           <div className="flex justify-end">
             <Button
+              className="w-full sm:w-auto"
               onClick={() => changePasswordMutation.mutate()}
               loading={changePasswordMutation.isPending}
             >
@@ -160,7 +160,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Role Info */}
-      <Card>
+      <Card padding={false}>
         <CardHeader>
           <h2 className="font-semibold flex items-center">
             <Shield className="w-5 h-5 mr-2" />
@@ -275,16 +275,16 @@ function StaffUsersSection() {
   const showRestrictions = ISSUING_ROLES.includes(form.role);
 
   return (
-    <Card>
+    <Card padding={false}>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="font-semibold flex items-center gap-2">
             <Shield className="w-5 h-5 text-orange-500" />
             Staff Users
           </h2>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="text-sm px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+            className="text-sm px-3 py-2 sm:py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium whitespace-nowrap flex-shrink-0"
           >
             + Add User
           </button>
@@ -292,28 +292,28 @@ function StaffUsersSection() {
       </CardHeader>
       <CardBody className="space-y-4">
         {showForm && (
-          <div className="bg-orange-50 rounded-xl p-4 border border-orange-100 space-y-3">
+          <div className="bg-orange-50 rounded-xl p-3 sm:p-4 border border-orange-100 space-y-3">
             <p className="text-sm font-semibold text-orange-800">New Staff User</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 placeholder="Full Name"
                 value={form.name}
                 onChange={e => setForm({...form, name: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                className="w-full min-w-0 px-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg text-base sm:text-sm bg-white focus:ring-2 focus:ring-orange-500"
               />
               <input
                 placeholder="Email"
                 type="email"
                 value={form.email}
                 onChange={e => setForm({...form, email: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                className="w-full min-w-0 px-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg text-base sm:text-sm bg-white focus:ring-2 focus:ring-orange-500"
               />
               <input
                 placeholder="Password"
                 type="password"
                 value={form.password}
                 onChange={e => setForm({...form, password: e.target.value})}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                className="w-full min-w-0 px-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg text-base sm:text-sm bg-white focus:ring-2 focus:ring-orange-500"
               />
               <select
                 value={form.role}
@@ -331,7 +331,7 @@ function StaffUsersSection() {
                     canViewScanFeed: !locked,
                   });
                 }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                className="w-full min-w-0 px-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg text-base sm:text-sm bg-white focus:ring-2 focus:ring-orange-500"
               >
                 {STAFF_ROLE_OPTIONS.filter((o) => o.create !== false && canAssignRole(currentUser, o.value)).map((o) => (
                   <option key={o.value} value={o.value}>{o.createLabel || o.label}</option>
@@ -379,7 +379,7 @@ function StaffUsersSection() {
               />
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col-reverse sm:flex-row gap-2">
               <button
                 onClick={() => createMutation.mutate({
                   name: form.name, email: form.email, password: form.password,
@@ -395,11 +395,11 @@ function StaffUsersSection() {
                   canViewScanFeed: form.canViewScanFeed,
                 })}
                 disabled={!form.name || !form.email || !form.password || createMutation.isPending}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+                className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
               >
                 {createMutation.isPending ? "Creating..." : "Create User"}
               </button>
-              <button onClick={() => { setShowForm(false); resetForm(); }} className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+              <button onClick={() => { setShowForm(false); resetForm(); }} className="w-full sm:w-auto px-4 py-2.5 sm:py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
                 Cancel
               </button>
             </div>
@@ -414,10 +414,10 @@ function StaffUsersSection() {
           <div className="space-y-2">
             {staffData?.map((u: any) => (
               <div key={u._id} className="bg-gray-50 rounded-xl">
-                <div className="flex items-center justify-between p-3">
-                  <div>
-                    <p className="font-medium text-sm text-gray-900">{u.name}</p>
-                    <p className="text-xs text-gray-500">{u.email}</p>
+                <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-gray-900 break-words">{u.name}</p>
+                    <p className="text-xs text-gray-500 break-all">{u.email}</p>
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
                         {u.role}
@@ -471,7 +471,7 @@ function StaffUsersSection() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-1 sm:flex-shrink-0">
                     <select
                       value={u.role}
                       onChange={(e) => updateMutation.mutate({
@@ -479,7 +479,7 @@ function StaffUsersSection() {
                         data: { role: e.target.value }
                       })}
                       disabled={!canManageUser(currentUser, u.role)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white focus:ring-1 focus:ring-orange-400 disabled:opacity-60"
+                      className="basis-full sm:basis-auto min-w-0 text-base sm:text-xs border border-gray-200 rounded-lg px-2 py-2 sm:py-1 bg-white focus:ring-1 focus:ring-orange-400 disabled:opacity-60"
                     >
                       {STAFF_ROLE_OPTIONS.filter((o) => o.value === u.role || canAssignRole(currentUser, o.value)).map((o) => (
                         <option key={o.value} value={o.value}>{o.label}</option>
@@ -491,13 +491,14 @@ function StaffUsersSection() {
                       <>
                         <button
                           onClick={() => setExpandedUserId(expandedUserId === u._id ? null : u._id)}
-                          className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-100"
+                          className="flex-1 sm:flex-none text-sm sm:text-xs px-3 sm:px-2 py-2 sm:py-1 border border-gray-200 rounded-lg bg-white text-gray-600 hover:bg-gray-100 whitespace-nowrap"
                         >
                           {expandedUserId === u._id ? "Close" : "Permissions"}
                         </button>
                         <button
                           onClick={() => confirm("Delete this user?") && deleteMutation.mutate(u._id)}
-                          className="text-red-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50"
+                          className="text-red-400 hover:text-red-600 p-2 sm:p-1.5 rounded-lg border border-gray-200 bg-white sm:border-transparent sm:bg-transparent hover:bg-red-50 leading-none"
+                          aria-label="Delete user"
                         >
                           🗑
                         </button>
@@ -541,7 +542,7 @@ function EventAssignment({
   toggleIn: (list: string[], v: string) => string[];
 }) {
   return (
-    <div className="bg-white rounded-xl p-4 border border-blue-200 space-y-3">
+    <div className="bg-white rounded-xl p-3 sm:p-4 border border-blue-200 space-y-3">
       <p className="text-sm font-semibold text-gray-800">Events</p>
       <div className="flex flex-wrap gap-2">
         {events.length === 0 && <span className="text-xs text-gray-400">No events yet.</span>}
@@ -601,7 +602,7 @@ function RestrictionEditor({
   toggleIn: (list: string[], v: string) => string[];
 }) {
   return (
-    <div className="bg-white rounded-xl p-4 border border-orange-200 space-y-4">
+    <div className="bg-white rounded-xl p-3 sm:p-4 border border-orange-200 space-y-4">
       <p className="text-sm font-semibold text-gray-800">Pass-issuing restrictions</p>
 
       <div>
@@ -743,7 +744,7 @@ function ExistingUserPermissions({
         toggleIn={toggleIn}
       />
 
-      <div className="bg-white rounded-xl p-4 border border-gray-200 space-y-2">
+      <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 space-y-2">
         <p className="text-xs font-medium text-gray-700">Other permissions</p>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={draft.canManualEntry}
@@ -782,7 +783,7 @@ function ExistingUserPermissions({
           restrictToAllowedEvents: draft.restrictToAllowedEvents,
         })}
         disabled={saving}
-        className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+        className="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
       >
         {saving ? "Saving..." : "Save permissions"}
       </button>

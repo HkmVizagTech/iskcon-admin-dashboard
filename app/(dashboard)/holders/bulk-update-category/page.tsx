@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import Link from "next/link";
 import api from "@/lib/api";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
 import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
 import {
-  ArrowLeft,
   Tags,
   Sparkles,
   AlertTriangle,
@@ -372,25 +371,14 @@ export default function BulkUpdateCategoryPage() {
   const resultsToShow = result?.results || preview?.results || null;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link href="/holders" className="text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Bulk Update Category
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Change A/B/C tiers on already-issued passes — no re-issue, new
-              category shows on the next scan
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+      <PageHeader
+        title="Bulk Update Category"
+        subtitle="Change A/B/C tiers on already-issued passes — no re-issue, new category shows on the next scan"
+        backHref="/holders"
+      />
 
-      <Card>
+      <Card className="p-0 sm:p-6">
         <CardHeader>
           <h2 className="font-semibold flex items-center">
             <Tags className="w-5 h-5 mr-2" />
@@ -410,7 +398,7 @@ export default function BulkUpdateCategoryPage() {
         </CardBody>
       </Card>
 
-      <Card>
+      <Card className="p-0 sm:p-6">
         <CardHeader>
           <h2 className="font-semibold flex items-center">
             <FileSpreadsheet className="w-5 h-5 mr-2" />
@@ -431,7 +419,7 @@ export default function BulkUpdateCategoryPage() {
                   setMode(m.key);
                   resetPreviewState();
                 }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                className={`flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-lg text-sm font-medium border transition-colors ${
                   mode === m.key
                     ? "border-orange-600 bg-orange-50 text-orange-700"
                     : "border-gray-200 bg-white text-gray-600 hover:border-orange-300"
@@ -455,7 +443,7 @@ export default function BulkUpdateCategoryPage() {
                 onChange={(e) => onTextChange(e.target.value)}
                 rows={8}
                 placeholder={"Ram Prasad, 9000000001, B\nSita Devi, 9000000002, C\nKrishna Kumar, 9000000003, NONE"}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none font-mono text-sm resize-y"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none font-mono text-base sm:text-sm resize-y"
               />
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -503,7 +491,7 @@ export default function BulkUpdateCategoryPage() {
                 />
                 <div className="text-center">
                   <FileSpreadsheet className="w-8 h-8 mx-auto text-gray-400" />
-                  <p className="mt-2 text-sm font-medium text-gray-700">
+                  <p className="mt-2 text-sm font-medium text-gray-700 break-all">
                     {file ? file.name : "Click to choose a sheet"}
                   </p>
                   <p className="text-xs text-gray-400">
@@ -544,7 +532,7 @@ export default function BulkUpdateCategoryPage() {
       )}
 
       {showTable && (
-        <Card>
+        <Card className="p-0 sm:p-6">
           <CardHeader>
             <h2 className="font-semibold">
               {result ? "Result" : preview ? "Preview" : "Parsed rows"}
@@ -553,8 +541,9 @@ export default function BulkUpdateCategoryPage() {
           <CardBody className="overflow-x-auto">
             {preview || result ? (
               ((resultsToShow || []).length === 0 ? null : (
-                <table className="w-full text-sm">
-                  <thead>
+                <table className="w-full text-sm block md:table">
+                  {/* Phones: each row stacks as a small card (no table header). */}
+                  <thead className="hidden md:table-header-group">
                     <tr className="text-left text-gray-500 border-b">
                       <th className="py-2 pr-3 font-medium">#</th>
                       <th className="py-2 pr-3 font-medium">Name / Phone</th>
@@ -563,15 +552,15 @@ export default function BulkUpdateCategoryPage() {
                       <th className="py-2 font-medium">Action</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="block md:table-row-group">
                     {(resultsToShow || []).map((res, i) => {
                       const isDuplicate = res.status === "duplicate";
                       const isMismatch = res.status === "name_mismatch";
                       return (
-                        <tr key={i} className="border-b last:border-0 align-top">
-                          <td className="py-3 pr-3 text-gray-400">{i + 1}</td>
-                          <td className="py-3 pr-3">
-                            <p className="font-medium text-gray-900">
+                        <tr key={i} className="grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-2 py-3 md:table-row md:py-0 border-b last:border-0 align-top">
+                          <td className="md:py-3 md:pr-3 text-gray-400">{i + 1}</td>
+                          <td className="md:py-3 md:pr-3 min-w-0">
+                            <p className="font-medium text-gray-900 break-words">
                               {res.name || "—"}
                             </p>
                             <p className="text-xs text-gray-500">{res.phone}</p>
@@ -589,12 +578,12 @@ export default function BulkUpdateCategoryPage() {
                               </p>
                             )}
                           </td>
-                          <td className="py-3 pr-3">
+                          <td className="md:py-3 md:pr-3">
                             <span className="inline-flex px-2 py-0.5 rounded-md font-mono font-bold border border-orange-200 bg-orange-50 text-orange-700">
                               {res.requestedCategory || "None"}
                             </span>
                           </td>
-                          <td className="py-3 pr-3 max-w-[240px]">
+                          <td className="col-span-3 md:py-3 md:pr-3 md:max-w-[240px]">
                             <span
                               className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${TIER_COLORS[res.status] || "bg-gray-100 text-gray-600"}`}
                             >
@@ -604,7 +593,7 @@ export default function BulkUpdateCategoryPage() {
                               {res.message}
                             </p>
                           </td>
-                          <td className="py-3 min-w-[220px]">
+                          <td className="col-span-3 empty:hidden md:py-3 md:min-w-[220px]">
                             {isDuplicate && preview && !result && (
                               <Select
                                 label="Choose which pass"
@@ -692,7 +681,7 @@ export default function BulkUpdateCategoryPage() {
 
       {preview && !result && (
         <div className="flex justify-end">
-          <Button onClick={handleApply} loading={applyMutation.isPending}>
+          <Button onClick={handleApply} loading={applyMutation.isPending} size="lg" className="w-full sm:w-auto sm:px-4 sm:py-2 sm:text-sm">
             <ShieldCheck className="w-4 h-4 mr-2" />
             Apply changes
           </Button>

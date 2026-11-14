@@ -50,8 +50,8 @@ export default function AnalyticsPanel({ events }: Props) {
   const totals = data?.totals || { issued: 0, attended: 0, notAttended: 0, attendanceRate: 0 };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-4 sm:space-y-6">
+      <Card padding={false}>
         <CardBody>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <span className="text-sm font-medium text-gray-700">Scope:</span>
@@ -70,7 +70,7 @@ export default function AnalyticsPanel({ events }: Props) {
       </Card>
 
       {/* Morning / Evening session tabs */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
         {([
           { key: "all",     emoji: "🕉️", label: "All",     sub: null },
           { key: "morning", emoji: "🌅", label: "Morning", sub: "Before 2 PM" },
@@ -81,7 +81,7 @@ export default function AnalyticsPanel({ events }: Props) {
             <button
               key={key}
               onClick={() => setSession(key)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              className={`flex flex-col items-center justify-center min-h-[44px] px-2 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-colors sm:flex-row sm:inline-flex ${
                 session === key
                   ? "bg-orange-600 text-white shadow-sm"
                   : "bg-white border border-gray-200 text-gray-600 hover:border-orange-300"
@@ -89,7 +89,7 @@ export default function AnalyticsPanel({ events }: Props) {
             >
               {emoji} {label}
               {count !== undefined && (
-                <span className={`ml-1.5 text-xs font-normal ${session === key ? "text-orange-100" : "text-gray-400"}`}>
+                <span className={`sm:ml-1.5 text-xs font-normal leading-tight text-center ${session === key ? "text-orange-100" : "text-gray-400"}`}>
                   {count}{sub ? ` · ${sub}` : ""}
                 </span>
               )}
@@ -104,29 +104,29 @@ export default function AnalyticsPanel({ events }: Props) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-blue-50 rounded-xl p-3 sm:p-4 border border-blue-100">
               <p className="text-xs text-blue-600 font-medium">Total Issued</p>
-              <p className="text-3xl font-bold text-blue-900">{totals.issued}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-blue-900">{totals.issued}</p>
             </div>
-            <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+            <div className="bg-green-50 rounded-xl p-3 sm:p-4 border border-green-100">
               <p className="text-xs text-green-600 font-medium">Attended</p>
-              <p className="text-3xl font-bold text-green-900">{totals.attended}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-green-900">{totals.attended}</p>
             </div>
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div className="bg-gray-50 rounded-xl p-3 sm:p-4 border border-gray-200">
               <p className="text-xs text-gray-500 font-medium">Not Attended</p>
-              <p className="text-3xl font-bold text-gray-700">{totals.notAttended}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-700">{totals.notAttended}</p>
             </div>
-            <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+            <div className="bg-orange-50 rounded-xl p-3 sm:p-4 border border-orange-100">
               <p className="text-xs text-orange-600 font-medium">Attendance Rate</p>
-              <p className="text-3xl font-bold text-orange-900">{totals.attendanceRate}%</p>
+              <p className="text-2xl sm:text-3xl font-bold text-orange-900">{totals.attendanceRate}%</p>
             </div>
           </div>
 
-          <Card>
+          <Card padding={false}>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold flex items-center"><Users className="w-5 h-5 mr-2 text-orange-500" />Preacher-wise</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold flex items-center min-w-0"><Users className="w-5 h-5 mr-2 text-orange-500" />Preacher-wise</h2>
                 <Button variant="outline" size="sm" onClick={() => exportAngle("preacher")}>
                   <Download className="w-4 h-4 mr-1" />Export
                 </Button>
@@ -135,14 +135,14 @@ export default function AnalyticsPanel({ events }: Props) {
             <CardBody>
               {data?.preacherWise?.length ? (
                 <>
-                  <div className="h-72">
+                  <div className="h-64 sm:h-72 -ml-2 sm:ml-0">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.preacherWise.slice(0, 12)} margin={{ bottom: 60 }}>
+                      <BarChart data={data.preacherWise.slice(0, 12)} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" angle={-35} textAnchor="end" height={70} fontSize={11} interval={0} />
-                        <YAxis allowDecimals={false} />
+                        <XAxis dataKey="name" angle={-35} textAnchor="end" height={70} fontSize={11} interval={0} tickFormatter={(v: any) => (String(v).length > 14 ? String(v).slice(0, 13) + "…" : v)} />
+                        <YAxis allowDecimals={false} width={32} fontSize={11} />
                         <Tooltip />
-                        <Legend />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
                         <Bar dataKey="issued" fill="#F97316" name="Issued" />
                         <Bar dataKey="attended" fill="#22C55E" name="Attended" />
                       </BarChart>
@@ -161,7 +161,7 @@ export default function AnalyticsPanel({ events }: Props) {
                       <tbody className="divide-y divide-gray-100">
                         {data.preacherWise.map((p: any, i: number) => (
                           <tr key={i}>
-                            <td className="px-3 py-2 text-gray-900">{p.name}</td>
+                            <td className="px-3 py-2 text-gray-900 break-words">{p.name}</td>
                             <td className="px-3 py-2 text-right">{p.issued}</td>
                             <td className="px-3 py-2 text-right">{p.attended}</td>
                             <td className="px-3 py-2 text-right text-gray-500">{p.issued ? Math.round((p.attended / p.issued) * 100) : 0}%</td>
@@ -175,10 +175,10 @@ export default function AnalyticsPanel({ events }: Props) {
             </CardBody>
           </Card>
 
-          <Card>
+          <Card padding={false}>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold flex items-center"><Clock className="w-5 h-5 mr-2 text-blue-500" />Seva Slot-wise</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold flex items-center min-w-0"><Clock className="w-5 h-5 mr-2 text-blue-500" />Seva Slot-wise</h2>
                 <Button variant="outline" size="sm" onClick={() => exportAngle("slot")}>
                   <Download className="w-4 h-4 mr-1" />Export
                 </Button>
@@ -187,10 +187,10 @@ export default function AnalyticsPanel({ events }: Props) {
             <CardBody>
               {data?.slotWise?.length ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="h-64">
+                  <div className="h-56 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={data.slotWise} dataKey="issued" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={(e: any) => `${e.name}: ${e.issued}`}>
+                        <Pie data={data.slotWise} dataKey="issued" nameKey="name" cx="50%" cy="50%" outerRadius="70%" label={(e: any) => `${e.name}: ${e.issued}`}>
                           {data.slotWise.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                         </Pie>
                         <Tooltip />
@@ -211,8 +211,8 @@ export default function AnalyticsPanel({ events }: Props) {
                         {data.slotWise.map((s: any, i: number) => (
                           <tr key={i}>
                             <td className="px-3 py-2 font-mono font-bold">{s.code}</td>
-                            <td className="px-3 py-2">{s.name}</td>
-                            <td className="px-3 py-2 text-gray-500">{s.time || "-"}</td>
+                            <td className="px-3 py-2 break-words">{s.name}</td>
+                            <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{s.time || "-"}</td>
                             <td className="px-3 py-2 text-right font-medium">{s.issued}</td>
                           </tr>
                         ))}
@@ -224,10 +224,10 @@ export default function AnalyticsPanel({ events }: Props) {
             </CardBody>
           </Card>
 
-          <Card>
+          <Card padding={false}>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold flex items-center"><Award className="w-5 h-5 mr-2 text-amber-500" />Bahumana Tier-wise</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold flex items-center min-w-0"><Award className="w-5 h-5 mr-2 text-amber-500" />Bahumana Tier-wise</h2>
                 <Button variant="outline" size="sm" onClick={() => exportAngle("tier")}>
                   <Download className="w-4 h-4 mr-1" />Export
                 </Button>
@@ -236,10 +236,10 @@ export default function AnalyticsPanel({ events }: Props) {
             <CardBody>
               {data?.tierWise?.length ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-                  <div className="h-64">
+                  <div className="h-56 sm:h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={data.tierWise} dataKey="issued" nameKey="tier" cx="50%" cy="50%" outerRadius={90} label={(e: any) => `${e.tier}: ${e.issued}`}>
+                        <Pie data={data.tierWise} dataKey="issued" nameKey="tier" cx="50%" cy="50%" outerRadius="70%" label={(e: any) => `${e.tier}: ${e.issued}`}>
                           {data.tierWise.map((t: any, i: number) => <Cell key={i} fill={TIER_COLORS[t.tier] || COLORS[i % COLORS.length]} />)}
                         </Pie>
                         <Tooltip />
@@ -253,7 +253,7 @@ export default function AnalyticsPanel({ events }: Props) {
                           <span className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-lg" style={{ background: TIER_COLORS[t.tier] || "#888" }}>{t.tier}</span>
                           <span className="text-sm text-gray-600">Bahumana {t.tier}</span>
                         </span>
-                        <span className="text-2xl font-bold text-gray-900">{t.issued}</span>
+                        <span className="text-xl sm:text-2xl font-bold text-gray-900">{t.issued}</span>
                       </div>
                     ))}
                   </div>
@@ -262,10 +262,10 @@ export default function AnalyticsPanel({ events }: Props) {
             </CardBody>
           </Card>
 
-          <Card>
+          <Card padding={false}>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold flex items-center"><ScanLine className="w-5 h-5 mr-2 text-green-500" />Entry / Scan-wise</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="font-semibold flex items-center min-w-0"><ScanLine className="w-5 h-5 mr-2 text-green-500" />Entry / Scan-wise</h2>
                 <Button variant="outline" size="sm" onClick={() => exportAngle("entry")}>
                   <Download className="w-4 h-4 mr-1" />Export
                 </Button>
@@ -274,14 +274,14 @@ export default function AnalyticsPanel({ events }: Props) {
             <CardBody>
               {data?.entryWise?.length ? (
                 <>
-                  <div className="h-72">
+                  <div className="h-64 sm:h-72 -ml-2 sm:ml-0">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={data.entryWise} margin={{ bottom: 50 }}>
+                      <BarChart data={data.entryWise} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" angle={-25} textAnchor="end" height={60} fontSize={11} interval={0} />
-                        <YAxis allowDecimals={false} />
+                        <XAxis dataKey="name" angle={-25} textAnchor="end" height={60} fontSize={11} interval={0} tickFormatter={(v: any) => (String(v).length > 14 ? String(v).slice(0, 13) + "…" : v)} />
+                        <YAxis allowDecimals={false} width={32} fontSize={11} />
                         <Tooltip />
-                        <Legend />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
                         <Bar dataKey="granted" stackId="a" fill="#22C55E" name="Granted" />
                         <Bar dataKey="duplicate" stackId="a" fill="#EAB308" name="Duplicate" />
                         <Bar dataKey="denied" stackId="a" fill="#EF4444" name="Denied" />
@@ -301,7 +301,7 @@ export default function AnalyticsPanel({ events }: Props) {
                       <tbody className="divide-y divide-gray-100">
                         {data.entryWise.map((e: any, i: number) => (
                           <tr key={i}>
-                            <td className="px-3 py-2 text-gray-900">{e.name}</td>
+                            <td className="px-3 py-2 text-gray-900 break-words">{e.name}</td>
                             <td className="px-3 py-2 text-right text-green-700 font-medium">{e.granted}</td>
                             <td className="px-3 py-2 text-right text-yellow-700">{e.duplicate}</td>
                             <td className="px-3 py-2 text-right text-red-700">{e.denied}</td>

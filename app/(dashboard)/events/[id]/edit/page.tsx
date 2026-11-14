@@ -6,11 +6,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { utcToISTLocal, istLocalToISO } from "@/lib/dateUtils";
 import toast from "react-hot-toast";
-import { ArrowLeft, MapPin, Plus, X, Tags } from "lucide-react";
+import { MapPin, Plus, X, Tags } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Link from "next/link";
+import PageHeader from "@/components/ui/PageHeader";
+import VccLinkCard from "@/components/events/VccLinkCard";
 
 function buildFormData(eventData: any) {
   return {
@@ -149,16 +150,8 @@ export default function EditEventPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center space-x-4">
-        <Link href={`/events/${eventId}`} className="text-gray-600 hover:text-gray-900">
-          <ArrowLeft className="w-6 h-6" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Event</h1>
-          <p className="text-gray-600 mt-1">{formData.name}</p>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+      <PageHeader backHref={`/events/${eventId}`} title="Edit Event" subtitle={<span className="break-words">{formData.name}</span>} />
 
       <Card>
         <CardHeader><h2 className="text-lg font-semibold">Basic Information</h2></CardHeader>
@@ -181,7 +174,7 @@ export default function EditEventPage() {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full px-4 py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -197,7 +190,7 @@ export default function EditEventPage() {
               value={formData.dateEnd}
               onChange={(e) => setFormData({ ...formData, dateEnd: e.target.value })}
             />
-            <div className="col-span-2 pt-4 border-t border-orange-100">
+            <div className="sm:col-span-2 pt-4 border-t border-orange-100">
               <p className="text-sm font-semibold text-gray-800 mb-0.5">🔒 Scan Window</p>
               <p className="text-xs text-gray-400 mb-3">When the scanner accepts QRs at the gate — set this independent of ceremony time so scanning can start before the event begins. If not set, falls back to event start/end dates.</p>
             </div>
@@ -220,14 +213,14 @@ export default function EditEventPage() {
               <p className="text-xs text-gray-400 mt-1">QRs stop working after this time</p>
             </div>
 
-            <div className="col-span-2 pt-4 border-t border-orange-100">
+            <div className="sm:col-span-2 pt-4 border-t border-orange-100">
               <p className="text-sm font-semibold text-gray-800 mb-0.5">🔗 Community App Sync</p>
               <p className="text-xs text-gray-400 mb-3">
                 If set, every QR issued for this event is automatically pushed to
                 harekrishnavizag.co.in&apos;s community app using this event_id. Leave blank to disable sync for this event.
               </p>
             </div>
-            <div className="col-span-2 sm:col-span-1">
+            <div>
               <Input
                 label="Community App event_id"
                 type="text"
@@ -241,9 +234,11 @@ export default function EditEventPage() {
         </CardBody>
       </Card>
 
+      <VccLinkCard eventId={eventId} eventStartLocal={formData.dateStart} eventEndLocal={formData.dateEnd} />
+
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">
               <MapPin className="w-5 h-5 inline mr-2" />Venue(s)
             </h2>
@@ -254,12 +249,13 @@ export default function EditEventPage() {
         </CardHeader>
         <CardBody className="space-y-4">
           {venues.map((venue, index) => (
-            <div key={index} className="border rounded-lg p-4 relative">
+            <div key={index} className="border rounded-lg p-3 sm:p-4 relative">
               {venues.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeVenue(index)}
-                  className="absolute top-2 right-2 text-red-500 hover:bg-red-50 p-1 rounded"
+                  aria-label="Remove venue"
+                  className="absolute top-1.5 right-1.5 text-red-500 hover:bg-red-50 p-2 rounded-lg"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -285,7 +281,7 @@ export default function EditEventPage() {
                       setVenues(updated);
                     }}
                     rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-4 py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
               </div>
@@ -333,39 +329,39 @@ export default function EditEventPage() {
                 return (
                   <div
                     key={cat.catCode}
-                    className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
+                    className={`flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border-2 transition-all ${
                       isEnabled
                         ? "border-orange-400 bg-orange-50"
                         : "border-gray-200 bg-white"
                     }`}
                   >
-                    <label className="flex items-center space-x-3 cursor-pointer flex-1">
+                    <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0 py-1">
                       <input
                         type="checkbox"
                         checked={isEnabled}
                         onChange={() => toggleDevCat(cat)}
-                        className="rounded border-gray-300 text-orange-600"
+                        className="w-5 h-5 flex-shrink-0 rounded border-gray-300 text-orange-600 accent-orange-500"
                       />
                       <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
+                        className="w-8 h-8 flex-shrink-0 rounded-lg flex items-center justify-center text-lg"
                         style={{ backgroundColor: (cat.color || "#FF6B6B") + "20" }}
                       >
                         {cat.icon || "🏷️"}
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">{cat.name}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm break-words">{cat.name}</p>
                         <p className="text-xs text-gray-500 font-mono">{cat.catCode}</p>
                       </div>
                     </label>
 
                     {isEnabled && (
-                      <div className="flex items-center space-x-2 ml-4">
-                        <label className="text-xs text-gray-500">Max passes:</label>
+                      <div className="flex items-center gap-2 ml-auto pl-11 sm:pl-0 sm:ml-4">
+                        <label className="text-xs text-gray-500 whitespace-nowrap">Max passes:</label>
                         <input
                           type="number"
                           min="1"
                           inputMode="numeric"
-                          className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-lg"
+                          className="w-24 sm:w-20 px-2 py-2 sm:py-1 text-base sm:text-sm border border-gray-300 rounded-lg"
                           placeholder="∞"
                           value={devCat?.limit ?? ""}
                           onChange={(e) =>
@@ -391,9 +387,9 @@ export default function EditEventPage() {
         </CardBody>
       </Card>
 
-      <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-        <Button onClick={() => updateMutation.mutate()} loading={updateMutation.isPending}>
+      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
+        <Button type="button" variant="outline" onClick={() => router.back()} className="w-full sm:w-auto">Cancel</Button>
+        <Button onClick={() => updateMutation.mutate()} loading={updateMutation.isPending} className="w-full sm:w-auto">
           Save Changes
         </Button>
       </div>

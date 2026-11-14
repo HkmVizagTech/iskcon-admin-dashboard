@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -9,6 +9,13 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "ISKCON Seva Pass - Admin",
   description: "Central QR Pass Management Platform",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f97316",
 };
 
 export default function RootLayout({
@@ -22,7 +29,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <Toaster
-            position="top-right"
+            position="top-center"
             toastOptions={{
               style: {
                 background: "#fff",

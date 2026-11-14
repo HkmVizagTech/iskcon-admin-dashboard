@@ -43,7 +43,7 @@ export default function Table<T>({
   }
 
   return (
-    <div className={cn("overflow-x-auto", className)}>
+    <div className={cn("overflow-x-auto overscroll-x-contain", className)}>
       <table className="w-full">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
@@ -51,7 +51,7 @@ export default function Table<T>({
               <th
                 key={column.key as string}
                 className={cn(
-                  "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
+                  "px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
                   column.className,
                 )}
               >
@@ -74,7 +74,7 @@ export default function Table<T>({
                 <td
                   key={column.key as string}
                   className={cn(
-                    "px-6 py-4 whitespace-nowrap",
+                    "px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm sm:text-base",
                     column.className,
                   )}
                 >

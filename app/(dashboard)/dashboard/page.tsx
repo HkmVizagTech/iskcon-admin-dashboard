@@ -13,6 +13,7 @@ import StatCard from "@/components/ui/StatCard";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { can } from "@/lib/permissions";
+import PageHeader from "@/components/ui/PageHeader";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -54,27 +55,25 @@ export default function DashboardPage() {
     <div className="space-y-6">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back, {user?.name?.split(" ")[0]}! 🙏
-          </h1>
-          <p className="text-gray-500 mt-0.5">{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
-        </div>
-        <div className="flex space-x-3">
-          <Link href="/holders/create"
-            className="flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all shadow-md text-sm font-medium">
-            <QrCode className="w-4 h-4 mr-2" /> Issue QR Pass
-          </Link>
-          <Link href="/events/create"
-            className="flex items-center px-4 py-2 border border-orange-500 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors text-sm font-medium">
-            <Plus className="w-4 h-4 mr-2" /> Create Event
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title={<>Welcome back, {user?.name?.split(" ")[0]}! 🙏</>}
+        subtitle={<span className="text-gray-500">{format(new Date(), "EEEE, MMMM d, yyyy")}</span>}
+        actions={
+          <>
+            <Link href="/events/create"
+              className="flex items-center justify-center whitespace-nowrap px-4 py-2.5 sm:py-2 border border-orange-500 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors text-sm font-medium">
+              <Plus className="w-4 h-4 mr-2" /> Create Event
+            </Link>
+            <Link href="/holders/create"
+              className="flex items-center justify-center whitespace-nowrap px-4 py-2.5 sm:py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg hover:from-orange-600 hover:to-red-700 transition-all shadow-md text-sm font-medium sm:order-first">
+              <QrCode className="w-4 h-4 mr-2" /> Issue QR Pass
+            </Link>
+          </>
+        }
+      />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="Total Events" value={stats?.totalEvents || 0} icon={<Calendar className="w-6 h-6" />} color="blue" loading={statsLoading} />
         <StatCard title="Active Passes" value={stats?.activePasses || 0} icon={<QrCode className="w-6 h-6" />} color="green" loading={statsLoading} />
         <StatCard title="Total Holders" value={stats?.totalHolders || 0} icon={<Users className="w-6 h-6" />} color="purple" loading={statsLoading} />
@@ -86,9 +85,9 @@ export default function DashboardPage() {
 
         {/* Recent Events */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">Recent Events</h2>
-            <Link href="/events" className="text-orange-600 hover:text-orange-700 text-sm flex items-center gap-1">
+            <Link href="/events" className="text-orange-600 hover:text-orange-700 text-sm flex items-center gap-1 py-1 -my-1">
               View All <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -101,12 +100,12 @@ export default function DashboardPage() {
               <div className="p-6 text-center text-sm text-gray-400">No events yet. Create your first event!</div>
             ) : recentEvents.map((event: any) => (
               <Link key={event._id} href={`/events/${event._id}`}
-                className="block px-5 py-4 hover:bg-orange-50/40 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900 text-sm">{event.name}</span>
-                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                className="block px-4 sm:px-5 py-3 sm:py-4 hover:bg-orange-50/40 transition-colors">
+                <div className="flex items-start sm:items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-medium text-gray-900 text-sm break-words">{event.name}</span>
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium flex-shrink-0 ${
                         event.status === "active" ? "bg-green-100 text-green-700" :
                         event.status === "upcoming" ? "bg-blue-100 text-blue-700" :
                         "bg-gray-100 text-gray-500"}`}>
@@ -117,7 +116,7 @@ export default function DashboardPage() {
                       {event.eventCode} · {formatIST(event.dateStart, "MMM d")} – {formatIST(event.dateEnd, "MMM d")}
                     </p>
                   </div>
-                  <div className="text-right text-xs">
+                  <div className="text-right text-xs flex-shrink-0 whitespace-nowrap">
                     <div className="font-semibold text-gray-800">{event.stats?.totalPasses || 0} passes</div>
                     <div className="text-gray-400">{event.stats?.scanRate || 0}% scanned</div>
                   </div>
@@ -133,7 +132,7 @@ export default function DashboardPage() {
 
         {/* Live Scan Feed */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">Live Scan Feed</h2>
             <ScanLine className="w-4 h-4 text-green-500 animate-pulse" />
           </div>
@@ -141,7 +140,7 @@ export default function DashboardPage() {
             {!recentScans?.length ? (
               <div className="p-6 text-center text-sm text-gray-400">No scans yet</div>
             ) : recentScans.map((scan: any, i: number) => (
-              <div key={scan._id || i} className="px-5 py-3 flex items-center justify-between">
+              <div key={scan._id || i} className="px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${scan.result === "granted" ? "bg-green-500" : "bg-red-400"}`} />
                   <div className="min-w-0">
@@ -165,7 +164,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <QuickAction title="Issue QR Pass" description="Create and send passes" href="/holders/create" icon={<QrCode className="w-5 h-5" />} />
         <QuickAction title="Bulk Import" description="Import via CSV/Excel" href="/holders/import" icon={<Users className="w-5 h-5" />} />
         <QuickAction title="View Reports" description="Analytics & insights" href="/reports" icon={<TrendingUp className="w-5 h-5" />} />
@@ -174,9 +173,9 @@ export default function DashboardPage() {
 
       {/* Holder Type Breakdown */}
       {stats?.holderTypeStats?.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">Holder Types</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 sm:mb-4 uppercase tracking-wider">Holder Types</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
             {stats.holderTypeStats.map((ht: any) => (
               <div key={ht._id} className="bg-gray-50 rounded-lg p-3 text-center">
                 <div className="text-xl font-bold text-gray-900">{ht.count}</div>
@@ -189,14 +188,14 @@ export default function DashboardPage() {
 
       {/* Scans by Entry Point */}
       {stats?.scansByEP?.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">Scans by Entry Point</h3>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 sm:mb-4 uppercase tracking-wider">Scans by Entry Point</h3>
           <div className="space-y-3">
             {stats.scansByEP.map((ep: any) => (
               <div key={ep._id}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-gray-700">{ep.name}</span>
-                  <span className="text-gray-500 tabular-nums">{ep.count} scans</span>
+                  <span className="font-medium text-gray-700 truncate min-w-0">{ep.name}</span>
+                  <span className="text-gray-500 tabular-nums flex-shrink-0 ml-3">{ep.count} scans</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-1.5">
                   <div className="bg-orange-500 h-1.5 rounded-full"
@@ -213,10 +212,10 @@ export default function DashboardPage() {
 
 function QuickAction({ title, description, href, icon }: any) {
   return (
-    <Link href={href} className="p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-200 transition-all">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg text-orange-600">{icon}</div>
-        <div>
+    <Link href={href} className="p-3 sm:p-4 bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-orange-200 transition-all">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <div className="p-2 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg text-orange-600 self-start sm:self-auto">{icon}</div>
+        <div className="min-w-0">
           <p className="font-medium text-gray-900 text-sm">{title}</p>
           <p className="text-xs text-gray-400 mt-0.5">{description}</p>
         </div>

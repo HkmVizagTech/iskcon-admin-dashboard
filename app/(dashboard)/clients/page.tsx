@@ -10,6 +10,7 @@ import { Plus, KeyRound, Copy, Check, AlertTriangle } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import PageHeader from "@/components/ui/PageHeader";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 
@@ -234,16 +235,16 @@ export default function ClientAppsPage() {
   const eventCodes: string[] = (events || []).map((e: any) => e.eventCode).filter(Boolean);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Client Apps</h1>
-          <p className="text-gray-600 mt-1">Apps that call the integration API, each with its own key</p>
-        </div>
-        <Button onClick={openCreate}>
-          <Plus className="w-5 h-5 mr-2" />New client
-        </Button>
-      </div>
+    <div className="space-y-4 sm:space-y-6">
+      <PageHeader
+        title="Client Apps"
+        subtitle="Apps that call the integration API, each with its own key"
+        actions={
+          <Button onClick={openCreate}>
+            <Plus className="w-5 h-5 mr-2" />New client
+          </Button>
+        }
+      />
 
       <Card padding={false}>
         {isLoading ? (
@@ -253,7 +254,75 @@ export default function ClientAppsPage() {
         ) : !clients || clients.length === 0 ? (
           <div className="text-center py-12 text-gray-500">No client apps yet</div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Phones: one card per client */}
+          <ul className="md:hidden divide-y divide-gray-100">
+            {clients.map((c) => (
+              <li key={c._id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900 break-words">{c.name}</div>
+                    <div className="text-xs text-gray-500 font-mono break-all">{c.slug}</div>
+                  </div>
+                  <span className={`flex-shrink-0 px-2 py-1 text-xs rounded-full ${
+                    c.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
+                  }`}>
+                    {c.status}
+                  </span>
+                </div>
+                {c.description && <p className="text-xs text-gray-500 break-words">{c.description}</p>}
+                <div className="flex flex-wrap gap-1">
+                  {(c.scopes || []).map((s) => (
+                    <span key={s} className="px-1.5 py-0.5 text-[11px] font-mono rounded bg-orange-50 text-orange-700 border border-orange-200">{s}</span>
+                  ))}
+                </div>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                  <div className="min-w-0">
+                    <dt className="text-xs text-gray-500">Events</dt>
+                    <dd className="text-gray-700 break-words">{codesLabel(c.allowedEvents)}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-xs text-gray-500">Pass types</dt>
+                    <dd className="text-gray-700 break-words">{codesLabel(c.allowedPassTypes)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-gray-500">Rate / min</dt>
+                    <dd className="text-gray-700">{c.rateLimitPerMin}</dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="text-xs text-gray-500">Key</dt>
+                    <dd>
+                      <code className="text-xs bg-gray-100 px-2 py-0.5 rounded break-all">{c.keyHint ? `${c.keyHint}…` : "—"}</code>
+                      {c.keyRotatedAt && (
+                        <div className="text-[11px] text-gray-400 mt-1">rotated {formatIST(c.keyRotatedAt, "d MMM yyyy")}</div>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-xs text-gray-500">Last used</dt>
+                    <dd className="text-gray-500">{c.lastUsedAt ? formatIST(c.lastUsedAt, "d MMM yyyy, h:mm a") : "Never"}</dd>
+                  </div>
+                </dl>
+                <div className="grid grid-cols-2 gap-2 text-sm font-medium">
+                  <button onClick={() => openEdit(c)} className="h-10 rounded-lg border border-gray-200 text-blue-600 hover:bg-blue-50">Edit</button>
+                  <button
+                    onClick={() => toggleStatus(c)}
+                    disabled={busy === `status-${c._id}`}
+                    className="h-10 rounded-lg border border-gray-200 text-amber-600 hover:bg-amber-50 disabled:opacity-50"
+                  >
+                    {c.status === "active" ? "Disable" : "Enable"}
+                  </button>
+                  <button onClick={() => setConfirm({ kind: "rotate", client: c })} className="h-10 rounded-lg border border-gray-200 text-orange-600 hover:bg-orange-50">
+                    Rotate key
+                  </button>
+                  <button onClick={() => setConfirm({ kind: "delete", client: c })} className="h-10 rounded-lg border border-gray-200 text-red-600 hover:bg-red-50">
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -319,6 +388,7 @@ export default function ClientAppsPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </Card>
 
@@ -372,7 +442,7 @@ export default function ClientAppsPage() {
                   key={p}
                   type="button"
                   onClick={() => pickPreset(p)}
-                  className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 sm:py-1.5 rounded-lg border text-sm font-medium transition-colors ${
                     form.preset === p
                       ? "border-orange-600 bg-orange-50 text-orange-700"
                       : "border-gray-200 text-gray-600 hover:border-orange-300"
@@ -385,15 +455,15 @@ export default function ClientAppsPage() {
             </div>
             <div className="space-y-2">
               {Object.entries(scopes).map(([scope, desc]) => (
-                <label key={scope} className="flex items-start gap-2 text-sm cursor-pointer">
+                <label key={scope} className="flex items-start gap-2 text-sm cursor-pointer py-0.5">
                   <input
                     type="checkbox"
                     checked={form.scopes.includes(scope)}
                     onChange={() => toggleScope(scope)}
                     className="mt-0.5 accent-orange-600"
                   />
-                  <span>
-                    <span className="font-mono text-gray-900">{scope}</span>
+                  <span className="min-w-0 break-words">
+                    <span className="font-mono text-gray-900 break-all">{scope}</span>
                     <span className="text-gray-500"> — {desc}</span>
                   </span>
                 </label>
@@ -468,7 +538,7 @@ export default function ClientAppsPage() {
             <AlertTriangle className="w-5 h-5 shrink-0" />
             <span>Copy this key now. It is shown only once and cannot be shown again — if it is lost, rotate the key.</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
             <KeyRound className="w-5 h-5 text-gray-400 shrink-0" />
             <code className="flex-1 min-w-0 break-all select-all text-sm bg-gray-100 px-3 py-2 rounded-lg font-mono">
               {revealed?.apiKey}

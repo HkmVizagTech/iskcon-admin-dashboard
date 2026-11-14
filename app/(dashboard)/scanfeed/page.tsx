@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageHeader from "@/components/ui/PageHeader";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
@@ -235,42 +236,40 @@ export default function ScanFeedPage() {
     const Icon = badge.icon;
     return (
       <span
-        className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${badge.color}`}
+        className={`inline-flex items-center px-2.5 sm:px-2 py-1 text-sm sm:text-xs font-semibold sm:font-normal whitespace-nowrap rounded-full ${badge.color}`}
       >
-        <Icon className="w-3 h-3 mr-1" />
+        <Icon className="w-4 h-4 sm:w-3 sm:h-3 mr-1" />
         {badge.label}
       </span>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Reports & Live Scans
-          </h1>
-          <p className="text-gray-600 mt-1">View scan history and analytics</p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={handleExport}
-          disabled={!selectedEvent}
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
-      </div>
+      <PageHeader
+        title="Reports & Live Scans"
+        subtitle="View scan history and analytics"
+        actions={
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={!selectedEvent}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+        }
+      />
 
       {/* Event Selection */}
-      <Card>
+      <Card padding={false}>
         <CardBody>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
             <select
               value={selectedEvent}
               onChange={(e) => handleEventChange(e.target.value)}
-              className="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full sm:w-64 px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
             >
               <option value="">Select an event...</option>
               {events?.map((event: any) => (
@@ -285,7 +284,7 @@ export default function ScanFeedPage() {
                 <select
                   value={resultFilter}
                   onChange={(e) => handleFilterChange(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-base sm:text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">All Results</option>
                   <option value="granted">✅ Granted</option>
@@ -294,7 +293,7 @@ export default function ScanFeedPage() {
                   <option value="invalid">❌ Invalid</option>
                 </select>
                 {/* Morning / Evening session filter */}
-                <div className="flex gap-1">
+                <div className="grid grid-cols-3 gap-1.5 sm:flex sm:gap-1">
                   {([
                     { val: "", label: "All" },
                     { val: "morning", label: "🌅 Morning" },
@@ -303,7 +302,7 @@ export default function ScanFeedPage() {
                     <button
                       key={val}
                       onClick={() => handleSlotFilterChange(val)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-2 sm:px-3 py-2.5 sm:py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                         slotFilter === val
                           ? "bg-orange-600 text-white"
                           : "border border-gray-300 text-gray-600 hover:border-orange-400"
@@ -318,9 +317,9 @@ export default function ScanFeedPage() {
           </div>
 
           {selectedEvent && (
-            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-gray-100">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3 mt-3 pt-3 border-t border-gray-100">
               {/* Holder name/phone search */}
-              <div className="relative w-full sm:w-56">
+              <div className="relative col-span-2 w-full sm:w-56">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
@@ -333,7 +332,7 @@ export default function ScanFeedPage() {
                     setCursors([]);
                     setSearchFilter(val);
                   }}
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-9 pr-3 py-2.5 sm:py-2 border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
@@ -342,7 +341,7 @@ export default function ScanFeedPage() {
                 <select
                   value={venueFilter}
                   onChange={(e) => { setVenueFilter(e.target.value); setCursor(null); setCursors([]); }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                  className="w-full sm:w-auto min-w-0 px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-orange-500"
                   title="Where the scan physically happened"
                 >
                   <option value="">Scan Venue: All</option>
@@ -357,7 +356,7 @@ export default function ScanFeedPage() {
                 <select
                   value={allowedVenueFilter}
                   onChange={(e) => { setAllowedVenueFilter(e.target.value); setCursor(null); setCursors([]); }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                  className="w-full sm:w-auto min-w-0 px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-orange-500"
                   title="Which venue(s) the pass is valid at"
                 >
                   <option value="">Pass Valid At: All</option>
@@ -372,7 +371,7 @@ export default function ScanFeedPage() {
                 <select
                   value={catFilter}
                   onChange={(e) => { setCatFilter(e.target.value); setCursor(null); setCursors([]); }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                  className="w-full sm:w-auto min-w-0 px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">Category: All</option>
                   {categories.map((c: any) => (
@@ -385,7 +384,7 @@ export default function ScanFeedPage() {
               <select
                 value={tierFilter}
                 onChange={(e) => { setTierFilter(e.target.value); setCursor(null); setCursors([]); }}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                className="w-full sm:w-auto min-w-0 px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-orange-500"
               >
                 <option value="">Tier: All</option>
                 <option value="A">Tier A</option>
@@ -398,7 +397,7 @@ export default function ScanFeedPage() {
                 <select
                   value={epFilter}
                   onChange={(e) => { setEpFilter(e.target.value); setCursor(null); setCursors([]); }}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                  className="w-full sm:w-auto min-w-0 px-3 py-2.5 sm:py-2 bg-white border border-gray-300 rounded-lg text-base sm:text-sm focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">Station: All</option>
                   {entryPoints.map((ep: any) => (
@@ -414,7 +413,7 @@ export default function ScanFeedPage() {
                     setTierFilter(""); setEpFilter(""); setSearchFilter(""); setSearchInput("");
                     setCursor(null); setCursors([]);
                   }}
-                  className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 underline"
+                  className="col-span-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 underline"
                 >
                   Clear filters
                 </button>
@@ -439,7 +438,7 @@ export default function ScanFeedPage() {
         <>
           {/* Tabs */}
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-6">
+            <nav className="flex space-x-6 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={() => setActiveTab("scans")}
                 className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -468,11 +467,10 @@ export default function ScanFeedPage() {
             <Card padding={false}>
               <div className="divide-y divide-gray-100">
                 {/* Header */}
-                <div className="px-6 py-3 bg-gray-50 grid grid-cols-5 gap-4 text-xs font-medium text-gray-500 uppercase">
+                <div className="hidden sm:grid px-4 py-3 bg-gray-50 grid-cols-4 gap-4 text-xs font-medium text-gray-500 uppercase rounded-t-xl">
                   <span>Holder</span>
-                  <span>Station</span>
-                  <span>Volunteer</span>
-                  <span>Time</span>
+                  <span>Category</span>
+                  <span>Station · Volunteer · Time</span>
                   <span>Result</span>
                 </div>
 
@@ -486,23 +484,23 @@ export default function ScanFeedPage() {
                       key={log._id}
                       className="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
                     >
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4 items-start">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-4 gap-x-3 gap-y-2 sm:gap-4 items-start">
 
                         {/* Col 1: Holder name + phone */}
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <User className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span className="font-semibold text-gray-900 text-sm">
+                        <div className="min-w-0">
+                          <div className="flex items-start gap-1.5">
+                            <User className="w-4 h-4 text-gray-400 shrink-0 mt-1 sm:mt-0.5" />
+                            <span className="font-semibold text-gray-900 text-base sm:text-sm break-words min-w-0">
                               {log.holderId?.name || "Unknown"}
                             </span>
                           </div>
                           {log.holderId?.phone && (
-                            <p className="text-xs text-gray-400 mt-0.5 ml-5">{log.holderId.phone}</p>
+                            <p className="text-sm sm:text-xs text-gray-500 sm:text-gray-400 mt-0.5 ml-5">{log.holderId.phone}</p>
                           )}
                         </div>
 
                         {/* Col 2: Category + Bahumana tier + Seva slot */}
-                        <div className="flex flex-col gap-1">
+                        <div className="col-span-2 sm:col-span-1 flex flex-row flex-wrap sm:flex-col gap-1">
                           {/* Category badge */}
                           {log.holderId?.catId ? (
                             <span
@@ -534,8 +532,8 @@ export default function ScanFeedPage() {
                         </div>
 
                         {/* Col 3: Station + scanned by + time */}
-                        <div>
-                          <div className="flex items-center text-sm text-gray-700 gap-1 font-medium">
+                        <div className="col-span-2 sm:col-span-1 min-w-0">
+                          <div className="flex items-center text-sm text-gray-700 gap-1 font-medium break-words">
                             <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
                             {log.stationLabel || log.epId?.name || "Unknown"}
                           </div>
@@ -549,7 +547,7 @@ export default function ScanFeedPage() {
                         </div>
 
                         {/* Col 4: Result */}
-                        <div className="flex items-start">
+                        <div className="col-start-2 row-start-1 sm:col-start-auto sm:row-start-auto flex items-start justify-end sm:justify-start">
                           {getResultBadge(log.result)}
                         </div>
 
@@ -561,7 +559,7 @@ export default function ScanFeedPage() {
 
               {/* Pagination */}
               {scanData?.pagination?.hasMore && (
-                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-2">
                   <span className="text-sm text-gray-500">
                     Page {scanData.pagination.page} of{" "}
                     {scanData.pagination.pages}
@@ -600,46 +598,63 @@ export default function ScanFeedPage() {
 
           {/* Summary Tab */}
           {activeTab === "summary" && summary && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Top Stats */}
-              <div className="grid grid-cols-3 gap-6">
-                <Card>
-                  <CardBody className="text-center">
-                    <p className="text-3xl font-bold text-gray-900">
+              <div className="grid grid-cols-3 gap-2 sm:gap-6">
+                <Card padding={false}>
+                  <CardBody className="text-center !px-2 sm:!px-6">
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                       {summary.totalIssued || 0}
                     </p>
-                    <p className="text-sm text-gray-500">Total Issued</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Total Issued</p>
                   </CardBody>
                 </Card>
-                <Card>
-                  <CardBody className="text-center">
-                    <p className="text-3xl font-bold text-green-700">
+                <Card padding={false}>
+                  <CardBody className="text-center !px-2 sm:!px-6">
+                    <p className="text-2xl sm:text-3xl font-bold text-green-700">
                       {summary.totalScanned || 0}
                     </p>
-                    <p className="text-sm text-green-600">
+                    <p className="text-xs sm:text-sm text-green-600">
                       Total Scanned (All)
                     </p>
                   </CardBody>
                 </Card>
-                <Card>
-                  <CardBody className="text-center">
-                    <p className="text-3xl font-bold text-blue-700">
+                <Card padding={false}>
+                  <CardBody className="text-center !px-2 sm:!px-6">
+                    <p className="text-2xl sm:text-3xl font-bold text-blue-700">
                       {summary.byEntryPoint?.reduce(
                         (sum: number, ep: any) => sum + ep.granted,
                         0,
                       ) || 0}
                     </p>
-                    <p className="text-sm text-blue-600">Access Granted</p>
+                    <p className="text-xs sm:text-sm text-blue-600">Access Granted</p>
                   </CardBody>
                 </Card>
               </div>
 
               {/* By Entry Point */}
-              <Card>
+              <Card padding={false}>
                 <CardHeader>
                   <h2 className="font-semibold">By Entry Point</h2>
                 </CardHeader>
                 <CardBody padding={false}>
+                  {/* Phones: one row per station with result counts */}
+                  <ul className="md:hidden divide-y divide-gray-100">
+                    {summary.byEntryPoint?.map((ep: any) => (
+                      <li key={ep._id?.epId} className="px-4 py-3">
+                        <p className="text-sm font-medium text-gray-900 break-words">
+                          {ep._id?.epLabel || ep._id?.epName || "Unknown"}
+                        </p>
+                        <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                          <span className="text-green-600">✅ Granted <b className="font-semibold">{ep.granted}</b></span>
+                          <span className="text-yellow-600">⚠️ Already Used <b className="font-semibold text-gray-900">{ep.already_used || 0}</b></span>
+                          <span className="text-red-600">❌ Not Included <b className="font-semibold text-gray-900">{ep.not_included || 0}</b></span>
+                          <span className="text-red-600">🚫 Invalid <b className="font-semibold text-gray-900">{ep.invalid || 0}</b></span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
@@ -682,12 +697,13 @@ export default function ScanFeedPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </CardBody>
               </Card>
 
               {/* By Holder Type & By Venue */}
-              <div className="grid grid-cols-2 gap-6">
-                <Card>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <Card padding={false}>
                   <CardHeader>
                     <h2 className="font-semibold">By Holder Type (Granted)</h2>
                   </CardHeader>
@@ -706,7 +722,7 @@ export default function ScanFeedPage() {
                   </CardBody>
                 </Card>
 
-                <Card>
+                <Card padding={false}>
                   <CardHeader>
                     <h2 className="font-semibold">By Venue (Granted)</h2>
                   </CardHeader>
@@ -716,7 +732,7 @@ export default function ScanFeedPage() {
                         key={v._id}
                         className="flex justify-between py-2 border-b last:border-0"
                       >
-                        <span className="text-sm">{v._id || "Unknown"}</span>
+                        <span className="text-sm min-w-0 break-words pr-2">{v._id || "Unknown"}</span>
                         <span className="font-bold">{v.count}</span>
                       </div>
                     ))}
